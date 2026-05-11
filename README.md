@@ -63,10 +63,26 @@ This README is the canonical context for building Fyntra's Phase 1 web applicati
 - **Lucide React** for iconography
 - **Recharts** for the small handful of charts in the admin dashboard
 - **Vitest** + **React Testing Library** for tests
+- **nfc-pcsc** + **ws** — bridge service only (dev tooling, not shipped to production)
 
 ---
 
 ## 4. Directory structure (atomic design)
+
+Repo layout — the frontend lives in `src/` and a small dev-only bridge service for the ACR122U reader (see §13) lives in a sibling `bridge/` directory:
+
+```
+fyntra/
+├── src/                      # frontend application (atomic design below)
+├── bridge/                   # local-only RFID bridge service (dev only)
+│   ├── package.json
+│   ├── tsconfig.json
+│   └── src/
+│       └── index.ts
+└── package.json              # frontend root
+```
+
+Frontend `src/` breakdown:
 
 ```
 src/
@@ -339,13 +355,21 @@ POST   /dev/simulate-tap           { rfidUid, deviceId, direction }
 
 ## 11. Build & run
 
-```
+```bash
+# Frontend
 npm install
-npm run dev          # Vite dev with MSW enabled
+npm run dev          # Vite dev with MSW enabled, http://localhost:5173
 npm run build
 npm run test
 npm run lint
+
+# Bridge service (separate terminal — only needed when working on the Simulate Tap page)
+cd bridge
+npm install
+npm run dev          # ACR122U → WebSocket bridge on ws://localhost:8787
 ```
+
+For a full dev session involving the reader, both processes need to run. A root-level `concurrently` script may be added later to start both at once, but two terminals is fine for now.
 
 Dev seed data: 1 school, 4 classes, 60 students, 2 devices, 3 admin users, 4 teachers, 60 parents. Configurable in `services/mocks/seed.ts`.
 
@@ -373,9 +397,29 @@ VITE_DEFAULT_LOCALE=en
 
 ## 13. The hardware reality
 
-A USB RFID reader and test cards are already available for local testing. **Most USB RFID readers emulate a keyboard** — they "type" the UID followed by Enter into whatever input has focus.
+The reader for Phase 1 is an **ACR122U** (ACS, USB NFC reader, PC/SC standard). It does *not* emulate a keyboard — it speaks the PC/SC protocol and is accessed through the operating system's smart-card framework (`CryptoTokenKit` on macOS, `pcscd` on Linux, WinSCard on Windows). Card UIDs cannot be obtained by capturing keyboard input.
 
-For Phase 1, this means:
-- The dev-only **Simulate Tap** page (admin → devices → simulate) must include a focused input that captures real reader scans, in addition to a manual UID text field and a direction selector.
-- A scan triggers `POST /dev/simulate-tap` with the captured UID, the chosen device, and the chosen direction. MSW handles the rest as if it came from a real device.
-- This is the *only* point where physical hardware touches the frontend in Phase 1. Real device integration happens at the backend in Phase 1.5.
+To bridge the reader to the frontend during development, Phase 1 includes a small **local-only bridge service** alongside the frontend, in its own subdirectory of the repo:
+
+```
+fyntra/
+├── src/        # frontend (existing app)
+└── bridge/     # local-only Node service: ACR122U → WebSocket → frontend
+```
+
+The bridge is a small Node service (~50 lines) that:
+1. Connects to the ACR122U via the `nfc-pcsc` library
+2. Listens for card taps
+3. Exposes a WebSocket server at `ws://localhost:8787`
+4. Emits messages of shape `{ type: "card_tapped", uid: string, readerName: string, timestamp: string }` whenever a card is tapped
+
+The frontend's **Simulate Tap** page (admin → devices → simulate) integrates with the bridge as follows:
+- On mount, connects to `ws://localhost:8787` via a `useReaderBridge()` hook
+- Shows the bridge connection status prominently (Disconnected / Connecting / Connected)
+- Receives `card_tapped` events and auto-fills the UID input
+- Still supports manual UID entry and direction selection (in/out) for when the reader is unavailable
+- Submitting fires `POST /dev/simulate-tap` against MSW exactly as before — the API contract does not change
+
+This bridge is **dev-only**. It is not part of production. In Phase 1.5, when the real backend exists, deployed readers will communicate with the backend directly over network protocols, and this bridge service will be retired.
+
+**macOS-specific note.** On modern macOS, the built-in CryptoTokenKit framework occasionally claims the ACR122U before `nfc-pcsc` can. If the bridge reports no readers found despite the device being visible in System Information → USB, the fix is documented in `bridge/README.md` — typically involves preventing macOS's built-in smart-card driver from claiming the device. The bridge's README must include OS-specific setup notes.
