@@ -175,12 +175,21 @@ interface Class {
   schoolId: ID;
 }
 
+interface CardAuditEntry {
+  at: string;             // ISO
+  byUserId: ID;
+  action: "issued" | "assigned" | "replaced" | "lost" | "deactivated" | "reactivated";
+  note?: string;
+}
+
 interface Card {
   id: ID;
-  rfidUid: string;        // unique
-  studentId?: ID;         // null if unassigned
+  rfidUid: string;            // unique
+  studentId?: ID;             // null if unassigned
   status: "active" | "lost" | "replaced" | "deactivated";
-  issuedAt: string;       // ISO
+  issuedAt: string;           // ISO
+  auditLog: CardAuditEntry[]; // see §7.5 — every mutation appends an entry,
+                              // seed cards start with one "issued" entry
 }
 
 interface Device {
@@ -342,6 +351,7 @@ POST   /dev/simulate-tap           { rfidUid, deviceId, direction }
 - Use **Noto Nastaliq Urdu** (or **Jameel Noori Nastaleeq** as fallback) for Urdu text blocks. Configure in `tailwind.config.ts`.
 - Format dates via `date-fns/locale` (`enUS`, `ur`). Always use `Asia/Karachi` as the source-of-truth timezone — don't trust the device clock for canonical timestamps.
 - Phone numbers: store in E.164, display in local format (`0300-1234567`).
+- **English is the default UI language.** Fresh sessions always start in English regardless of `navigator.language`. The i18n detector reads only from `localStorage` (`fyntra:locale`); the locale toggle persists there. `user.preferredLanguage` from `/me` and `verify-otp` is **data, not a session-time override** — the verify-otp success handler does not call `i18n.changeLanguage`. Urdu polish (translations, RTL acceptance screenshot) is the final step of Phase 1.
 
 ---
 
@@ -389,13 +399,25 @@ For a full dev session involving the reader, both processes need to run. A root-
 
 Dev seed data: 1 school, 4 classes, 60 students, 2 devices, 3 admin users, 4 teachers, 60 parents. Configurable in `services/mocks/seed.ts`.
 
-Environment variables (`.env.local`):
+Environment variables (`.env.local`, copy from `.env.example`):
 
 ```
 VITE_API_BASE_URL=http://localhost:5173/api
 VITE_USE_MOCKS=true
 VITE_DEFAULT_LOCALE=en
 ```
+
+### Demo logins
+
+Any 4-digit OTP works in dev (`1234` is fine). The seed assigns deterministic phone numbers per role — the third digit-block is the role marker (`00` parent / `11` admin / `12` teacher), which is easy to misread when typing:
+
+| Role    | Phone format                | Example         |
+| ------- | --------------------------- | --------------- |
+| Parent  | `+9230010000NN` (60 users)  | `+923001000001` |
+| Admin   | `+9230011000NN` (3 users)   | `+923001100001` |
+| Teacher | `+9230012000NN` (4 users)   | `+923001200001` |
+
+To force-clear a stuck session, delete the `fyntra:auth` key from `localStorage` and refresh.
 
 ---
 
@@ -439,3 +461,5 @@ The frontend's **Simulate Tap** page (admin → devices → simulate) integrates
 This bridge is **dev-only**. It is not part of production. In Phase 1.5, when the real backend exists, deployed readers will communicate with the backend directly over network protocols, and this bridge service will be retired.
 
 **macOS-specific note.** On modern macOS, the built-in CryptoTokenKit framework occasionally claims the ACR122U before `nfc-pcsc` can. If the bridge reports no readers found despite the device being visible in System Information → USB, the fix is documented in `bridge/README.md` — typically involves preventing macOS's built-in smart-card driver from claiming the device. The bridge's README must include OS-specific setup notes.
+
+**Implementation status.** The frontend half is built — `useReaderBridge()` connects to `ws://localhost:8787`, surfaces the live connection status on the admin Simulate Tap page, and auto-fills the UID input when a `card_tapped` message arrives. The standalone `bridge/` Node service is **not yet built**; until it is, the Simulate Tap page shows "Bridge disconnected" and the admin can submit UIDs by hand. The hook short-circuits in tests via an `import.meta.env.MODE === 'test'` guard so jsdom doesn't churn on dead connections.
