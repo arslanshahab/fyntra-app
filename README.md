@@ -452,11 +452,17 @@ fyntra/
 └── bridge/     # local-only Node service: ACR122U → WebSocket → frontend
 ```
 
-The bridge is a small Node service (~50 lines) that:
+The bridge is a small Node service (~80 lines) that:
 1. Connects to the ACR122U via the `nfc-pcsc` library
 2. Listens for card taps
-3. Exposes a WebSocket server at `ws://localhost:8787`
+3. Exposes a WebSocket server at `ws://127.0.0.1:8787` — **bound to localhost only, not 0.0.0.0**, so the bridge is never reachable on the LAN
 4. Emits messages of shape `{ type: "card_tapped", uid: string, readerName: string, timestamp: string }` whenever a card is tapped
+
+**Protocol details the bridge must honour:**
+- `uid` is **uppercase hex with no separators** (e.g. `AABBCCDD`). nfc-pcsc returns a Buffer — convert to `.toString('hex').toUpperCase()`.
+- `timestamp` is ISO-8601 UTC, the moment the tap was detected.
+- The same UID arriving from the same reader within **500 ms** is treated as a duplicate physical tap and suppressed. ACR122U sometimes fires multiple events per tap.
+- Multiple concurrent WebSocket clients are supported (admin may have several tabs open). Each `card_tapped` message is broadcast to all of them.
 
 The frontend's **Simulate Tap** page (admin → devices → simulate) integrates with the bridge as follows:
 - On mount, connects to `ws://localhost:8787` via a `useReaderBridge()` hook
