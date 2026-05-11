@@ -25,3 +25,7 @@ dist-ssr
 
 # Claude Code per-user settings
 .claude/settings.local.json
+
+# Claude Code conversation exports (via /export)
+*-youre-going-to-help-me-*.txt
+20[0-9][0-9]-[0-1][0-9]-[0-3][0-9]-[0-9]*.txt
