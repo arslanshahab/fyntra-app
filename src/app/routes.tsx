@@ -1,11 +1,28 @@
-import { Route, Routes } from 'react-router-dom'
+import { Outlet, Route, Routes } from 'react-router-dom'
 
-import { WelcomePage } from '../pages/welcome/WelcomePage'
+import { AdminHomePage } from '../pages/admin/AdminHomePage'
+import { LoginPage } from '../pages/auth/LoginPage'
+import { ParentHomePage } from '../pages/parent/ParentHomePage'
+import { TeacherHomePage } from '../pages/teacher/TeacherHomePage'
+import { RequireAuth } from './RequireAuth'
+import { RoleRedirect } from './RoleRedirect'
 
 export function AppRoutes() {
   return (
     <Routes>
-      <Route path="/" element={<WelcomePage />} />
+      <Route path="/login" element={<LoginPage />} />
+      <Route
+        element={
+          <RequireAuth>
+            <Outlet />
+          </RequireAuth>
+        }
+      >
+        <Route path="/" element={<RoleRedirect />} />
+        <Route path="/parent" element={<ParentHomePage />} />
+        <Route path="/admin" element={<AdminHomePage />} />
+        <Route path="/teacher" element={<TeacherHomePage />} />
+      </Route>
     </Routes>
   )
 }

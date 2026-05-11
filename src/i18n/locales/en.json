@@ -8,14 +8,39 @@
     "error": "Something went wrong",
     "retry": "Retry",
     "cancel": "Cancel",
-    "save": "Save"
+    "save": "Save",
+    "signOut": "Sign out"
   },
   "language": {
     "current": "English",
     "switchTo": "اردو"
   },
-  "welcome": {
-    "heading": "Welcome to Fyntra",
-    "body": "Phase 1 app shell is wired. Providers, router, and i18n are live."
+  "login": {
+    "heading": "Sign in to Fyntra",
+    "phoneStep": {
+      "body": "Enter your phone number to receive a one-time code.",
+      "phoneLabel": "Phone number",
+      "phonePlaceholder": "+923001234567",
+      "submit": "Send code",
+      "invalidPhone": "Enter a valid Pakistani mobile number (starts with +92, 12 digits total)."
+    },
+    "otpStep": {
+      "body": "We sent a 4-digit code to {{phone}}.",
+      "otpLabel": "One-time code",
+      "submit": "Verify",
+      "invalidOtp": "Enter the 4-digit code.",
+      "back": "Use a different number"
+    },
+    "errors": {
+      "unknownPhone": "That phone number is not registered. Please contact your school.",
+      "generic": "Something went wrong. Please try again."
+    },
+    "demoHint": "Demo: any 4-digit code works. Try +923001000001 (parent), +923001100001 (admin), or +923001200001 (teacher)."
+  },
+  "roleHome": {
+    "parent": "Parent home",
+    "admin": "Admin dashboard",
+    "teacher": "Teacher view",
+    "placeholder": "Real content lands here in upcoming steps."
   }
 }
