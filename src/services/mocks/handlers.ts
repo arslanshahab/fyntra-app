@@ -442,6 +442,15 @@ export const handlers = [
     return HttpResponse.json(notif)
   }),
 
+  http.get(`${API}/notifications/settings`, async ({ request }) => {
+    await latency()
+    const me = currentUser(request)
+    if (!me) return HttpResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const settings = seedStore.notificationSettings.get(me.id)
+    if (!settings) return HttpResponse.json({ error: 'Not found' }, { status: 404 })
+    return HttpResponse.json(settings)
+  }),
+
   http.patch(`${API}/notifications/settings`, async ({ request }) => {
     await latency()
     const me = currentUser(request)

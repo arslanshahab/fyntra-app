@@ -105,6 +105,43 @@
     "noChildren": "No children linked to your account yet. Please contact your school.",
     "loadError": "We couldn't reach the school server. Pull to try again.",
     "viewTimeline": "View 30-day history",
+    "openSettings": "Notification settings",
+    "settings": {
+      "title": "Notification settings",
+      "back": "Back to home",
+      "loadError": "Couldn't load your settings.",
+      "saveError": "Couldn't save that change. Reverted.",
+      "channelsHeading": "Channels",
+      "channelsHint": "Choose how you receive alerts.",
+      "channel": {
+        "whatsapp": "WhatsApp",
+        "whatsappHint": "Delivered to your registered number.",
+        "sms": "SMS",
+        "smsHint": "Standard carrier rates may apply.",
+        "in_app": "In-app",
+        "in_appHint": "Visible inside Fyntra on this device."
+      },
+      "eventsHeading": "Events",
+      "eventsHint": "Pick which events trigger a notification.",
+      "event": {
+        "tap_in": "Tap in (arrived)",
+        "tap_inHint": "Your child has tapped into school.",
+        "tap_out": "Tap out (left)",
+        "tap_outHint": "Your child has tapped out for the day.",
+        "late": "Late arrival",
+        "lateHint": "Tapped in after the late threshold.",
+        "absent": "Absent",
+        "absentHint": "No tap within the absent threshold.",
+        "manual_override": "Manual override",
+        "manual_overrideHint": "A staff member recorded a tap on your child's behalf."
+      },
+      "languageHeading": "Language",
+      "languageHint": "The active language on this device. Changes take effect immediately.",
+      "language": {
+        "en": "English",
+        "ur": "اردو"
+      }
+    },
     "status": {
       "atSchool": {
         "title": "{{name}} is at school.",

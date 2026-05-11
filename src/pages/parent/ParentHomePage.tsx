@@ -1,7 +1,9 @@
+import { Settings as SettingsIcon } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 
 import { Button } from '../../components/atoms/Button'
+import { Icon } from '../../components/atoms/Icon'
 import { Spinner } from '../../components/atoms/Spinner'
 import { ChildCard } from '../../components/molecules/ChildCard'
 import { useTodayAttendance } from '../../features/attendance/queries'
@@ -75,9 +77,19 @@ export function ParentHomePage() {
               {me.data ? t('parent.greeting', { name: me.data.user.fullName }) : ''}
             </p>
           </div>
-          <Button variant="ghost" size="sm" onClick={onSignOut}>
-            {t('common.signOut')}
-          </Button>
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => navigate('/parent/settings')}
+              aria-label={t('parent.openSettings')}
+              className="rounded-md p-2 text-slate-600 hover:bg-slate-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+            >
+              <Icon icon={SettingsIcon} size="md" />
+            </button>
+            <Button variant="ghost" size="sm" onClick={onSignOut}>
+              {t('common.signOut')}
+            </Button>
+          </div>
         </div>
       </header>
 

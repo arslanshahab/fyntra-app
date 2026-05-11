@@ -12,6 +12,7 @@ import { AdminStudentsPage } from '../pages/admin/AdminStudentsPage'
 import { LoginPage } from '../pages/auth/LoginPage'
 import { ChildTimelinePage } from '../pages/parent/ChildTimelinePage'
 import { ParentHomePage } from '../pages/parent/ParentHomePage'
+import { ParentSettingsPage } from '../pages/parent/ParentSettingsPage'
 import { TeacherHistoryPage } from '../pages/teacher/TeacherHistoryPage'
 import { TeacherTodayPage } from '../pages/teacher/TeacherTodayPage'
 import { RequireAuth } from './RequireAuth'
@@ -32,6 +33,7 @@ export function AppRoutes() {
         <Route path="/" element={<RoleRedirect />} />
         <Route path="/parent" element={<ParentHomePage />} />
         <Route path="/parent/child/:id/timeline" element={<ChildTimelinePage />} />
+        <Route path="/parent/settings" element={<ParentSettingsPage />} />
         <Route
           path="/admin"
           element={

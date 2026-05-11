@@ -298,6 +298,9 @@ POST   /notifications/:id/retry    -> NotificationLog
                                      # Admin / teacher only. Flips status to
                                      # 'sent' and refreshes sentAt — the
                                      # backend will actually retry in Phase 1.5.
+GET    /notifications/settings     -> NotificationSettings
+                                     # The caller's current preferences.
+                                     # 404 if no settings record exists yet.
 PATCH  /notifications/settings     { channels: { whatsapp, sms, in_app },
                                      events:   { tap_in, tap_out, late, absent,
                                                  manual_override, device_offline } }
