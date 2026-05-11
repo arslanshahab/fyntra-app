@@ -31,7 +31,10 @@ void i18n
     ns: ['common'],
     defaultNS: 'common',
     detection: {
-      order: ['localStorage', 'navigator'],
+      // English-default policy: only honour an explicit user toggle via
+      // localStorage. Browser-language detection is intentionally disabled
+      // so fresh sessions always land in English regardless of OS locale.
+      order: ['localStorage'],
       caches: ['localStorage'],
       lookupLocalStorage: 'fyntra:locale',
     },

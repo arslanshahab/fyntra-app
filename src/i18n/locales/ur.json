@@ -103,5 +103,32 @@
       "absent": "غیر حاضر",
       "left_early": "جلدی گئے"
     }
+  },
+  "admin": {
+    "dashboardTitle": "ڈیش بورڈ",
+    "today": "آج، {{date}}",
+    "stats": {
+      "present": "حاضر",
+      "late": "تاخیر",
+      "absent": "غیر حاضر",
+      "noTapYet": "ابھی تک ٹیپ نہیں",
+      "ofTotal": "{{total}} میں سے"
+    },
+    "liveFeed": {
+      "title": "لائیو ٹیپ فیڈ",
+      "empty": "آج ابھی تک کوئی ٹیپ ریکارڈ نہیں ہوا۔",
+      "loadError": "ٹیپ ایونٹس لوڈ نہیں ہو سکے۔",
+      "in": "اندر",
+      "out": "باہر"
+    },
+    "devices": {
+      "title": "گیٹ ڈیوائسز",
+      "online": "آن لائن",
+      "offline": "آف لائن",
+      "lastHeartbeat": "آخری بار {{time}}",
+      "empty": "کوئی ڈیوائس کنفگر نہیں ہے۔"
+    },
+    "loadError": "ہم سکول کے سرور تک نہیں پہنچ سکے۔",
+    "unknownStudent": "نامعلوم طالب علم"
   }
 }

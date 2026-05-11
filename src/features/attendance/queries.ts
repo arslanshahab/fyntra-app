@@ -11,8 +11,10 @@ const tapEventListSchema = z.array(tapEventSchema)
 
 export const attendanceKeys = {
   todayByStudent: (studentId: string) => ['attendance', 'today', studentId] as const,
+  todayAll: ['attendance', 'today', 'all'] as const,
   timelineByStudent: (studentId: string) => ['attendance', 'timeline', studentId] as const,
   tapsByStudentDay: (studentId: string, date: string) => ['tapEvents', studentId, date] as const,
+  liveFeed: ['tapEvents', 'live'] as const,
 }
 
 /** Today's attendance row for a student. Polls inside the school window. */
@@ -52,6 +54,34 @@ export function useStudentTimeline(studentId: string | undefined, days = 30) {
     },
     enabled: !!studentId,
     staleTime: 5 * 60_000,
+  })
+}
+
+/** All of today's attendance rows. Used by the admin dashboard stat row. */
+export function useTodayAttendanceAll(school: School | undefined) {
+  const { refetchInterval } = useRealtime(school)
+  return useQuery({
+    queryKey: attendanceKeys.todayAll,
+    queryFn: () => apiGet(`/attendance?date=${dateStrInKarachi()}`, attendanceListSchema),
+    refetchInterval,
+    refetchIntervalInBackground: false,
+  })
+}
+
+/** Today's tap events, newest first. Backing query for the admin live feed. */
+export function useLiveTapFeed(school: School | undefined) {
+  const { refetchInterval } = useRealtime(school)
+  return useQuery({
+    queryKey: attendanceKeys.liveFeed,
+    queryFn: () => {
+      const today = dateStrInKarachi()
+      return apiGet(
+        `/tap-events?from=${today}T00:00:00.000%2B05:00&to=${today}T23:59:59.999%2B05:00`,
+        tapEventListSchema,
+      )
+    },
+    refetchInterval,
+    refetchIntervalInBackground: false,
   })
 }
 

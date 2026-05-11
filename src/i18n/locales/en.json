@@ -103,5 +103,32 @@
       "absent": "Absent",
       "left_early": "Left early"
     }
+  },
+  "admin": {
+    "dashboardTitle": "Dashboard",
+    "today": "Today, {{date}}",
+    "stats": {
+      "present": "Present",
+      "late": "Late",
+      "absent": "Absent",
+      "noTapYet": "No tap yet",
+      "ofTotal": "of {{total}}"
+    },
+    "liveFeed": {
+      "title": "Live tap feed",
+      "empty": "No taps recorded yet today.",
+      "loadError": "Couldn't load tap events.",
+      "in": "In",
+      "out": "Out"
+    },
+    "devices": {
+      "title": "Gate devices",
+      "online": "Online",
+      "offline": "Offline",
+      "lastHeartbeat": "Last seen {{time}}",
+      "empty": "No devices configured."
+    },
+    "loadError": "Couldn't reach the school server.",
+    "unknownStudent": "Unknown student"
   }
 }

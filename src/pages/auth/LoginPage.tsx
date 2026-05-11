@@ -65,9 +65,9 @@ export function LoginPage() {
     try {
       const result = await verifyOtp.mutateAsync({ phone, otp: data.otp })
       setAuth({ token: result.token, user: result.user })
-      if (result.user.preferredLanguage !== i18n.language.split('-')[0]) {
-        void i18n.changeLanguage(result.user.preferredLanguage)
-      }
+      // Intentionally do NOT change i18n.language based on user.preferredLanguage —
+      // the active session locale is the user's choice via the toggle, not a
+      // server-driven override.
       navigate('/', { replace: true })
     } catch (err) {
       if (err instanceof ApiError && err.status === 401) {
