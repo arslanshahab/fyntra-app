@@ -9,7 +9,8 @@
     "retry": "Retry",
     "cancel": "Cancel",
     "save": "Save",
-    "signOut": "Sign out"
+    "signOut": "Sign out",
+    "back": "Back"
   },
   "language": {
     "current": "English",
@@ -42,5 +43,65 @@
     "admin": "Admin dashboard",
     "teacher": "Teacher view",
     "placeholder": "Real content lands here in upcoming steps."
+  },
+  "parent": {
+    "greeting": "Hello, {{name}}",
+    "noChildren": "No children linked to your account yet. Please contact your school.",
+    "loadError": "We couldn't reach the school server. Pull to try again.",
+    "viewTimeline": "View 30-day history",
+    "status": {
+      "atSchool": {
+        "title": "{{name}} is at school.",
+        "subtitle": "Arrived at {{time}}."
+      },
+      "atSchoolLate": {
+        "title": "{{name}} is at school.",
+        "subtitle": "Arrived late at {{time}}."
+      },
+      "left": {
+        "title": "{{name}} has left school.",
+        "subtitle": "Tapped out at {{time}}."
+      },
+      "leftEarly": {
+        "title": "{{name}} left early.",
+        "subtitle": "Tapped out at {{time}}."
+      },
+      "preSchool": {
+        "title": "School starts in {{minutes}} minutes.",
+        "subtitle": "We'll let you know the moment {{name}} arrives."
+      },
+      "notYet": {
+        "title": "{{name}} hasn't tapped in yet.",
+        "subtitle": "School started {{minutes}} minutes ago."
+      },
+      "absent": {
+        "title": "{{name}} has not arrived.",
+        "subtitle": "School started {{minutes}} minutes ago. Please reach out to your school."
+      },
+      "noCard": {
+        "title": "{{name}}'s card hasn't been issued yet.",
+        "subtitle": "Please contact the school office."
+      },
+      "unverified": {
+        "title": "We can't confirm {{name}}'s status right now.",
+        "subtitle": "The gate reader is offline. The school has been notified."
+      }
+    }
+  },
+  "timeline": {
+    "heading": "{{name}} — 30-day history",
+    "empty": "No records yet.",
+    "loadError": "We couldn't load the history.",
+    "dayDetail": "Events on {{date}}",
+    "noEventsForDay": "No taps recorded on this day.",
+    "in": "In",
+    "out": "Out",
+    "atDevice": "at {{device}}",
+    "statusLabel": {
+      "present": "Present",
+      "late": "Late",
+      "absent": "Absent",
+      "left_early": "Left early"
+    }
   }
 }

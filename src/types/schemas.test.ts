@@ -147,6 +147,17 @@ describe('verifyOtpRequestSchema', () => {
   })
 })
 
+const sampleSchool = {
+  id: 'sch_1',
+  name: 'Test School',
+  address: 'Lahore',
+  timezone: 'Asia/Karachi' as const,
+  startTime: '07:45',
+  endTime: '13:30',
+  lateThresholdMinutes: 15,
+  absentThresholdMinutes: 30,
+}
+
 describe('meResponseSchema', () => {
   it('accepts admin responses without children', () => {
     const parsed = meResponseSchema.parse({
@@ -158,8 +169,10 @@ describe('meResponseSchema', () => {
         preferredLanguage: 'en',
         schoolId: 'sch_1',
       },
+      school: sampleSchool,
     })
     expect(parsed.children).toBeUndefined()
+    expect(parsed.school.id).toBe('sch_1')
   })
 
   it('accepts parent responses with a children array', () => {
@@ -172,6 +185,7 @@ describe('meResponseSchema', () => {
         preferredLanguage: 'en',
         schoolId: 'sch_1',
       },
+      school: sampleSchool,
       children: [
         {
           id: 'std_1',
@@ -185,5 +199,20 @@ describe('meResponseSchema', () => {
       ],
     })
     expect(parsed.children).toHaveLength(1)
+  })
+
+  it('rejects responses missing the school', () => {
+    expect(() =>
+      meResponseSchema.parse({
+        user: {
+          id: 'u_a_1',
+          role: 'admin',
+          fullName: 'A',
+          phone: '+92300',
+          preferredLanguage: 'en',
+          schoolId: 'sch_1',
+        },
+      }),
+    ).toThrow()
   })
 })

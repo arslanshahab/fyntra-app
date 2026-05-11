@@ -73,11 +73,12 @@ export const handlers = [
     await latency()
     const user = currentUser(request)
     if (!user) return HttpResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const school = seedStore.school
     if (user.role === 'parent') {
       const children = seedStore.students.filter((s) => s.guardianIds.includes(user.id))
-      return HttpResponse.json({ user, children })
+      return HttpResponse.json({ user, school, children })
     }
-    return HttpResponse.json({ user })
+    return HttpResponse.json({ user, school })
   }),
 
   // --- Students -----------------------------------------------------------

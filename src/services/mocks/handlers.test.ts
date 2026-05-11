@@ -60,6 +60,7 @@ describe('GET /me', () => {
     expect(res.status).toBe(200)
     const parsed = meResponseSchema.parse(await res.json())
     expect(parsed.user.id).toBe(parent.id)
+    expect(parsed.school.id).toBe(seedStore.school.id)
     expect(parsed.children).toBeDefined()
     expect(parsed.children!.length).toBeGreaterThan(0)
     for (const child of parsed.children!) {

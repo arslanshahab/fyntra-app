@@ -238,8 +238,11 @@ The frontend is built against this contract. MSW serves these in dev. To swap to
 ```
 POST   /auth/request-otp           { phone } -> { ok: true }
 POST   /auth/verify-otp            { phone, otp } -> { token, user }
-GET    /me                         -> { user, children?: Student[] }
-                                     # children present iff user.role === "parent"
+GET    /me                         -> { user, school, children?: Student[] }
+                                     # school is always present — clients need
+                                     # start/end times and thresholds to render
+                                     # the parent hero status. children present
+                                     # iff user.role === "parent".
 
 GET    /students?classId=&search=&guardianId=
                                      # guardianId=me is a convenience filter for refetch flows;
