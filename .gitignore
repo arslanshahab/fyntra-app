@@ -23,8 +23,9 @@ dist-ssr
 *.sln
 *.sw?
 
-# Claude Code per-user settings
-.claude/settings.local.json
+# Claude Code per-user settings (match at any depth — bridge/, future
+# sibling projects in this repo, etc.)
+**/.claude/settings.local.json
 
 # Claude Code conversation exports (via /export)
 *-youre-going-to-help-me-*.txt
