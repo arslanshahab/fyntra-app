@@ -1,7 +1,9 @@
 import { afterEach, describe, expect, it } from 'vitest'
-import { type AuthUser, useAuthStore } from './auth'
 
-const sampleUser: AuthUser = {
+import type { User } from '../types/schemas'
+import { useAuthStore } from './auth'
+
+const sampleUser: User = {
   id: 'u_1',
   role: 'parent',
   fullName: 'Ayesha Khan',
@@ -43,7 +45,7 @@ describe('useAuthStore', () => {
     useAuthStore.getState().setAuth({ token: 'tok_abc', user: sampleUser })
     const raw = localStorage.getItem('fyntra:auth')
     expect(raw).not.toBeNull()
-    const parsed = JSON.parse(raw as string) as { state: { token: string; user: AuthUser } }
+    const parsed = JSON.parse(raw as string) as { state: { token: string; user: User } }
     expect(parsed.state.token).toBe('tok_abc')
     expect(parsed.state.user.id).toBe('u_1')
   })

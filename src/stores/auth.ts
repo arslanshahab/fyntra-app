@@ -1,24 +1,12 @@
 import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
 
-// Local mirror of the auth-relevant subset of User (README §5).
-// The full shared User type and Zod schema land in src/types/schemas.ts
-// during step 4 — this skeleton will swap to use that when it arrives.
-export type AuthRole = 'parent' | 'admin' | 'teacher'
-
-export interface AuthUser {
-  id: string
-  role: AuthRole
-  fullName: string
-  phone: string
-  preferredLanguage: 'en' | 'ur'
-  schoolId: string
-}
+import type { User } from '../types/schemas'
 
 interface AuthState {
   token: string | null
-  user: AuthUser | null
-  setAuth: (args: { token: string; user: AuthUser }) => void
+  user: User | null
+  setAuth: (args: { token: string; user: User }) => void
   clearAuth: () => void
 }
 
@@ -35,7 +23,7 @@ export const useAuthStore = create<AuthState>()(
     {
       name: STORAGE_KEY,
       storage: createJSONStorage(() => localStorage),
-      // Only persist the credentials, not the setters.
+      // Only persist credentials, not setters.
       partialize: (state) => ({ token: state.token, user: state.user }),
     },
   ),

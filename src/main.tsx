@@ -9,8 +9,20 @@ if (!rootEl) {
   throw new Error('Root element #root not found in index.html')
 }
 
-createRoot(rootEl).render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
-)
+async function startMocks(): Promise<void> {
+  if (!import.meta.env.DEV) return
+  if (import.meta.env.VITE_USE_MOCKS !== 'true') return
+  const { worker } = await import('./services/mocks/browser')
+  await worker.start({
+    onUnhandledRequest: 'bypass',
+    serviceWorker: { url: '/mockServiceWorker.js' },
+  })
+}
+
+void startMocks().then(() => {
+  createRoot(rootEl).render(
+    <StrictMode>
+      <App />
+    </StrictMode>,
+  )
+})
