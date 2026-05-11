@@ -4,6 +4,8 @@ import { AdminLayout } from '../components/templates/AdminLayout'
 import { AdminCardsPage } from '../pages/admin/AdminCardsPage'
 import { AdminDashboardPage } from '../pages/admin/AdminDashboardPage'
 import { AdminDevicesPage } from '../pages/admin/AdminDevicesPage'
+import { AdminNotificationsPage } from '../pages/admin/AdminNotificationsPage'
+import { AdminReportsPage } from '../pages/admin/AdminReportsPage'
 import { AdminStudentDetailPage } from '../pages/admin/AdminStudentDetailPage'
 import { AdminStudentsPage } from '../pages/admin/AdminStudentsPage'
 import { LoginPage } from '../pages/auth/LoginPage'
@@ -41,6 +43,8 @@ export function AppRoutes() {
           <Route path="students/:id" element={<AdminStudentDetailPage />} />
           <Route path="cards" element={<AdminCardsPage />} />
           <Route path="devices" element={<AdminDevicesPage />} />
+          <Route path="reports" element={<AdminReportsPage />} />
+          <Route path="notifications" element={<AdminNotificationsPage />} />
         </Route>
         <Route path="/teacher" element={<TeacherHomePage />} />
       </Route>

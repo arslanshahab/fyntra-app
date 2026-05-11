@@ -309,10 +309,14 @@ export const handlers = [
     await latency()
     const url = new URL(request.url)
     const date = url.searchParams.get('date')
+    const from = url.searchParams.get('from')
+    const to = url.searchParams.get('to')
     const classId = url.searchParams.get('classId')
 
     let result = seedStore.attendance
     if (date) result = result.filter((a) => a.date === date)
+    if (from) result = result.filter((a) => a.date >= from)
+    if (to) result = result.filter((a) => a.date <= to)
     if (classId) {
       const studentIds = new Set(
         seedStore.students.filter((s) => s.classId === classId).map((s) => s.id),
@@ -364,12 +368,39 @@ export const handlers = [
 
   http.get(`${API}/notifications`, async ({ request }) => {
     await latency()
-    const userId = new URL(request.url).searchParams.get('userId')
+    const url = new URL(request.url)
+    const userId = url.searchParams.get('userId')
+    const status = url.searchParams.get('status')
     const me = currentUser(request)
-    const target = userId === 'me' ? me?.id : userId
-    if (!target) return HttpResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    const result = seedStore.notifications.filter((n) => n.recipientUserId === target)
+    if (!me) return HttpResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+    let result: typeof seedStore.notifications = seedStore.notifications
+    // Admin / teacher can see all (no userId scoping); parents are scoped to
+    // themselves regardless of what they pass.
+    const target = userId === 'me' ? me.id : userId
+    if (me.role === 'parent') {
+      result = result.filter((n) => n.recipientUserId === me.id)
+    } else if (target) {
+      result = result.filter((n) => n.recipientUserId === target)
+    }
+    if (status) result = result.filter((n) => n.status === status)
+    // Newest first.
+    result = [...result].sort((a, b) => ((a.sentAt ?? '') < (b.sentAt ?? '') ? 1 : -1))
     return HttpResponse.json(result)
+  }),
+
+  http.post(`${API}/notifications/:id/retry`, async ({ params, request }) => {
+    await latency()
+    const me = currentUser(request)
+    if (!me) return HttpResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    if (me.role === 'parent') {
+      return HttpResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+    const notif = seedStore.notifications.find((n) => n.id === params.id)
+    if (!notif) return HttpResponse.json({ error: 'Not found' }, { status: 404 })
+    notif.status = 'sent'
+    notif.sentAt = new Date().toISOString()
+    return HttpResponse.json(notif)
   }),
 
   http.patch(`${API}/notifications/settings`, async ({ request }) => {

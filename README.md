@@ -271,10 +271,20 @@ GET    /tap-events?from=&to=&studentId=
                                      # we call this scoped to that single day.
 POST   /tap-events/manual          { studentId, direction, occurredAt, reason }
 
-GET    /attendance?date=&classId=
+GET    /attendance?date=&from=&to=&classId=
+                                     # date filters to a single day; from/to
+                                     # filter to an inclusive range. Used by
+                                     # the admin reports preview.
 GET    /reports/attendance.csv?from=&to=&classId=
 
-GET    /notifications?userId=
+GET    /notifications?userId=&status=
+                                     # Admin / teacher: omit userId to see all
+                                     # notifications across the school. Parents
+                                     # are always scoped to their own logs.
+POST   /notifications/:id/retry    -> NotificationLog
+                                     # Admin / teacher only. Flips status to
+                                     # 'sent' and refreshes sentAt — the
+                                     # backend will actually retry in Phase 1.5.
 PATCH  /notifications/settings     { channels: { whatsapp, sms, in_app },
                                      events:   { tap_in, tap_out, late, absent,
                                                  manual_override, device_offline } }

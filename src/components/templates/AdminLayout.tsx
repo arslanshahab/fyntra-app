@@ -1,4 +1,12 @@
-import { CreditCard, Home, type LucideIcon, Radio, Users } from 'lucide-react'
+import {
+  Bell,
+  CreditCard,
+  FileSpreadsheet,
+  Home,
+  type LucideIcon,
+  Radio,
+  Users,
+} from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 
@@ -19,6 +27,8 @@ const NAV: NavItem[] = [
   { to: '/admin/students', labelKey: 'admin.nav.students', icon: Users },
   { to: '/admin/cards', labelKey: 'admin.nav.cards', icon: CreditCard },
   { to: '/admin/devices', labelKey: 'admin.nav.devices', icon: Radio },
+  { to: '/admin/reports', labelKey: 'admin.nav.reports', icon: FileSpreadsheet },
+  { to: '/admin/notifications', labelKey: 'admin.nav.notifications', icon: Bell },
 ]
 
 export function AdminLayout() {

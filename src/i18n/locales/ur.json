@@ -111,7 +111,9 @@
       "dashboard": "ڈیش بورڈ",
       "students": "طلباء",
       "cards": "کارڈز",
-      "devices": "ڈیوائسز"
+      "devices": "ڈیوائسز",
+      "reports": "رپورٹس",
+      "notifications": "نوٹیفیکیشنز"
     },
     "stats": {
       "present": "حاضر",
@@ -231,6 +233,50 @@
       "replaceBody": "{{uid}} کے حامل طالب علم کو نیا کارڈ جاری کریں۔ پرانا کارڈ تبدیل شدہ کے طور پر مارک ہو جائے گا۔",
       "newUidLabel": "نیا آر ایف آئی ڈی",
       "confirmReplace": "نیا کارڈ جاری کریں"
+    },
+    "reports": {
+      "title": "رپورٹس",
+      "from": "از",
+      "to": "تا",
+      "classFilter": "کلاس",
+      "allClasses": "تمام کلاسز",
+      "download": "CSV ڈاؤن لوڈ",
+      "downloadError": "رپورٹ ڈاؤن لوڈ نہیں ہو سکی۔",
+      "preview": "پری ویو",
+      "previewLimit": "{{total}} میں سے پہلی {{shown}} رو دکھائی گئی ہیں۔",
+      "totalRows": "{{count}} رو",
+      "totalRows_one": "{{count}} رو",
+      "empty": "اس رینج میں کوئی حاضری نہیں۔",
+      "table": {
+        "date": "تاریخ",
+        "student": "طالب علم",
+        "status": "اسٹیٹس",
+        "firstIn": "پہلی بار اندر",
+        "lastOut": "آخری بار باہر"
+      }
+    },
+    "notificationsLog": {
+      "title": "نوٹیفیکیشن لاگ",
+      "count": "{{count}} نوٹیفیکیشنز",
+      "count_one": "{{count}} نوٹیفیکیشن",
+      "empty": "اس ویو میں کوئی نوٹیفیکیشن نہیں۔",
+      "retry": "دوبارہ کوشش",
+      "retrySuccess": "نوٹیفیکیشن دوبارہ قطار میں۔",
+      "retryError": "دوبارہ کوشش ناکام۔ دوبارہ کریں۔",
+      "filter": {
+        "all": "تمام"
+      },
+      "status": {
+        "queued": "قطار میں",
+        "sent": "بھیجا گیا",
+        "delivered": "موصول",
+        "failed": "ناکام"
+      },
+      "channel": {
+        "whatsapp": "واٹس ایپ",
+        "sms": "SMS",
+        "in_app": "ان ایپ"
+      }
     },
     "loadError": "ہم سکول کے سرور تک نہیں پہنچ سکے۔",
     "unknownStudent": "نامعلوم طالب علم"

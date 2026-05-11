@@ -111,7 +111,9 @@
       "dashboard": "Dashboard",
       "students": "Students",
       "cards": "Cards",
-      "devices": "Devices"
+      "devices": "Devices",
+      "reports": "Reports",
+      "notifications": "Notifications"
     },
     "stats": {
       "present": "Present",
@@ -231,6 +233,50 @@
       "replaceBody": "Issue a new card to the student currently holding {{uid}}. The old card will be marked replaced.",
       "newUidLabel": "New RFID UID",
       "confirmReplace": "Issue new card"
+    },
+    "reports": {
+      "title": "Reports",
+      "from": "From",
+      "to": "To",
+      "classFilter": "Class",
+      "allClasses": "All classes",
+      "download": "Download CSV",
+      "downloadError": "Couldn't download the report. Please try again.",
+      "preview": "Preview",
+      "previewLimit": "Showing first {{shown}} of {{total}} rows.",
+      "totalRows": "{{count}} rows",
+      "totalRows_one": "{{count}} row",
+      "empty": "No attendance in this range.",
+      "table": {
+        "date": "Date",
+        "student": "Student",
+        "status": "Status",
+        "firstIn": "First in",
+        "lastOut": "Last out"
+      }
+    },
+    "notificationsLog": {
+      "title": "Notifications log",
+      "count": "{{count}} notifications",
+      "count_one": "{{count}} notification",
+      "empty": "No notifications in this view.",
+      "retry": "Retry",
+      "retrySuccess": "Notification re-queued.",
+      "retryError": "Couldn't retry. Please try again.",
+      "filter": {
+        "all": "All"
+      },
+      "status": {
+        "queued": "Queued",
+        "sent": "Sent",
+        "delivered": "Delivered",
+        "failed": "Failed"
+      },
+      "channel": {
+        "whatsapp": "WhatsApp",
+        "sms": "SMS",
+        "in_app": "In-app"
+      }
     },
     "loadError": "Couldn't reach the school server.",
     "unknownStudent": "Unknown student"
