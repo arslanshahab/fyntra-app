@@ -106,6 +106,7 @@ export const deviceSchema = z.object({
 export type Device = z.infer<typeof deviceSchema>
 
 export const tapDirectionSchema = z.enum(['in', 'out'])
+export type TapDirection = z.infer<typeof tapDirectionSchema>
 export const tapSourceSchema = z.enum(['device', 'manual'])
 export const tapEventSchema = z.object({
   id: idSchema,

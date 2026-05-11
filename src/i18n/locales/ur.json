@@ -110,7 +110,8 @@
     "nav": {
       "dashboard": "ڈیش بورڈ",
       "students": "طلباء",
-      "cards": "کارڈز"
+      "cards": "کارڈز",
+      "devices": "ڈیوائسز"
     },
     "stats": {
       "present": "حاضر",
@@ -128,10 +129,37 @@
     },
     "devices": {
       "title": "گیٹ ڈیوائسز",
+      "pageTitle": "ڈیوائسز",
       "online": "آن لائن",
       "offline": "آف لائن",
       "lastHeartbeat": "آخری بار {{time}}",
-      "empty": "کوئی ڈیوائس کنفگر نہیں ہے۔"
+      "lastSeenLabel": "آخری دل کی دھڑکن",
+      "idLabel": "ڈیوائس آئی ڈی",
+      "empty": "کوئی ڈیوائس کنفگر نہیں ہے۔",
+      "direction": {
+        "in": "صرف داخلہ",
+        "out": "صرف اخراج",
+        "both": "داخلہ / اخراج"
+      }
+    },
+    "simulate": {
+      "title": "ٹیپ کی سمولیشن",
+      "help": "ACR122U بریج سے {{url}} پر منسلک ہوتا ہے۔ بریج چلنے اور کارڈ ٹیپ ہونے پر UID نیچے خود بھر جائے گا۔ آپ ہاتھ سے بھی UID ٹائپ کر سکتے ہیں۔",
+      "uidLabel": "آر ایف آئی ڈی UID",
+      "directionLabel": "سمت",
+      "deviceLabel": "ڈیوائس",
+      "submit": "ٹیپ جمع کریں",
+      "success": "ٹیپ جمع ہو گیا۔",
+      "error": "ٹیپ جمع نہیں ہو سکا۔ کیا UID درست ہے؟",
+      "direction": {
+        "in": "اندر",
+        "out": "باہر"
+      },
+      "bridge": {
+        "connected": "بریج منسلک",
+        "connecting": "منسلک ہو رہا ہے…",
+        "disconnected": "بریج منقطع"
+      }
     },
     "students": {
       "title": "طلباء",

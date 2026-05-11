@@ -110,7 +110,8 @@
     "nav": {
       "dashboard": "Dashboard",
       "students": "Students",
-      "cards": "Cards"
+      "cards": "Cards",
+      "devices": "Devices"
     },
     "stats": {
       "present": "Present",
@@ -128,10 +129,37 @@
     },
     "devices": {
       "title": "Gate devices",
+      "pageTitle": "Devices",
       "online": "Online",
       "offline": "Offline",
       "lastHeartbeat": "Last seen {{time}}",
-      "empty": "No devices configured."
+      "lastSeenLabel": "Last heartbeat",
+      "idLabel": "Device ID",
+      "empty": "No devices configured.",
+      "direction": {
+        "in": "Entry only",
+        "out": "Exit only",
+        "both": "Entry / Exit"
+      }
+    },
+    "simulate": {
+      "title": "Simulate tap",
+      "help": "Connects to the ACR122U bridge at {{url}}. With the bridge running and a card tapped, the UID auto-fills below. You can also type a UID by hand.",
+      "uidLabel": "RFID UID",
+      "directionLabel": "Direction",
+      "deviceLabel": "Device",
+      "submit": "Submit tap",
+      "success": "Tap submitted.",
+      "error": "Couldn't submit the tap. Is the UID known?",
+      "direction": {
+        "in": "In",
+        "out": "Out"
+      },
+      "bridge": {
+        "connected": "Bridge connected",
+        "connecting": "Connecting…",
+        "disconnected": "Bridge disconnected"
+      }
     },
     "students": {
       "title": "Students",

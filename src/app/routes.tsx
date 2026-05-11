@@ -3,6 +3,7 @@ import { Outlet, Route, Routes } from 'react-router-dom'
 import { AdminLayout } from '../components/templates/AdminLayout'
 import { AdminCardsPage } from '../pages/admin/AdminCardsPage'
 import { AdminDashboardPage } from '../pages/admin/AdminDashboardPage'
+import { AdminDevicesPage } from '../pages/admin/AdminDevicesPage'
 import { AdminStudentDetailPage } from '../pages/admin/AdminStudentDetailPage'
 import { AdminStudentsPage } from '../pages/admin/AdminStudentsPage'
 import { LoginPage } from '../pages/auth/LoginPage'
@@ -39,6 +40,7 @@ export function AppRoutes() {
           <Route path="students" element={<AdminStudentsPage />} />
           <Route path="students/:id" element={<AdminStudentDetailPage />} />
           <Route path="cards" element={<AdminCardsPage />} />
+          <Route path="devices" element={<AdminDevicesPage />} />
         </Route>
         <Route path="/teacher" element={<TeacherHomePage />} />
       </Route>
