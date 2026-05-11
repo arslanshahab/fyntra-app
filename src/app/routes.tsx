@@ -1,6 +1,7 @@
 import { Outlet, Route, Routes } from 'react-router-dom'
 
 import { AdminLayout } from '../components/templates/AdminLayout'
+import { TeacherLayout } from '../components/templates/TeacherLayout'
 import { AdminCardsPage } from '../pages/admin/AdminCardsPage'
 import { AdminDashboardPage } from '../pages/admin/AdminDashboardPage'
 import { AdminDevicesPage } from '../pages/admin/AdminDevicesPage'
@@ -11,7 +12,8 @@ import { AdminStudentsPage } from '../pages/admin/AdminStudentsPage'
 import { LoginPage } from '../pages/auth/LoginPage'
 import { ChildTimelinePage } from '../pages/parent/ChildTimelinePage'
 import { ParentHomePage } from '../pages/parent/ParentHomePage'
-import { TeacherHomePage } from '../pages/teacher/TeacherHomePage'
+import { TeacherHistoryPage } from '../pages/teacher/TeacherHistoryPage'
+import { TeacherTodayPage } from '../pages/teacher/TeacherTodayPage'
 import { RequireAuth } from './RequireAuth'
 import { RequireRole } from './RequireRole'
 import { RoleRedirect } from './RoleRedirect'
@@ -46,7 +48,17 @@ export function AppRoutes() {
           <Route path="reports" element={<AdminReportsPage />} />
           <Route path="notifications" element={<AdminNotificationsPage />} />
         </Route>
-        <Route path="/teacher" element={<TeacherHomePage />} />
+        <Route
+          path="/teacher"
+          element={
+            <RequireRole role="teacher">
+              <TeacherLayout />
+            </RequireRole>
+          }
+        >
+          <Route index element={<TeacherTodayPage />} />
+          <Route path="history" element={<TeacherHistoryPage />} />
+        </Route>
       </Route>
     </Routes>
   )

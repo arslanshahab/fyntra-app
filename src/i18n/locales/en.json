@@ -44,6 +44,62 @@
     "teacher": "Teacher view",
     "placeholder": "Real content lands here in upcoming steps."
   },
+  "teacher": {
+    "role": "Teacher",
+    "noClass": "You're not currently assigned to a class. Please contact your school.",
+    "nav": {
+      "today": "Today",
+      "history": "History"
+    },
+    "today": {
+      "subtitle": "Today's class roster",
+      "studentCount": "{{count}} students",
+      "studentCount_one": "{{count}} student",
+      "empty": "No students in this class.",
+      "override": "Override",
+      "overrideSuccess": "Manual tap recorded for {{name}}.",
+      "overrideError": "Couldn't record the override. Please try again.",
+      "overrideDialogTitle": "Manual override — {{name}}",
+      "overrideDialogBody": "This creates a manual tap event attributed to you. The student's status updates immediately.",
+      "directionLabel": "Direction",
+      "reasonLabel": "Reason",
+      "reasonPlaceholder": "e.g. Card forgotten at home",
+      "reasonHelp": "Required. Recorded against this tap for audit.",
+      "submitOverride": "Record tap",
+      "manualBadge": "Manual",
+      "table": {
+        "name": "Student",
+        "status": "Status",
+        "firstIn": "First in",
+        "lastOut": "Last out",
+        "actions": "Actions"
+      },
+      "status": {
+        "present": "Present",
+        "late": "Late",
+        "absent": "Absent",
+        "left_early": "Left early",
+        "not_yet": "Not yet"
+      },
+      "direction": {
+        "in": "In",
+        "out": "Out"
+      }
+    },
+    "history": {
+      "title": "{{name}} — 30-day history",
+      "subtitle": "Daily attendance summary for your class.",
+      "empty": "No records in this range.",
+      "table": {
+        "date": "Date",
+        "present": "Present",
+        "late": "Late",
+        "absent": "Absent",
+        "leftEarly": "Left early",
+        "total": "Total"
+      }
+    }
+  },
   "parent": {
     "greeting": "Hello, {{name}}",
     "noChildren": "No children linked to your account yet. Please contact your school.",

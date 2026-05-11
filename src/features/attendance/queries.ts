@@ -1,9 +1,15 @@
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { z } from 'zod'
 
-import { apiGet } from '../../services/api/client'
+import { apiGet, apiPost } from '../../services/api/client'
 import { useRealtime } from '../../hooks/useRealtime'
-import { attendanceRecordSchema, tapEventSchema, type School } from '../../types/schemas'
+import {
+  attendanceRecordSchema,
+  tapEventSchema,
+  type School,
+  type TapDirection,
+  type TapEvent,
+} from '../../types/schemas'
 import { dateStrInKarachi } from '../../utils/datetime'
 
 const attendanceListSchema = z.array(attendanceRecordSchema)
@@ -15,6 +21,9 @@ export const attendanceKeys = {
   timelineByStudent: (studentId: string) => ['attendance', 'timeline', studentId] as const,
   tapsByStudentDay: (studentId: string, date: string) => ['tapEvents', studentId, date] as const,
   liveFeed: ['tapEvents', 'live'] as const,
+  classOnDate: (classId: string, date: string) => ['attendance', 'class', classId, date] as const,
+  classRange: (classId: string, from: string, to: string) =>
+    ['attendance', 'class', classId, 'range', from, to] as const,
 }
 
 /** Today's attendance row for a student. Polls inside the school window. */
@@ -82,6 +91,61 @@ export function useLiveTapFeed(school: School | undefined) {
     },
     refetchInterval,
     refetchIntervalInBackground: false,
+  })
+}
+
+/** Today's attendance rows for a single class. Polls inside the school window. */
+export function useClassAttendanceToday(classId: string | undefined, school: School | undefined) {
+  const { refetchInterval } = useRealtime(school)
+  return useQuery({
+    queryKey: classId
+      ? attendanceKeys.classOnDate(classId, dateStrInKarachi())
+      : ['attendance', 'class', 'none'],
+    queryFn: () => {
+      const today = dateStrInKarachi()
+      return apiGet(`/classes/${classId}/attendance?date=${today}`, attendanceListSchema)
+    },
+    enabled: !!classId,
+    refetchInterval,
+    refetchIntervalInBackground: false,
+  })
+}
+
+/** N most recent days of class attendance for the history page. */
+export function useClassAttendanceRange(classId: string | undefined, days = 30) {
+  return useQuery({
+    queryKey: classId
+      ? ['attendance', 'class', classId, 'range', days]
+      : ['attendance', 'class', 'range', 'none'],
+    queryFn: () => {
+      // Date math lives inside queryFn (effect-time) — calling Date.now()
+      // in the render body trips react-hooks/purity.
+      const today = dateStrInKarachi()
+      const from = dateStrInKarachi(new Date(Date.now() - (days - 1) * 86400000))
+      return apiGet(`/attendance?classId=${classId}&from=${from}&to=${today}`, attendanceListSchema)
+    },
+    enabled: !!classId,
+    staleTime: 60_000,
+  })
+}
+
+interface ManualTapInput {
+  studentId: string
+  direction: TapDirection
+  occurredAt: string
+  reason: string
+}
+
+export function useManualTapMutation() {
+  const client = useQueryClient()
+  return useMutation<TapEvent, Error, ManualTapInput>({
+    mutationFn: (input) => apiPost('/tap-events/manual', input, tapEventSchema),
+    onSuccess: () => {
+      // The override updates today's AttendanceRecord and tap-events stream;
+      // invalidate broadly so every consuming view refreshes.
+      void client.invalidateQueries({ queryKey: ['attendance'] })
+      void client.invalidateQueries({ queryKey: ['tapEvents'] })
+    },
   })
 }
 

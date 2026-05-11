@@ -2,6 +2,7 @@
 // changes VITE_API_BASE_URL + disabling the worker; URL shapes stay identical.
 
 import { delay, http, HttpResponse } from 'msw'
+import { formatInTimeZone } from 'date-fns-tz'
 
 import type { AttendanceRecord, Card, CardAuditEntry, TapEvent, User } from '../../types/schemas'
 import {
@@ -95,6 +96,14 @@ export const handlers = [
     if (user.role === 'parent') {
       const children = seedStore.students.filter((s) => s.guardianIds.includes(user.id))
       return HttpResponse.json({ user, school, children })
+    }
+    if (user.role === 'teacher') {
+      const assignedClass = seedStore.classes.find((c) => c.teacherId === user.id)
+      return HttpResponse.json({
+        user,
+        school,
+        ...(assignedClass ? { assignedClass } : {}),
+      })
     }
     return HttpResponse.json({ user, school })
   }),
@@ -300,6 +309,36 @@ export const handlers = [
       manualReason: body.data.reason,
     }
     seedStore.tapEvents.push(event)
+
+    // Reflect the override into the AttendanceRecord for that Karachi-local
+    // day so the teacher roster updates immediately. In production, the
+    // backend would re-derive — we shortcut here.
+    const recordDate = formatInTimeZone(
+      new Date(body.data.occurredAt),
+      'Asia/Karachi',
+      'yyyy-MM-dd',
+    )
+    let record = seedStore.attendance.find(
+      (a) => a.studentId === student.id && a.date === recordDate,
+    )
+    if (!record) {
+      record = {
+        id: `att_${student.id}_${recordDate}`,
+        studentId: student.id,
+        date: recordDate,
+        status: 'present',
+        isManual: true,
+      }
+      seedStore.attendance.push(record)
+    }
+    if (body.data.direction === 'in') {
+      record.firstInAt = body.data.occurredAt
+      if (record.status === 'absent') record.status = 'present'
+    } else {
+      record.lastOutAt = body.data.occurredAt
+    }
+    record.isManual = true
+
     return HttpResponse.json(event)
   }),
 

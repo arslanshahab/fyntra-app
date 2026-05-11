@@ -204,11 +204,13 @@ export type VerifyOtpResponse = z.infer<typeof verifyOtpResponseSchema>
 
 // /me — README §6: school is always present (parents need start/end times
 // and thresholds to render the hero status). `children` is present iff
-// user.role === "parent".
+// user.role === "parent". `assignedClass` is present iff user.role ===
+// "teacher" — the class they're responsible for in the today roster.
 export const meResponseSchema = z.object({
   user: userSchema,
   school: schoolSchema,
   children: z.array(studentSchema).optional(),
+  assignedClass: classSchema.optional(),
 })
 export type MeResponse = z.infer<typeof meResponseSchema>
 
