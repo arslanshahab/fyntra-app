@@ -49,8 +49,9 @@ This README is the canonical context for building Fyntra's Phase 1 web applicati
 
 ## 3. Tech stack
 
-- **React 18** + **TypeScript** (strict mode, no implicit `any`)
+- **React 19** + **TypeScript** (strict mode, no implicit `any`)
 - **Vite** as the build tool
+- **vite-plugin-pwa** for an installable PWA shell — manifest, theme color, icons, minimal offline cache. **No push notifications in Phase 1** (push stays stubbed).
 - **Tailwind CSS** v3+ with the official RTL plugin
 - **React Router** v6
 - **TanStack Query (React Query)** for all server state
@@ -133,9 +134,10 @@ interface School {
   name: string;
   address: string;
   timezone: "Asia/Karachi";
-  startTime: string;      // "07:45"
-  endTime: string;        // "13:30"
-  lateThresholdMinutes: number;
+  startTime: string;            // "07:45"
+  endTime: string;              // "13:30"
+  lateThresholdMinutes: number; // grace window after startTime before status flips to "late"
+  absentThresholdMinutes: number; // after startTime + this, status flips to "absent" and a high-priority parent alert fires (default 30)
 }
 
 interface Student {
@@ -215,14 +217,21 @@ All types should also have **Zod schemas** in `types/schemas.ts`. Validate every
 
 The frontend is built against this contract. MSW serves these in dev. To swap to a real backend later, change only the base URL and disable the worker.
 
-```
-POST   /auth/request-otp           { phone }
-POST   /auth/verify-otp            { phone, otp } -> { token, user }
-GET    /me
+**Authentication is OTP-only for all three roles in Phase 1.** No password flow. This matches local user expectations (Careem, JazzCash, banks all use OTP) and keeps one auth surface to build and test. After `verify-otp` succeeds, the client redirects by `user.role`.
 
-GET    /students?classId=&search=
+```
+POST   /auth/request-otp           { phone } -> { ok: true }
+POST   /auth/verify-otp            { phone, otp } -> { token, user }
+GET    /me                         -> { user, children?: Student[] }
+                                     # children present iff user.role === "parent"
+
+GET    /students?classId=&search=&guardianId=
+                                     # guardianId=me is a convenience filter for refetch flows;
+                                     # parent home uses /me.children as the primary path
 GET    /students/:id
 GET    /students/:id/timeline?from=&to=
+                                     # returns AttendanceRecord[] — day summaries
+                                     # for the parent calendar / list view.
 
 GET    /classes
 GET    /classes/:id/attendance?date=
@@ -236,19 +245,34 @@ GET    /devices
 GET    /devices/:id
 
 GET    /tap-events?from=&to=&studentId=
+                                     # day-drill: parent taps a day in the timeline,
+                                     # we call this scoped to that single day.
 POST   /tap-events/manual          { studentId, direction, occurredAt, reason }
 
 GET    /attendance?date=&classId=
 GET    /reports/attendance.csv?from=&to=&classId=
 
 GET    /notifications?userId=
-PATCH  /notifications/settings     { channels: {...}, events: {...} }
+PATCH  /notifications/settings     { channels: { whatsapp, sms, in_app },
+                                     events:   { tap_in, tap_out, late, absent,
+                                                 manual_override, device_offline } }
+                                     # All values are booleans.
+                                     # `device_offline` is admin/teacher only —
+                                     # do not expose it in the parent settings UI.
+                                     # UI language is User.preferredLanguage, NOT a
+                                     # notification setting.
 
 # Dev-only
 POST   /dev/simulate-tap           { rfidUid, deviceId, direction }
 ```
 
 **Real-time strategy for Phase 1.** Poll the relevant endpoints every 15 seconds on the parent home and admin live-attendance views. Stub a `useRealtime(channel)` hook so we can swap to WebSockets later without touching consumers.
+
+**Polling lifecycle.** `useRealtime` is the *only* place this logic lives — consumers pass a channel and forget about it.
+- Active window: `[school.startTime − 30min, school.endTime + 30min]` in `Asia/Karachi`. Outside the window, polling pauses entirely.
+- Tab visibility: when `document.visibilityState !== "visible"` (Page Visibility API), polling pauses. Resumes on visibility change.
+- Window focus: React Query's `refetchOnWindowFocus: true` handles the "user came back to the tab" refresh — we don't need to duplicate that.
+- This avoids draining batteries on phones left open after pickup and silences pointless background traffic.
 
 ---
 
@@ -262,7 +286,7 @@ POST   /dev/simulate-tap           { rfidUid, deviceId, direction }
 5. **Pre-school empty state** — *"School starts in 32 minutes. We'll let you know the moment Ahmad arrives."*
 
 ### Admin (desktop)
-1. Email/phone + password login.
+1. Phone + OTP login (same flow as parent — OTP is canonical for all roles in Phase 1).
 2. **Dashboard** — today's headline numbers (present, absent, late, no-tap-yet) as four stat cards, plus a live tap feed and device status row.
 3. **Students** — searchable list, filter by class, bulk import (CSV).
 4. **Student detail** — profile, guardian list, card history, attendance history.
@@ -272,7 +296,7 @@ POST   /dev/simulate-tap           { rfidUid, deviceId, direction }
 8. **Notifications log** — filter by status, retry failed.
 
 ### Teacher (desktop / tablet)
-1. Login.
+1. Phone + OTP login.
 2. **My class today** — roster with arrival times and statuses. Quick manual-override action per row (must capture reason).
 3. **Class history** — last 30 days.
 
@@ -292,8 +316,9 @@ POST   /dev/simulate-tap           { rfidUid, deviceId, direction }
 ## 9. Edge cases the UI must handle
 
 - **No card assigned yet.** Show "card not assigned" — don't render this as "absent".
+- **No tap by `startTime + absentThresholdMinutes`.** Status flips from "not yet arrived" to `absent` and a **high-priority parent alert** fires (the `absent` notification event). The `late` status uses `lateThresholdMinutes`; `absent` uses `absentThresholdMinutes` — they are two distinct thresholds and must not be reused for each other. If the relevant gate device is offline at that moment, see "Device offline" below — show `unverified` and do not fire the absent alert.
 - **Card swapped between students mid-day.** Admin view shows a warning indicator on affected attendance records.
-- **Device offline.** Admin dashboard shows the affected gate as degraded. Don't infer absence from no-tap if the relevant device is down — show "unverified" instead.
+- **Device offline.** Admin dashboard shows the affected gate as degraded. Don't infer absence from no-tap if the relevant device is down — show "unverified" instead, and suppress the absent-parent-alert for affected students.
 - **Tap-in without a tap-out by EOD.** Mark as "left without scan" and surface to admin for review.
 - **Two consecutive same-direction taps within 30s.** Treat the second as a duplicate; show in event log as deduped.
 - **Tap-in then tap-out within 60s.** Flag for admin review (likely a card test or a kid that turned around at the gate).
