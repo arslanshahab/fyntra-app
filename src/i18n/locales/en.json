@@ -1,0 +1,21 @@
+{
+  "app": {
+    "name": "Fyntra",
+    "tagline": "Parent peace of mind. School operational ease."
+  },
+  "common": {
+    "loading": "Loading…",
+    "error": "Something went wrong",
+    "retry": "Retry",
+    "cancel": "Cancel",
+    "save": "Save"
+  },
+  "language": {
+    "current": "English",
+    "switchTo": "اردو"
+  },
+  "welcome": {
+    "heading": "Welcome to Fyntra",
+    "body": "Phase 1 app shell is wired. Providers, router, and i18n are live."
+  }
+}
