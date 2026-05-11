@@ -247,7 +247,10 @@ GET    /me                         -> { user, school, children?: Student[] }
 GET    /students?classId=&search=&guardianId=
                                      # guardianId=me is a convenience filter for refetch flows;
                                      # parent home uses /me.children as the primary path
-GET    /students/:id
+GET    /students/:id               -> Student & { guardians: User[] }
+                                     # guardians are inlined so the admin
+                                     # detail page doesn't fan out to a
+                                     # per-guardian users lookup.
 GET    /students/:id/timeline?from=&to=
                                      # returns AttendanceRecord[] — day summaries
                                      # for the parent calendar / list view.

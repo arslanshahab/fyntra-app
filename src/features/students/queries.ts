@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { z } from 'zod'
 
 import { apiGet } from '../../services/api/client'
-import { studentSchema } from '../../types/schemas'
+import { studentDetailSchema, studentSchema } from '../../types/schemas'
 
 const studentListSchema = z.array(studentSchema)
 
@@ -25,6 +25,15 @@ export function useStudentsQuery(filters: StudentFilters = {}) {
   return useQuery({
     queryKey: studentKeys.list(filters),
     queryFn: () => apiGet(`/students${qs ? `?${qs}` : ''}`, studentListSchema),
+    staleTime: 60_000,
+  })
+}
+
+export function useStudentDetailQuery(id: string | undefined) {
+  return useQuery({
+    queryKey: id ? studentKeys.detail(id) : ['students', 'detail', 'none'],
+    queryFn: () => apiGet(`/students/${id}`, studentDetailSchema),
+    enabled: !!id,
     staleTime: 60_000,
   })
 }

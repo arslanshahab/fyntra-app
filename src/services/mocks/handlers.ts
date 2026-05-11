@@ -111,7 +111,8 @@ export const handlers = [
     await latency()
     const student = seedStore.students.find((s) => s.id === params.id)
     if (!student) return HttpResponse.json({ error: 'Not found' }, { status: 404 })
-    return HttpResponse.json(student)
+    const guardians = seedStore.users.filter((u) => student.guardianIds.includes(u.id))
+    return HttpResponse.json({ ...student, guardians })
   }),
 
   http.get(`${API}/students/:id/timeline`, async ({ request, params }) => {

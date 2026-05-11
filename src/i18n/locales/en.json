@@ -107,6 +107,10 @@
   "admin": {
     "dashboardTitle": "Dashboard",
     "today": "Today, {{date}}",
+    "nav": {
+      "dashboard": "Dashboard",
+      "students": "Students"
+    },
     "stats": {
       "present": "Present",
       "late": "Late",
@@ -127,6 +131,38 @@
       "offline": "Offline",
       "lastHeartbeat": "Last seen {{time}}",
       "empty": "No devices configured."
+    },
+    "students": {
+      "title": "Students",
+      "count": "{{count}} students",
+      "count_one": "{{count}} student",
+      "searchPlaceholder": "Search by name or roll number",
+      "filterByClass": "Filter by class",
+      "allClasses": "All classes",
+      "empty": "No students match your search.",
+      "loadError": "Couldn't load students.",
+      "table": {
+        "name": "Name",
+        "class": "Class",
+        "card": "Card",
+        "noCard": "No card"
+      }
+    },
+    "studentDetail": {
+      "back": "Back to students",
+      "guardians": "Guardians",
+      "noGuardians": "No guardians on file.",
+      "recentAttendance": "Recent attendance (last 14 days)",
+      "noCard": "No card assigned",
+      "loadError": "Couldn't load this student."
+    },
+    "cards": {
+      "status": {
+        "active": "Active",
+        "lost": "Lost",
+        "replaced": "Replaced",
+        "deactivated": "Deactivated"
+      }
     },
     "loadError": "Couldn't reach the school server.",
     "unknownStudent": "Unknown student"

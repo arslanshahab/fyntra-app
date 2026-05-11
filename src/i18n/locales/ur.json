@@ -107,6 +107,10 @@
   "admin": {
     "dashboardTitle": "ڈیش بورڈ",
     "today": "آج، {{date}}",
+    "nav": {
+      "dashboard": "ڈیش بورڈ",
+      "students": "طلباء"
+    },
     "stats": {
       "present": "حاضر",
       "late": "تاخیر",
@@ -127,6 +131,38 @@
       "offline": "آف لائن",
       "lastHeartbeat": "آخری بار {{time}}",
       "empty": "کوئی ڈیوائس کنفگر نہیں ہے۔"
+    },
+    "students": {
+      "title": "طلباء",
+      "count": "{{count}} طلباء",
+      "count_one": "{{count}} طالب علم",
+      "searchPlaceholder": "نام یا رول نمبر سے تلاش کریں",
+      "filterByClass": "کلاس کے لحاظ سے فلٹر کریں",
+      "allClasses": "تمام کلاسز",
+      "empty": "آپ کی تلاش سے کوئی طالب علم نہیں ملا۔",
+      "loadError": "طلباء لوڈ نہیں ہو سکے۔",
+      "table": {
+        "name": "نام",
+        "class": "کلاس",
+        "card": "کارڈ",
+        "noCard": "کارڈ نہیں"
+      }
+    },
+    "studentDetail": {
+      "back": "طلباء پر واپس",
+      "guardians": "والدین",
+      "noGuardians": "کوئی والدین ریکارڈ نہیں۔",
+      "recentAttendance": "حالیہ حاضری (پچھلے 14 دن)",
+      "noCard": "کوئی کارڈ تفویض نہیں",
+      "loadError": "یہ طالب علم لوڈ نہیں ہو سکا۔"
+    },
+    "cards": {
+      "status": {
+        "active": "ایکٹیو",
+        "lost": "گم شدہ",
+        "replaced": "تبدیل شدہ",
+        "deactivated": "غیر فعال"
+      }
     },
     "loadError": "ہم سکول کے سرور تک نہیں پہنچ سکے۔",
     "unknownStudent": "نامعلوم طالب علم"

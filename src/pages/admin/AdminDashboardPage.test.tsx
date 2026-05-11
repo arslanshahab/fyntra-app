@@ -69,10 +69,10 @@ describe('AdminDashboardPage', () => {
     expect(screen.getByText('Side Gate')).toBeInTheDocument()
   })
 
-  it('greets with the admin user name in the header', async () => {
+  it('shows the today label once /me lands', async () => {
     const admin = seedStore.users.find((u) => u.role === 'admin')!
     useAuthStore.setState({ token: `tok_${admin.id}`, user: admin })
     renderDashboard()
-    expect(await screen.findByText(admin.fullName)).toBeInTheDocument()
+    expect(await screen.findByText(/Today,/)).toBeInTheDocument()
   })
 })

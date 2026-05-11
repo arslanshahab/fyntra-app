@@ -8,6 +8,8 @@ const config: Config = {
         // Brand palette — calm trust-blue chosen for a child-safety product.
         // Tracks Tailwind's sky-500/600/700 stops. Used by primary actions.
         brand: {
+          50: '#f0f9ff',
+          100: '#e0f2fe',
           500: '#0ea5e9',
           600: '#0284c7',
           700: '#0369a1',

@@ -6,6 +6,7 @@ import { z } from 'zod'
 
 export const idSchema = z.string().min(1)
 export const roleSchema = z.enum(['parent', 'admin', 'teacher'])
+export type Role = z.infer<typeof roleSchema>
 export const localeSchema = z.enum(['en', 'ur'])
 
 export const userSchema = z.object({
@@ -44,6 +45,13 @@ export const studentSchema = z.object({
   status: studentStatusSchema,
 })
 export type Student = z.infer<typeof studentSchema>
+
+// GET /students/:id returns the student with embedded guardians so the
+// admin detail page doesn't need a per-guardian /users/:id round trip.
+export const studentDetailSchema = studentSchema.extend({
+  guardians: z.array(userSchema),
+})
+export type StudentDetail = z.infer<typeof studentDetailSchema>
 
 export const classSchema = z.object({
   id: idSchema,
