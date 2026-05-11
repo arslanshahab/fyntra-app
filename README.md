@@ -475,4 +475,70 @@ This bridge is **dev-only**. It is not part of production. In Phase 1.5, when th
 
 **macOS-specific note.** On modern macOS, the built-in CryptoTokenKit framework occasionally claims the ACR122U before `nfc-pcsc` can. If the bridge reports no readers found despite the device being visible in System Information → USB, the fix is documented in `bridge/README.md` — typically involves preventing macOS's built-in smart-card driver from claiming the device. The bridge's README must include OS-specific setup notes.
 
-**Implementation status.** The frontend half is built — `useReaderBridge()` connects to `ws://localhost:8787`, surfaces the live connection status on the admin Simulate Tap page, and auto-fills the UID input when a `card_tapped` message arrives. The standalone `bridge/` Node service is **not yet built**; until it is, the Simulate Tap page shows "Bridge disconnected" and the admin can submit UIDs by hand. The hook short-circuits in tests via an `import.meta.env.MODE === 'test'` guard so jsdom doesn't churn on dead connections.
+**Implementation status.** Both halves are built. Frontend consumer: `useReaderBridge()`. Producer: a standalone Node 20+ service in `bridge/` using `nfc-pcsc` + `ws`. End-to-end verified locally — tapping a physical card on the ACR122U emits `card_tapped` over WebSocket, the frontend's Simulate Tap panel flips to "Bridge connected" and auto-fills the UID input. The hook short-circuits in tests via an `import.meta.env.MODE === 'test'` guard so jsdom doesn't churn on dead connections.
+
+**Hardware testing workflow in mock mode.** Physical card UIDs do not exist in the in-memory MSW seed, so `POST /dev/simulate-tap` returns 404 for an unknown UID. Two ways to bind a real card for testing while the backend is still mocked:
+
+1. **One-shot via the UI:** `/admin/cards` → pick any active card → Replace → paste the real UID. The new Card row gets the real UID and points at the original student. Survives until the next page refresh (the seed is in-memory).
+2. **Persistent in dev:** add real UIDs directly into the seed loop in `src/services/mocks/seed.ts` so they survive Vite reloads.
+
+This friction disappears in Phase 1.5 (see §14) — once cards persist in a real database, any active UID accepts taps without re-binding.
+
+---
+
+## 14. Phase 1.5: building the real backend
+
+The frontend and the dev bridge are done. Phase 1.5 is the backend service that replaces the MSW mock and takes over from the bridge for tap ingestion. **This section is the handoff brief** — extract it as a prompt for a fresh Claude session in a sibling `backend/` repo or directory.
+
+### What you're replacing
+
+- **`src/services/mocks/`** — the in-memory MSW mock. Every endpoint in §6, every data shape in §5, every edge case in §9.
+- **The `bridge/` Node service** — deployed readers will talk to the real backend directly; the local-only dev bridge is retired in production. Keep it around if you still want hardware testing against a staging environment.
+
+The frontend itself does not change beyond two env vars and disabling the MSW worker.
+
+### Stack expectations
+
+Pick anything that comfortably serves JSON over HTTP and WebSocket. Suggested:
+
+- **Node 20+ + Fastify** (closest to the existing TS skill set; can share the Zod schemas as the source of truth across frontend and backend if both live in a monorepo).
+- **Postgres** for persistence — the data models in §5 are relational by nature.
+- **A real SMS / WhatsApp provider** for OTP and notifications (Twilio, Vonage, Infobip, or JazzCash's local API in Pakistan).
+
+Other stacks are fine; the frontend is stack-agnostic.
+
+### What the backend must implement
+
+1. **The API contract in §6, byte-for-byte.** The frontend has Zod schemas at every edge — any drift fails fast. Same URL shapes, same request/response bodies, same status codes.
+2. **The data models in §5** mapped to relational tables. `Card.auditLog` becomes either embedded JSON (Postgres `jsonb`) or a separate `card_audit_entries` table — your call.
+3. **Every edge case in §9** is backend-owned business logic: late/absent threshold transitions, device-offline-suppresses-absent, in-reader tap deduplication, "tap-in without tap-out" left-without-scan flag, manual override audit trail.
+4. **Real auth.** OTP via a real SMS / WhatsApp provider, tokens as JWT or opaque session IDs. The "any 4-digit OTP is valid in dev" rule from §7 is **mock-only** — do not carry it over.
+5. **Real-time over WebSocket.** `src/hooks/useRealtime.ts` is the single swap point in the frontend — replace its `refetchInterval` strategy with a WebSocket subscription. Suggested channels: `tap-events:school/<schoolId>` for admin dashboards, `tap-events:student/<studentId>` for parents. Fixes the cross-tab desync that exists in mock mode for free.
+6. **Reader ingestion endpoint.** Each deployed ACR122U gets a long-lived auth token. Readers send tap events to an authenticated endpoint (e.g. `POST /readers/tap`); the backend validates, persists, broadcasts. The current `/dev/simulate-tap` is the dev shim — production readers do not call it.
+7. **Notification fan-out.** On every persisted tap, look up student → guardians → their `NotificationSettings` → fire WhatsApp / SMS / in-app per the channels and events they've enabled. Every attempt creates a `NotificationLog` row with status (queued / sent / delivered / failed). Settings stored per user; admin and teacher have access to `device_offline`, parents do not.
+
+### Migration mechanics for the frontend
+
+1. Set `VITE_API_BASE_URL` to the real backend host (in `.env.production` or deploy-time env).
+2. Set `VITE_USE_MOCKS=false` (or omit it — anything other than `'true'` disables the worker).
+3. Delete `src/services/mocks/` and `public/mockServiceWorker.js` once the real backend is verified against the full contract.
+4. Replace the body of `src/hooks/useRealtime.ts` with a WebSocket-based implementation. **Consumers do not change** — they receive whatever shape the hook returns.
+5. Retire the `bridge/` directory. Keep it in dev for hardware testing against staging if useful.
+
+### What does NOT change in the frontend
+
+- Zod schemas in `src/types/schemas.ts` — they **are** the contract; the backend matches them.
+- React Query keys, mutations, optimistic update flows.
+- The auth store, the role-based routing (`RequireAuth` + `RequireRole`), the layouts.
+- The PWA manifest. Push notifications are still Phase 2.
+
+### Mock-mode artifacts that go away
+
+- The "physical card UID must be in the seed" gotcha disappears — production cards are issued through `/admin/cards` and persist in the DB.
+- Cross-tab cache desync goes away — WebSocket pushes a tap event to every connected client once.
+- "Seed resets on page refresh" goes away — production data persists.
+- The dev-only `POST /dev/simulate-tap` endpoint goes away. Replace with the real reader-ingestion endpoint.
+
+### Out of scope for Phase 1.5 (deferred to Phase 2)
+
+Push notifications. Multi-school super-admin. Bus tracking / geofencing. Authorized pickup verification. Visitor management. Fee management. Homework / diary.
