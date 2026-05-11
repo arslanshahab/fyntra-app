@@ -32,6 +32,12 @@ export function TeacherLayout() {
 
   return (
     <div className="min-h-dvh bg-slate-50">
+      <a
+        href="#teacher-main"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-50 focus:rounded-md focus:bg-white focus:px-3 focus:py-2 focus:text-sm focus:font-medium focus:text-brand-700 focus:shadow focus:ring-2 focus:ring-brand-500"
+      >
+        {t('common.skipToContent')}
+      </a>
       <header className="border-b border-slate-200 bg-white">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-4">
           <div>
@@ -71,9 +77,9 @@ export function TeacherLayout() {
           </ul>
         </nav>
 
-        <div className="min-w-0">
+        <main id="teacher-main" className="min-w-0">
           <Outlet />
-        </div>
+        </main>
       </div>
     </div>
   )

@@ -28,7 +28,11 @@ export function LiveTapFeed({ school }: LiveTapFeedProps) {
     .slice(0, 20)
 
   return (
-    <section className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+    <section
+      aria-live="polite"
+      aria-label={t('admin.liveFeed.title')}
+      className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200"
+    >
       <h2 className="text-sm font-semibold text-slate-900">{t('admin.liveFeed.title')}</h2>
       <div className="mt-4">
         {feed.isLoading ? (

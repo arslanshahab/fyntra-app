@@ -1,23 +1,72 @@
+import { lazy, Suspense } from 'react'
 import { Outlet, Route, Routes } from 'react-router-dom'
 
-import { AdminLayout } from '../components/templates/AdminLayout'
-import { TeacherLayout } from '../components/templates/TeacherLayout'
-import { AdminCardsPage } from '../pages/admin/AdminCardsPage'
-import { AdminDashboardPage } from '../pages/admin/AdminDashboardPage'
-import { AdminDevicesPage } from '../pages/admin/AdminDevicesPage'
-import { AdminNotificationsPage } from '../pages/admin/AdminNotificationsPage'
-import { AdminReportsPage } from '../pages/admin/AdminReportsPage'
-import { AdminStudentDetailPage } from '../pages/admin/AdminStudentDetailPage'
-import { AdminStudentsPage } from '../pages/admin/AdminStudentsPage'
+import { Spinner } from '../components/atoms/Spinner'
 import { LoginPage } from '../pages/auth/LoginPage'
-import { ChildTimelinePage } from '../pages/parent/ChildTimelinePage'
-import { ParentHomePage } from '../pages/parent/ParentHomePage'
-import { ParentSettingsPage } from '../pages/parent/ParentSettingsPage'
-import { TeacherHistoryPage } from '../pages/teacher/TeacherHistoryPage'
-import { TeacherTodayPage } from '../pages/teacher/TeacherTodayPage'
 import { RequireAuth } from './RequireAuth'
 import { RequireRole } from './RequireRole'
 import { RoleRedirect } from './RoleRedirect'
+
+// LoginPage is eager so the first-paint of a fresh session has no
+// Suspense flash. Everything else is split per-role so admins don't
+// download the parent home and vice versa.
+const AdminLayout = lazy(() =>
+  import('../components/templates/AdminLayout').then((m) => ({ default: m.AdminLayout })),
+)
+const TeacherLayout = lazy(() =>
+  import('../components/templates/TeacherLayout').then((m) => ({ default: m.TeacherLayout })),
+)
+
+const AdminDashboardPage = lazy(() =>
+  import('../pages/admin/AdminDashboardPage').then((m) => ({ default: m.AdminDashboardPage })),
+)
+const AdminStudentsPage = lazy(() =>
+  import('../pages/admin/AdminStudentsPage').then((m) => ({ default: m.AdminStudentsPage })),
+)
+const AdminStudentDetailPage = lazy(() =>
+  import('../pages/admin/AdminStudentDetailPage').then((m) => ({
+    default: m.AdminStudentDetailPage,
+  })),
+)
+const AdminCardsPage = lazy(() =>
+  import('../pages/admin/AdminCardsPage').then((m) => ({ default: m.AdminCardsPage })),
+)
+const AdminDevicesPage = lazy(() =>
+  import('../pages/admin/AdminDevicesPage').then((m) => ({ default: m.AdminDevicesPage })),
+)
+const AdminReportsPage = lazy(() =>
+  import('../pages/admin/AdminReportsPage').then((m) => ({ default: m.AdminReportsPage })),
+)
+const AdminNotificationsPage = lazy(() =>
+  import('../pages/admin/AdminNotificationsPage').then((m) => ({
+    default: m.AdminNotificationsPage,
+  })),
+)
+
+const ParentHomePage = lazy(() =>
+  import('../pages/parent/ParentHomePage').then((m) => ({ default: m.ParentHomePage })),
+)
+const ChildTimelinePage = lazy(() =>
+  import('../pages/parent/ChildTimelinePage').then((m) => ({ default: m.ChildTimelinePage })),
+)
+const ParentSettingsPage = lazy(() =>
+  import('../pages/parent/ParentSettingsPage').then((m) => ({ default: m.ParentSettingsPage })),
+)
+
+const TeacherTodayPage = lazy(() =>
+  import('../pages/teacher/TeacherTodayPage').then((m) => ({ default: m.TeacherTodayPage })),
+)
+const TeacherHistoryPage = lazy(() =>
+  import('../pages/teacher/TeacherHistoryPage').then((m) => ({ default: m.TeacherHistoryPage })),
+)
+
+function FullPageSpinner() {
+  return (
+    <div role="status" className="min-h-dvh flex items-center justify-center bg-slate-50">
+      <Spinner size="lg" />
+    </div>
+  )
+}
 
 export function AppRoutes() {
   return (
@@ -26,7 +75,9 @@ export function AppRoutes() {
       <Route
         element={
           <RequireAuth>
-            <Outlet />
+            <Suspense fallback={<FullPageSpinner />}>
+              <Outlet />
+            </Suspense>
           </RequireAuth>
         }
       >
