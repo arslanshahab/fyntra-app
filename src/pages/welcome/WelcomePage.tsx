@@ -1,5 +1,7 @@
 import { useTranslation } from 'react-i18next'
 
+import { Button } from '../../components/atoms/Button'
+
 export function WelcomePage() {
   const { t, i18n } = useTranslation()
   const isUrdu = i18n.language.startsWith('ur')
@@ -19,14 +21,9 @@ export function WelcomePage() {
         </h1>
         <p className="mt-2 text-sm leading-relaxed text-slate-600">{t('welcome.body')}</p>
 
-        <button
-          type="button"
-          onClick={toggleLanguage}
-          aria-label={t('language.switchTo')}
-          className="mt-6 inline-flex items-center justify-center rounded-lg bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2"
-        >
+        <Button className="mt-6" onClick={toggleLanguage} aria-label={t('language.switchTo')}>
           {t('language.switchTo')}
-        </button>
+        </Button>
 
         <p className="mt-8 text-xs text-slate-500">{t('app.tagline')}</p>
       </div>

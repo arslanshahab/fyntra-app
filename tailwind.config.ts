@@ -5,6 +5,13 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        // Brand palette — calm trust-blue chosen for a child-safety product.
+        // Tracks Tailwind's sky-500/600/700 stops. Used by primary actions.
+        brand: {
+          500: '#0ea5e9',
+          600: '#0284c7',
+          700: '#0369a1',
+        },
         // Semantic attendance status palette — see README §10.
         // Used by Badge and other status surfaces. Anything outside this
         // palette should not represent attendance state.
