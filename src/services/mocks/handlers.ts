@@ -3,7 +3,7 @@
 
 import { delay, http, HttpResponse } from 'msw'
 
-import type { AttendanceRecord, Card, TapEvent, User } from '../../types/schemas'
+import type { AttendanceRecord, Card, CardAuditEntry, TapEvent, User } from '../../types/schemas'
 import {
   assignCardRequestSchema,
   manualTapEventRequestSchema,
@@ -40,6 +40,24 @@ function currentUser(request: Request): User | null {
   const id = userIdFromToken(request.headers.get('authorization'))
   if (!id) return null
   return seedStore.users.find((u) => u.id === id) ?? null
+}
+
+function appendAudit(
+  card: Card,
+  request: Request,
+  action: CardAuditEntry['action'],
+  note?: string,
+): void {
+  const me = currentUser(request)
+  card.auditLog = [
+    ...card.auditLog,
+    {
+      at: new Date().toISOString(),
+      byUserId: me?.id ?? 'system',
+      action,
+      ...(note ? { note } : {}),
+    },
+  ]
 }
 
 export const handlers = [
@@ -165,6 +183,7 @@ export const handlers = [
     card.studentId = student.id
     card.status = 'active'
     student.cardId = card.id
+    appendAudit(card, request, 'assigned', `Assigned to ${student.fullName}`)
     return HttpResponse.json(card)
   }),
 
@@ -176,7 +195,10 @@ export const handlers = [
     if (!student) return HttpResponse.json({ error: 'Not found' }, { status: 404 })
 
     const oldCard = seedStore.cards.find((c) => c.id === student.cardId)
-    if (oldCard) oldCard.status = 'replaced'
+    if (oldCard) {
+      oldCard.status = 'replaced'
+      appendAudit(oldCard, request, 'replaced', `Replaced by new card`)
+    }
 
     const newCard: Card = {
       id: `crd_${seedStore.cards.length + 1}`,
@@ -184,7 +206,9 @@ export const handlers = [
       studentId: student.id,
       status: 'active',
       issuedAt: new Date().toISOString(),
+      auditLog: [],
     }
+    appendAudit(newCard, request, 'issued', `Issued to ${student.fullName}`)
     seedStore.cards.push(newCard)
     student.cardId = newCard.id
     return HttpResponse.json(newCard)
@@ -196,7 +220,24 @@ export const handlers = [
     if (!body.success) return HttpResponse.json({ error: 'Invalid body' }, { status: 400 })
     const card = seedStore.cards.find((c) => c.id === params.id)
     if (!card) return HttpResponse.json({ error: 'Not found' }, { status: 404 })
+    const previousStatus = card.status
     card.status = body.data.status
+    // Map the new status to an audit action. Reactivating from lost or
+    // deactivated maps to 'reactivated'; otherwise mirror the status name.
+    const auditAction: CardAuditEntry['action'] =
+      body.data.status === 'active' && previousStatus !== 'active'
+        ? 'reactivated'
+        : body.data.status === 'lost'
+          ? 'lost'
+          : body.data.status === 'deactivated'
+            ? 'deactivated'
+            : 'assigned'
+    appendAudit(
+      card,
+      request,
+      auditAction,
+      `Status changed: ${previousStatus} → ${body.data.status}`,
+    )
     return HttpResponse.json(card)
   }),
 

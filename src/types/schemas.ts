@@ -62,12 +62,34 @@ export const classSchema = z.object({
 export type Class = z.infer<typeof classSchema>
 
 export const cardStatusSchema = z.enum(['active', 'lost', 'replaced', 'deactivated'])
+export type CardStatus = z.infer<typeof cardStatusSchema>
+
+// Audit trail entry per README §7.5 ("Always show audit trail"). Each
+// mutation on a card appends one entry; the seed builder seeds an
+// initial "issued" entry so the history starts non-empty.
+export const cardAuditActionSchema = z.enum([
+  'issued',
+  'assigned',
+  'replaced',
+  'lost',
+  'deactivated',
+  'reactivated',
+])
+export const cardAuditEntrySchema = z.object({
+  at: z.string(),
+  byUserId: idSchema,
+  action: cardAuditActionSchema,
+  note: z.string().optional(),
+})
+export type CardAuditEntry = z.infer<typeof cardAuditEntrySchema>
+
 export const cardSchema = z.object({
   id: idSchema,
   rfidUid: z.string(),
   studentId: idSchema.optional(),
   status: cardStatusSchema,
   issuedAt: z.string(),
+  auditLog: z.array(cardAuditEntrySchema).default([]),
 })
 export type Card = z.infer<typeof cardSchema>
 

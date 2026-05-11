@@ -109,7 +109,8 @@
     "today": "Today, {{date}}",
     "nav": {
       "dashboard": "Dashboard",
-      "students": "Students"
+      "students": "Students",
+      "cards": "Cards"
     },
     "stats": {
       "present": "Present",
@@ -157,12 +158,51 @@
       "loadError": "Couldn't load this student."
     },
     "cards": {
+      "title": "Cards",
+      "count": "{{count}} cards",
+      "count_one": "{{count}} card",
+      "empty": "No cards match this filter.",
+      "error": "Action failed. Please try again.",
+      "filter": {
+        "all": "All"
+      },
       "status": {
         "active": "Active",
         "lost": "Lost",
         "replaced": "Replaced",
         "deactivated": "Deactivated"
-      }
+      },
+      "table": {
+        "uid": "RFID UID",
+        "student": "Student",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "actions": {
+        "markLost": "Mark lost",
+        "deactivate": "Deactivate",
+        "reactivate": "Reactivate",
+        "replace": "Replace"
+      },
+      "audit": {
+        "issued": "Issued",
+        "assigned": "Assigned",
+        "replaced": "Replaced",
+        "lost": "Marked lost",
+        "deactivated": "Deactivated",
+        "reactivated": "Reactivated"
+      },
+      "auditTitle": "Audit trail",
+      "toggleHistory": "Toggle history",
+      "byActor": "by {{actor}}",
+      "lostSuccess": "Card marked as lost.",
+      "deactivateSuccess": "Card deactivated.",
+      "reactivateSuccess": "Card reactivated.",
+      "replaceSuccess": "Card replaced.",
+      "replaceTitle": "Replace card",
+      "replaceBody": "Issue a new card to the student currently holding {{uid}}. The old card will be marked replaced.",
+      "newUidLabel": "New RFID UID",
+      "confirmReplace": "Issue new card"
     },
     "loadError": "Couldn't reach the school server.",
     "unknownStudent": "Unknown student"

@@ -230,12 +230,21 @@ export function buildSeed(options: BuildSeedOptions = {}): SeedStore {
       schoolId: school.id,
     })
 
+    const issuedAt = dateAtTime(ymd(new Date(today.getTime() - 90 * 86400000)), '09:00')
     cards.push({
       id: cardId,
       rfidUid: rfidUid(prng),
       studentId,
       status: 'active',
-      issuedAt: dateAtTime(ymd(new Date(today.getTime() - 90 * 86400000)), '09:00'),
+      issuedAt,
+      auditLog: [
+        {
+          at: issuedAt,
+          byUserId: 'usr_a_1',
+          action: 'issued',
+          note: `Assigned to ${studentId}`,
+        },
+      ],
     })
   }
 

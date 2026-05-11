@@ -109,7 +109,8 @@
     "today": "آج، {{date}}",
     "nav": {
       "dashboard": "ڈیش بورڈ",
-      "students": "طلباء"
+      "students": "طلباء",
+      "cards": "کارڈز"
     },
     "stats": {
       "present": "حاضر",
@@ -157,12 +158,51 @@
       "loadError": "یہ طالب علم لوڈ نہیں ہو سکا۔"
     },
     "cards": {
+      "title": "کارڈز",
+      "count": "{{count}} کارڈز",
+      "count_one": "{{count}} کارڈ",
+      "empty": "اس فلٹر سے کوئی کارڈ نہیں ملا۔",
+      "error": "ایکشن ناکام ہوا۔ دوبارہ کوشش کریں۔",
+      "filter": {
+        "all": "تمام"
+      },
       "status": {
         "active": "ایکٹیو",
         "lost": "گم شدہ",
         "replaced": "تبدیل شدہ",
         "deactivated": "غیر فعال"
-      }
+      },
+      "table": {
+        "uid": "آر ایف آئی ڈی",
+        "student": "طالب علم",
+        "status": "اسٹیٹس",
+        "actions": "ایکشنز"
+      },
+      "actions": {
+        "markLost": "گم شدہ",
+        "deactivate": "غیر فعال",
+        "reactivate": "بحال",
+        "replace": "تبدیل"
+      },
+      "audit": {
+        "issued": "جاری",
+        "assigned": "تفویض",
+        "replaced": "تبدیل",
+        "lost": "گم شدہ",
+        "deactivated": "غیر فعال",
+        "reactivated": "بحال"
+      },
+      "auditTitle": "آڈٹ ٹریل",
+      "toggleHistory": "تاریخ ٹوگل کریں",
+      "byActor": "بذریعہ {{actor}}",
+      "lostSuccess": "کارڈ گم شدہ مارک ہو گیا۔",
+      "deactivateSuccess": "کارڈ غیر فعال ہو گیا۔",
+      "reactivateSuccess": "کارڈ بحال ہو گیا۔",
+      "replaceSuccess": "کارڈ تبدیل ہو گیا۔",
+      "replaceTitle": "کارڈ تبدیل کریں",
+      "replaceBody": "{{uid}} کے حامل طالب علم کو نیا کارڈ جاری کریں۔ پرانا کارڈ تبدیل شدہ کے طور پر مارک ہو جائے گا۔",
+      "newUidLabel": "نیا آر ایف آئی ڈی",
+      "confirmReplace": "نیا کارڈ جاری کریں"
     },
     "loadError": "ہم سکول کے سرور تک نہیں پہنچ سکے۔",
     "unknownStudent": "نامعلوم طالب علم"

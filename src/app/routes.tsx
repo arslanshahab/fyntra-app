@@ -1,6 +1,7 @@
 import { Outlet, Route, Routes } from 'react-router-dom'
 
 import { AdminLayout } from '../components/templates/AdminLayout'
+import { AdminCardsPage } from '../pages/admin/AdminCardsPage'
 import { AdminDashboardPage } from '../pages/admin/AdminDashboardPage'
 import { AdminStudentDetailPage } from '../pages/admin/AdminStudentDetailPage'
 import { AdminStudentsPage } from '../pages/admin/AdminStudentsPage'
@@ -37,6 +38,7 @@ export function AppRoutes() {
           <Route index element={<AdminDashboardPage />} />
           <Route path="students" element={<AdminStudentsPage />} />
           <Route path="students/:id" element={<AdminStudentDetailPage />} />
+          <Route path="cards" element={<AdminCardsPage />} />
         </Route>
         <Route path="/teacher" element={<TeacherHomePage />} />
       </Route>
