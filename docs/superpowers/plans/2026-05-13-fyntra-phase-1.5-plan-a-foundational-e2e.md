@@ -574,7 +574,7 @@ Bring up a Fastify server with logging, env validation, Zod type provider, error
     "@types/supertest": "^6.0.2",
     "tsx": "^4.19.0",
     "typescript": "~5.6.0",
-    "vitest": "^2.1.0"
+    "vitest": "^4.1.5"
   }
 }
 ```
