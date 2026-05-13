@@ -1,12 +1,15 @@
 import Fastify, { type FastifyInstance, type FastifyError, type FastifyRequest, type FastifyReply } from 'fastify'
 import cors from '@fastify/cors'
 import jwt from '@fastify/jwt'
+import rateLimit from '@fastify/rate-limit'
 import { serializerCompiler, validatorCompiler, type ZodTypeProvider } from 'fastify-type-provider-zod'
 import { env } from './config/env.js'
 import { buildLoggerOptions } from './lib/logger.js'
 import { newRequestId } from './lib/ids.js'
 import { AppError } from './lib/errors.js'
 import { healthRoutes } from './modules/health/routes.js'
+import { authRoutes } from './modules/auth/routes.js'
+import { meRoutes } from './modules/me/routes.js'
 
 export async function buildApp(): Promise<FastifyInstance> {
   const e = env()
@@ -20,6 +23,7 @@ export async function buildApp(): Promise<FastifyInstance> {
 
   await app.register(cors, { origin: e.CORS_ORIGIN, credentials: false })
   await app.register(jwt, { secret: e.JWT_SECRET })
+  await app.register(rateLimit, { global: true, max: 100, timeWindow: '1 minute' })
 
   app.addHook('onSend', async (req, reply) => {
     reply.header('x-request-id', req.id)
@@ -56,6 +60,8 @@ export async function buildApp(): Promise<FastifyInstance> {
   })
 
   await app.register(healthRoutes)
+  await app.register(authRoutes)
+  await app.register(meRoutes)
 
   return app
 }
