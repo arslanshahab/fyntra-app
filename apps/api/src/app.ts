@@ -10,6 +10,7 @@ import { AppError } from './lib/errors.js'
 import { healthRoutes } from './modules/health/routes.js'
 import { authRoutes } from './modules/auth/routes.js'
 import { meRoutes } from './modules/me/routes.js'
+import { studentsRoutes } from './modules/students/routes.js'
 
 export async function buildApp(): Promise<FastifyInstance> {
   const e = env()
@@ -62,6 +63,7 @@ export async function buildApp(): Promise<FastifyInstance> {
   await app.register(healthRoutes)
   await app.register(authRoutes)
   await app.register(meRoutes)
+  await app.register(studentsRoutes)
 
   return app
 }
