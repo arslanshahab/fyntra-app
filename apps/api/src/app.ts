@@ -1,5 +1,6 @@
 import Fastify, { type FastifyInstance, type FastifyError, type FastifyRequest, type FastifyReply } from 'fastify'
 import cors from '@fastify/cors'
+import jwt from '@fastify/jwt'
 import { serializerCompiler, validatorCompiler, type ZodTypeProvider } from 'fastify-type-provider-zod'
 import { env } from './config/env.js'
 import { buildLoggerOptions } from './lib/logger.js'
@@ -18,6 +19,7 @@ export async function buildApp(): Promise<FastifyInstance> {
   app.setSerializerCompiler(serializerCompiler)
 
   await app.register(cors, { origin: e.CORS_ORIGIN, credentials: false })
+  await app.register(jwt, { secret: e.JWT_SECRET })
 
   app.addHook('onSend', async (req, reply) => {
     reply.header('x-request-id', req.id)
