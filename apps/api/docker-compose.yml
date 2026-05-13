@@ -1,0 +1,20 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: fyntra-postgres
+    environment:
+      POSTGRES_DB: fyntra
+      POSTGRES_USER: fyntra
+      POSTGRES_PASSWORD: fyntra
+    ports:
+      - "5433:5432"
+    volumes:
+      - fyntra_pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fyntra -d fyntra"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  fyntra_pg:
