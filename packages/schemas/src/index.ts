@@ -121,7 +121,7 @@ export const tapEventSchema = z.object({
 })
 export type TapEvent = z.infer<typeof tapEventSchema>
 
-export const attendanceStatusSchema = z.enum(['present', 'absent', 'late', 'left_early'])
+export const attendanceStatusSchema = z.enum(['present', 'absent', 'late', 'left_early', 'unverified'])
 export const attendanceRecordSchema = z.object({
   id: idSchema,
   studentId: idSchema,

@@ -17,6 +17,7 @@ const statusTone: Record<AttendanceRecord['status'], 'present' | 'late' | 'absen
   late: 'late',
   absent: 'absent',
   left_early: 'late',
+  unverified: 'notyet',
 }
 
 function daysAgo(n: number): string {
