@@ -37,3 +37,8 @@ export function env(): Env {
   if (!cached) cached = parseEnv(process.env)
   return cached
 }
+
+// Test-only — clears the memoized env so a test can mutate process.env and re-read.
+export function _resetEnvCacheForTests(): void {
+  cached = null
+}

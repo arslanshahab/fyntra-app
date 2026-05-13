@@ -17,7 +17,7 @@ export async function buildApp(): Promise<FastifyInstance> {
   app.setValidatorCompiler(validatorCompiler)
   app.setSerializerCompiler(serializerCompiler)
 
-  await app.register(cors, { origin: e.CORS_ORIGIN, credentials: true })
+  await app.register(cors, { origin: e.CORS_ORIGIN, credentials: false })
 
   app.addHook('onSend', async (req, reply) => {
     reply.header('x-request-id', req.id)
