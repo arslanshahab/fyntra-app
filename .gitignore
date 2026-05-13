@@ -30,3 +30,13 @@ dist-ssr
 # Claude Code conversation exports (via /export)
 *-youre-going-to-help-me-*.txt
 20[0-9][0-9]-[0-1][0-9]-[0-3][0-9]-[0-9]*.txt
+
+# Monorepo
+pnpm-debug.log
+**/node_modules
+**/dist
+**/.turbo
+**/.vite
+**/coverage
+**/.env.local
+**/.env
