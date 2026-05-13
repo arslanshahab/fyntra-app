@@ -1,0 +1,12 @@
+process.env.PORT ??= '3000'
+process.env.NODE_ENV ??= 'test'
+process.env.LOG_LEVEL ??= 'fatal'
+process.env.DATABASE_URL ??= 'postgres://fyntra:fyntra@localhost:5433/fyntra_test'
+process.env.JWT_SECRET ??= 'a'.repeat(32)
+process.env.READER_TOKEN_SECRET ??= 'b'.repeat(32)
+process.env.WHATSAPP_PHONE_NUMBER_ID ??= '0'
+process.env.WHATSAPP_ACCESS_TOKEN ??= 'dev'
+process.env.WHATSAPP_BUSINESS_ACCOUNT_ID ??= '0'
+process.env.WHATSAPP_APP_SECRET ??= 'dev'
+process.env.WHATSAPP_DRY_RUN ??= 'true'
+process.env.CORS_ORIGIN ??= 'http://localhost:5173'
