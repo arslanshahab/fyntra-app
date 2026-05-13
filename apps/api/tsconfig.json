@@ -2,7 +2,7 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "outDir": "./dist",
-    "rootDir": "./src",
+    "rootDir": ".",
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "target": "ES2023",
@@ -11,5 +11,5 @@
     "noEmit": false,
     "declaration": false
   },
-  "include": ["src"]
+  "include": ["src", "tests"]
 }
