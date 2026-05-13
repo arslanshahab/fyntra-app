@@ -1,8 +1,8 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 
 import { apiPost } from '../../services/api/client'
-import { tapEventSchema, type TapEvent } from '../../types/schemas'
-import type { TapDirection } from '../../types/schemas'
+import { tapEventSchema, type TapEvent } from '@fyntra/schemas'
+import type { TapDirection } from '@fyntra/schemas'
 
 interface SimulateTapInput {
   rfidUid: string

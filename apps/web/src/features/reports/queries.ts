@@ -3,7 +3,7 @@ import { z } from 'zod'
 
 import { apiGet } from '../../services/api/client'
 import { useAuthStore } from '../../stores/auth'
-import { attendanceRecordSchema } from '../../types/schemas'
+import { attendanceRecordSchema } from '@fyntra/schemas'
 
 const attendanceListSchema = z.array(attendanceRecordSchema)
 

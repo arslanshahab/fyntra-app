@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest'
 
-import type { User } from '../types/schemas'
+import type { User } from '@fyntra/schemas'
 import { useAuthStore } from './auth'
 
 const sampleUser: User = {

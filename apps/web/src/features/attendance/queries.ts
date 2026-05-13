@@ -9,7 +9,7 @@ import {
   type School,
   type TapDirection,
   type TapEvent,
-} from '../../types/schemas'
+} from '@fyntra/schemas'
 import { dateStrInKarachi } from '../../utils/datetime'
 
 const attendanceListSchema = z.array(attendanceRecordSchema)

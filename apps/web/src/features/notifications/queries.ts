@@ -8,7 +8,7 @@ import {
   type NotificationLog,
   type NotificationSettings,
   type notificationStatusSchema,
-} from '../../types/schemas'
+} from '@fyntra/schemas'
 
 const notificationListSchema = z.array(notificationLogSchema)
 

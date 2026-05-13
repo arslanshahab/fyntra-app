@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 
-import type { School } from '../types/schemas'
+import type { School } from '@fyntra/schemas'
 import { isInSchoolPollingWindow } from '../utils/datetime'
 import { usePageVisibility } from './usePageVisibility'
 

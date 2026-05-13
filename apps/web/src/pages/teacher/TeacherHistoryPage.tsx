@@ -4,7 +4,7 @@ import { Spinner } from '../../components/atoms/Spinner'
 import { useClassAttendanceRange } from '../../features/attendance/queries'
 import { useMeQuery } from '../../features/auth/queries'
 import { useStudentsQuery } from '../../features/students/queries'
-import type { AttendanceRecord } from '../../types/schemas'
+import type { AttendanceRecord } from '@fyntra/schemas'
 import { formatTimelineDate } from '../../utils/datetime'
 
 interface DailySummary {

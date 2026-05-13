@@ -1,4 +1,4 @@
-import type { AttendanceRecord, Device, School, Student } from '../types/schemas'
+import type { AttendanceRecord, Device, School, Student } from '@fyntra/schemas'
 import { dateStrInKarachi, minutesAfterSchoolStart, minutesUntilSchoolStart } from './datetime'
 
 // LiveStatus is the single source of truth for what to render in the parent

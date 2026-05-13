@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { z } from 'zod'
 
 import { apiGet } from '../../services/api/client'
-import { studentDetailSchema, studentSchema } from '../../types/schemas'
+import { studentDetailSchema, studentSchema } from '@fyntra/schemas'
 
 const studentListSchema = z.array(studentSchema)
 

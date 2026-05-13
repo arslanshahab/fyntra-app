@@ -4,7 +4,7 @@
 import { delay, http, HttpResponse } from 'msw'
 import { formatInTimeZone } from 'date-fns-tz'
 
-import type { AttendanceRecord, Card, CardAuditEntry, TapEvent, User } from '../../types/schemas'
+import type { AttendanceRecord, Card, CardAuditEntry, TapEvent, User } from '@fyntra/schemas'
 import {
   assignCardRequestSchema,
   manualTapEventRequestSchema,
@@ -14,7 +14,7 @@ import {
   requestOtpRequestSchema,
   simulateTapRequestSchema,
   verifyOtpRequestSchema,
-} from '../../types/schemas'
+} from '@fyntra/schemas'
 import { seedStore } from './seed'
 
 // Prefix with '*' so handlers match any origin — needed for node tests

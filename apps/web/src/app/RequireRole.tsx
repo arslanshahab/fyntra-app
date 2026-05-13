@@ -2,7 +2,7 @@ import { type ReactNode } from 'react'
 import { Navigate } from 'react-router-dom'
 
 import { useAuthStore } from '../stores/auth'
-import type { Role } from '../types/schemas'
+import type { Role } from '@fyntra/schemas'
 
 // Narrows RequireAuth: a logged-in parent visiting /admin would otherwise
 // see admin UI rendered against their own data. RequireRole bounces them

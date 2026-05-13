@@ -13,7 +13,7 @@ import {
   useCardsQuery,
 } from '../../features/cards/queries'
 import { useStudentsQuery } from '../../features/students/queries'
-import type { Card, CardStatus } from '../../types/schemas'
+import type { Card, CardStatus } from '@fyntra/schemas'
 
 const statusTone: Record<CardStatus, 'present' | 'late' | 'absent' | 'notyet' | 'neutral'> = {
   active: 'present',

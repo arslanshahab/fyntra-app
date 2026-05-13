@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { z } from 'zod'
 
 import { apiGet, apiPatch, apiPost } from '../../services/api/client'
-import { cardSchema, type Card, type CardStatus } from '../../types/schemas'
+import { cardSchema, type Card, type CardStatus } from '@fyntra/schemas'
 
 const cardListSchema = z.array(cardSchema)
 

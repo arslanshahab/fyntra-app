@@ -10,7 +10,7 @@ import { useTodayAttendance } from '../../features/attendance/queries'
 import { useMeQuery } from '../../features/auth/queries'
 import { useDevicesQuery } from '../../features/devices/queries'
 import { useAuthStore } from '../../stores/auth'
-import type { Device, School, Student } from '../../types/schemas'
+import type { Device, School, Student } from '@fyntra/schemas'
 import { deriveLiveStatus } from '../../utils/attendanceStatus'
 
 interface ChildRowProps {

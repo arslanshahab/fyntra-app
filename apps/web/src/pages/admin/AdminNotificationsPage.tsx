@@ -9,7 +9,7 @@ import {
   useNotificationsQuery,
   useRetryNotificationMutation,
 } from '../../features/notifications/queries'
-import type { NotificationLog } from '../../types/schemas'
+import type { NotificationLog } from '@fyntra/schemas'
 
 type StatusFilter = '' | NotificationLog['status']
 

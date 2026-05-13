@@ -1,4 +1,4 @@
-import type { AttendanceRecord, School } from '../types/schemas'
+import type { AttendanceRecord, School } from '@fyntra/schemas'
 import { minutesAfterSchoolStart } from './datetime'
 
 export interface DashboardStats {

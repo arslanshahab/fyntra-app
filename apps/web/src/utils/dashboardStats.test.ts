@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import type { AttendanceRecord, School } from '../types/schemas'
+import type { AttendanceRecord, School } from '@fyntra/schemas'
 import { computeDashboardStats } from './dashboardStats'
 import { schoolDateTime } from './datetime'
 

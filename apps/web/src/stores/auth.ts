@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
 
-import type { User } from '../types/schemas'
+import type { User } from '@fyntra/schemas'
 
 interface AuthState {
   token: string | null

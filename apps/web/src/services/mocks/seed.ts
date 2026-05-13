@@ -14,7 +14,7 @@ import type {
   Student,
   TapEvent,
   User,
-} from '../../types/schemas'
+} from '@fyntra/schemas'
 import { createPrng, type Prng } from './random'
 
 // School day uses Pakistan Standard Time (UTC+05:00, no DST).

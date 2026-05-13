@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import type { School } from '../types/schemas'
+import type { School } from '@fyntra/schemas'
 import {
   dateStrInKarachi,
   formatTimeInKarachi,

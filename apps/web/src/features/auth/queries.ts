@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 
 import { apiGet } from '../../services/api/client'
 import { useAuthStore } from '../../stores/auth'
-import { meResponseSchema } from '../../types/schemas'
+import { meResponseSchema } from '@fyntra/schemas'
 
 export const authQueryKeys = {
   me: ['auth', 'me'] as const,

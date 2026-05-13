@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { z } from 'zod'
 
 import { apiGet } from '../../services/api/client'
-import { deviceSchema } from '../../types/schemas'
+import { deviceSchema } from '@fyntra/schemas'
 
 const deviceListSchema = z.array(deviceSchema)
 

@@ -9,7 +9,7 @@ import {
   studentSchema,
   tapEventSchema,
   userSchema,
-} from '../../types/schemas'
+} from '@fyntra/schemas'
 import { buildSeed } from './seed'
 
 describe('buildSeed', () => {

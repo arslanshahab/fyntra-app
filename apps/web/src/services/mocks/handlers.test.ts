@@ -5,7 +5,7 @@ import {
   attendanceRecordSchema,
   meResponseSchema,
   verifyOtpResponseSchema,
-} from '../../types/schemas'
+} from '@fyntra/schemas'
 import { handlers } from './handlers'
 import { seedStore } from './seed'
 

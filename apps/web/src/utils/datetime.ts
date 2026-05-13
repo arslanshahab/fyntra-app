@@ -1,7 +1,7 @@
 import { addMinutes, differenceInMinutes } from 'date-fns'
 import { formatInTimeZone } from 'date-fns-tz'
 
-import type { School } from '../types/schemas'
+import type { School } from '@fyntra/schemas'
 
 export const KARACHI_TZ = 'Asia/Karachi'
 

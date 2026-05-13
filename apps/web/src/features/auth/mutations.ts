@@ -5,7 +5,7 @@ import {
   okResponseSchema,
   verifyOtpResponseSchema,
   type VerifyOtpResponse,
-} from '../../types/schemas'
+} from '@fyntra/schemas'
 
 export function useRequestOtpMutation() {
   return useMutation({

@@ -9,7 +9,7 @@ import {
   studentSchema,
   userSchema,
   verifyOtpRequestSchema,
-} from './schemas'
+} from '@fyntra/schemas'
 
 describe('userSchema', () => {
   it('accepts a well-formed parent user', () => {

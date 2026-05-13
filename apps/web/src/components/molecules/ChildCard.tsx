@@ -6,7 +6,7 @@ import { Icon } from '../atoms/Icon'
 import { cn } from '../../utils/cn'
 import { type LiveStatus, toneFor } from '../../utils/attendanceStatus'
 import { formatTimeInKarachi } from '../../utils/datetime'
-import type { Student } from '../../types/schemas'
+import type { Student } from '@fyntra/schemas'
 
 interface ChildCardProps {
   student: Student

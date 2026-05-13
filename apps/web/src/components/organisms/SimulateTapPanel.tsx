@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { Button } from '../atoms/Button'
 import { useSimulateTapMutation } from '../../features/devices/mutations'
 import { useReaderBridge, type BridgeStatus } from '../../hooks/useReaderBridge'
-import type { Device, TapDirection } from '../../types/schemas'
+import type { Device, TapDirection } from '@fyntra/schemas'
 import { cn } from '../../utils/cn'
 
 interface SimulateTapPanelProps {

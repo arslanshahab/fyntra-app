@@ -9,7 +9,7 @@ import {
   useNotificationSettingsQuery,
   useUpdateNotificationSettingsMutation,
 } from '../../features/notifications/queries'
-import type { NotificationSettings } from '../../types/schemas'
+import type { NotificationSettings } from '@fyntra/schemas'
 
 // Per README §6: parents do NOT toggle device_offline — it's an admin/teacher
 // concern. The PATCH body must still carry all event flags, so we preserve

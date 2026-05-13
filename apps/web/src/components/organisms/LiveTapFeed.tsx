@@ -6,7 +6,7 @@ import { Spinner } from '../atoms/Spinner'
 import { useLiveTapFeed } from '../../features/attendance/queries'
 import { useDevicesQuery } from '../../features/devices/queries'
 import { useStudentsQuery } from '../../features/students/queries'
-import type { School } from '../../types/schemas'
+import type { School } from '@fyntra/schemas'
 import { formatTimeInKarachi } from '../../utils/datetime'
 
 interface LiveTapFeedProps {

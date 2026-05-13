@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import type { AttendanceRecord, Device, School, Student } from '../types/schemas'
+import type { AttendanceRecord, Device, School, Student } from '@fyntra/schemas'
 import { schoolDateTime } from './datetime'
 import { deriveLiveStatus, toneFor } from './attendanceStatus'
 

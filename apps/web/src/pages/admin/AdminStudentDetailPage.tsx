@@ -9,7 +9,7 @@ import { Spinner } from '../../components/atoms/Spinner'
 import { useStudentTimeline } from '../../features/attendance/queries'
 import { useClassesQuery } from '../../features/classes/queries'
 import { useStudentDetailQuery } from '../../features/students/queries'
-import type { AttendanceRecord } from '../../types/schemas'
+import type { AttendanceRecord } from '@fyntra/schemas'
 import { formatTimeInKarachi, formatTimelineDate } from '../../utils/datetime'
 
 const statusTone: Record<AttendanceRecord['status'], 'present' | 'late' | 'absent' | 'notyet'> = {

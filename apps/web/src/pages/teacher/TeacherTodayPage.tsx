@@ -8,7 +8,7 @@ import { Spinner } from '../../components/atoms/Spinner'
 import { useClassAttendanceToday, useManualTapMutation } from '../../features/attendance/queries'
 import { useMeQuery } from '../../features/auth/queries'
 import { useStudentsQuery } from '../../features/students/queries'
-import type { AttendanceRecord, Student, TapDirection } from '../../types/schemas'
+import type { AttendanceRecord, Student, TapDirection } from '@fyntra/schemas'
 import { formatTimeInKarachi } from '../../utils/datetime'
 
 const statusTone: Record<AttendanceRecord['status'], 'present' | 'late' | 'absent' | 'notyet'> = {
