@@ -1,4 +1,4 @@
-import { and, desc, eq, gt, isNull } from 'drizzle-orm'
+import { and, desc, eq, gt, isNull, sql } from 'drizzle-orm'
 import { db } from '../../db/client.js'
 import { otpCodes, users } from '../../db/schema/auth.js'
 import { newId } from '../../lib/ids.js'
@@ -32,14 +32,12 @@ export const authRepo = {
     return rows[0]
   },
   async incrementOtpAttempts(id: string) {
-    const row = await db
-      .select()
-      .from(otpCodes)
+    const rows = await db
+      .update(otpCodes)
+      .set({ attempts: sql`${otpCodes.attempts} + 1` })
       .where(eq(otpCodes.id, id))
-      .limit(1)
-    const current = row[0]?.attempts ?? 0
-    await db.update(otpCodes).set({ attempts: current + 1 }).where(eq(otpCodes.id, id))
-    return current + 1
+      .returning({ attempts: otpCodes.attempts })
+    return rows[0]?.attempts ?? 0
   },
   async markOtpConsumed(id: string, at: Date) {
     await db.update(otpCodes).set({ consumedAt: at }).where(eq(otpCodes.id, id))
