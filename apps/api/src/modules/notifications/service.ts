@@ -1,6 +1,10 @@
 import type { FastifyBaseLogger } from 'fastify'
 import type { NotificationSettings } from '@fyntra/schemas'
+import { eq } from 'drizzle-orm'
+import { db } from '../../db/client.js'
+import { users } from '../../db/schema/auth.js'
 import { NotFoundError } from '../../lib/errors.js'
+import { sendTemplate } from '../../services/whatsapp.js'
 import type { TenantContext } from '../../types/tenant-context.js'
 import { notificationsRepo } from './repository.js'
 
@@ -16,9 +20,13 @@ export interface DispatchInput {
   schoolId: string
   recipientUserId: string
   event: NotificationEvent
-  title: string
-  body: string
+  payloads: {
+    inApp?: { title: string; body: string }
+    whatsapp?: { templateName: string; variables: string[] }
+    sms?: { body: string }
+  }
   eventId?: string | null
+  recipientPhone: string
 }
 
 type SettingsRow = NonNullable<Awaited<ReturnType<typeof notificationsRepo.findSettings>>>
@@ -92,28 +100,100 @@ function wireToDbPatch(input: NotificationSettings) {
   }
 }
 
-// Inserts a notification_logs row if the recipient has in-app enabled for this
-// event. Returns true on insert, false if the recipient's settings opt out (or
-// no settings row exists).
+// Fan out a notification across the recipient's enabled channels. Returns the
+// number of channels that actually fired (i.e. the count of notification_logs
+// rows written — both successful and failed sends count, because the row exists
+// either way; only opted-out channels skip the insert).
 //
-// Plan B will add whatsapp/sms branches and replace the in_app-only fan-out at
-// every caller.
-export async function dispatchInAppNotification(input: DispatchInput): Promise<boolean> {
+// Semantics:
+// - No settings row for the recipient → 0 (the user hasn't auto-created their
+//   defaults yet via /me; we don't fan-out blindly).
+// - Event flag disabled in settings → 0.
+// - For each payload key present whose channel flag is true, attempt a send.
+export async function dispatch(input: DispatchInput): Promise<number> {
   const settings = await notificationsRepo.findSettings(input.recipientUserId)
-  if (!settings) return false
-  if (!settings.inApp) return false
+  if (!settings) return 0
   const field = SETTINGS_EVENT_FIELD[input.event]
-  if (!settings[field]) return false
-  await notificationsRepo.insertLog({
-    schoolId: input.schoolId,
-    recipientUserId: input.recipientUserId,
-    channel: 'in_app',
-    eventId: input.eventId ?? null,
-    status: 'sent',
-    payload: { title: input.title, body: input.body },
-    sentAt: new Date(),
-  })
-  return true
+  if (!settings[field]) return 0
+
+  let count = 0
+
+  // in_app
+  if (input.payloads.inApp && settings.inApp) {
+    await notificationsRepo.insertLog({
+      schoolId: input.schoolId,
+      recipientUserId: input.recipientUserId,
+      channel: 'in_app',
+      eventId: input.eventId ?? null,
+      status: 'sent',
+      payload: { title: input.payloads.inApp.title, body: input.payloads.inApp.body },
+      sentAt: new Date(),
+    })
+    count++
+  }
+
+  // whatsapp
+  if (input.payloads.whatsapp && settings.whatsapp) {
+    if (!input.recipientPhone) {
+      console.warn(
+        `[notifications.dispatch] whatsapp skipped for user=${input.recipientUserId} event=${input.event}: no recipient phone`,
+      )
+    } else {
+      const result = await sendTemplate({
+        to: input.recipientPhone,
+        name: input.payloads.whatsapp.templateName,
+        languageCode: 'en',
+        variables: input.payloads.whatsapp.variables,
+      })
+      const title = input.payloads.inApp?.title ?? `<${input.payloads.whatsapp.templateName}>`
+      const body = input.payloads.inApp?.body ?? `<${input.payloads.whatsapp.templateName}>`
+      const payload: {
+        title: string
+        body: string
+        errorMessage?: string
+        templateName: string
+        variables: string[]
+        dryRun?: boolean
+      } = {
+        title,
+        body,
+        templateName: input.payloads.whatsapp.templateName,
+        variables: input.payloads.whatsapp.variables,
+      }
+      if (result.errorMessage) payload.errorMessage = result.errorMessage
+      if (result.dryRun) payload.dryRun = true
+      await notificationsRepo.insertLog({
+        schoolId: input.schoolId,
+        recipientUserId: input.recipientUserId,
+        channel: 'whatsapp',
+        eventId: input.eventId ?? null,
+        status: result.status,
+        payload,
+        sentAt: result.status === 'sent' ? new Date() : null,
+      })
+      count++
+    }
+  }
+
+  // sms — no provider wired; always logged as failed.
+  if (input.payloads.sms && settings.sms) {
+    await notificationsRepo.insertLog({
+      schoolId: input.schoolId,
+      recipientUserId: input.recipientUserId,
+      channel: 'sms',
+      eventId: input.eventId ?? null,
+      status: 'failed',
+      payload: {
+        title: '',
+        body: input.payloads.sms.body,
+        errorMessage: 'sms provider not configured',
+      },
+      sentAt: null,
+    })
+    count++
+  }
+
+  return count
 }
 
 export async function getMySettings(ctx: TenantContext): Promise<NotificationSettings> {
@@ -176,8 +256,50 @@ export async function listNotifications(
 export async function retryNotification(ctx: TenantContext, id: string): Promise<WireLog> {
   const existing = await notificationsRepo.findLog(ctx, id)
   if (!existing) throw new NotFoundError('Notification not found')
-  // TODO(slice 8): re-invoke channel provider (whatsapp sendTemplate, etc)
-  const updated = await notificationsRepo.markLogResent(ctx, id)
+
+  if (existing.channel === 'in_app') {
+    const updated = await notificationsRepo.markLogResent(ctx, id)
+    if (!updated) throw new NotFoundError('Notification not found')
+    return logToWire(updated)
+  }
+
+  if (existing.channel === 'whatsapp') {
+    const tpl = existing.payload.templateName
+    const vars = existing.payload.variables
+    if (!tpl || !vars) {
+      const updated = await notificationsRepo.markLogResult(
+        ctx,
+        id,
+        'failed',
+        'cannot retry — original template payload missing',
+      )
+      if (!updated) throw new NotFoundError('Notification not found')
+      return logToWire(updated)
+    }
+    const userRows = await db
+      .select({ phone: users.phone })
+      .from(users)
+      .where(eq(users.id, existing.recipientUserId))
+      .limit(1)
+    const phone = userRows[0]?.phone
+    if (!phone) {
+      const updated = await notificationsRepo.markLogResult(ctx, id, 'failed', 'recipient phone not found')
+      if (!updated) throw new NotFoundError('Notification not found')
+      return logToWire(updated)
+    }
+    const result = await sendTemplate({
+      to: phone,
+      name: tpl,
+      languageCode: 'en',
+      variables: vars,
+    })
+    const updated = await notificationsRepo.markLogResult(ctx, id, result.status, result.errorMessage)
+    if (!updated) throw new NotFoundError('Notification not found')
+    return logToWire(updated)
+  }
+
+  // sms: no provider — keep returning a failed status.
+  const updated = await notificationsRepo.markLogResult(ctx, id, 'failed', 'sms provider not configured')
   if (!updated) throw new NotFoundError('Notification not found')
   return logToWire(updated)
 }

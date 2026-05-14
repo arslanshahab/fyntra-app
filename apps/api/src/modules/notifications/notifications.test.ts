@@ -212,4 +212,45 @@ describe('notifications routes', () => {
     expect(rows[0]?.status).toBe('sent')
     expect(rows[0]?.sentAt).not.toBeNull()
   })
+
+  it('POST /notifications/:id/retry on a whatsapp log re-sends and refreshes sentAt under dry-run', async () => {
+    const { schoolA, adminA, parentA } = await seedTwoSchools()
+    const logId = newId()
+    await db.insert(notificationLogs).values({
+      id: logId,
+      schoolId: schoolA,
+      recipientUserId: parentA,
+      channel: 'whatsapp',
+      eventId: null,
+      status: 'failed',
+      payload: {
+        title: 'Arrived at school',
+        body: 'Tap at 07:48',
+        templateName: 'fyntra_tap_event',
+        variables: ['Ali', '07:48'],
+        errorMessage: 'previous send failed',
+      },
+      sentAt: null,
+    })
+
+    const before = Date.now()
+    const t = token(app, { userId: adminA, schoolId: schoolA, role: 'admin' })
+    const res = await app.inject({
+      method: 'POST',
+      url: `/notifications/${logId}/retry`,
+      headers: { authorization: `Bearer ${t}` },
+    })
+    expect(res.statusCode).toBe(200)
+    const body = res.json() as { status: string; sentAt?: string }
+    expect(body.status).toBe('sent')
+    expect(body.sentAt).toBeDefined()
+
+    const rows = await db
+      .select()
+      .from(notificationLogs)
+      .where(eq(notificationLogs.id, logId))
+    expect(rows[0]?.status).toBe('sent')
+    expect(rows[0]?.sentAt).not.toBeNull()
+    expect(rows[0]!.sentAt!.getTime()).toBeGreaterThanOrEqual(before)
+  })
 })

@@ -1,12 +1,13 @@
 import { and, eq } from 'drizzle-orm'
 import { db } from '../../db/client.js'
+import { users } from '../../db/schema/auth.js'
 import { students, studentGuardians } from '../../db/schema/students.js'
 import type { TenantContext } from '../../types/tenant-context.js'
 import { NotFoundError } from '../../lib/errors.js'
 import { ymdInKarachi } from '../../lib/time.js'
 import { tapEventsRepo } from './repository.js'
 import { recomputeAttendanceForDay } from '../attendance/service.js'
-import { dispatchInAppNotification } from '../notifications/service.js'
+import { dispatch } from '../notifications/service.js'
 import { broker, channels } from '../../services/realtime.js'
 
 export interface ListTapEventsFilters {
@@ -72,10 +73,14 @@ export async function recordManualOverride(ctx: TenantContext, input: ManualOver
   const ymd = ymdInKarachi(occurredAt)
   const record = await recomputeAttendanceForDay(ctx.schoolId, input.studentId, ymd)
 
-  // Fan out manual_override notification to the student's guardians
+  // Fan out manual_override notification to the student's guardians.
+  // Note: only in_app — no `fyntra_manual_override` (or `fyntra_device_offline`)
+  // WhatsApp template is approved in Meta, so we deliberately skip the WA leg
+  // for these two events until/unless those templates ship.
   const guardianRows = await db
-    .select({ userId: studentGuardians.userId })
+    .select({ userId: studentGuardians.userId, phone: users.phone })
     .from(studentGuardians)
+    .innerJoin(users, eq(users.id, studentGuardians.userId))
     .where(
       and(
         eq(studentGuardians.schoolId, ctx.schoolId),
@@ -83,12 +88,17 @@ export async function recordManualOverride(ctx: TenantContext, input: ManualOver
       ),
     )
   for (const g of guardianRows) {
-    await dispatchInAppNotification({
+    await dispatch({
       schoolId: ctx.schoolId,
       recipientUserId: g.userId,
       event: 'manual_override',
-      title: 'Manual attendance update',
-      body: `${student.fullName}: ${input.direction === 'in' ? 'arrival' : 'departure'} recorded by admin. Reason: ${input.reason}`,
+      recipientPhone: g.phone,
+      payloads: {
+        inApp: {
+          title: 'Manual attendance update',
+          body: `${student.fullName}: ${input.direction === 'in' ? 'arrival' : 'departure'} recorded by admin. Reason: ${input.reason}`,
+        },
+      },
     })
   }
 

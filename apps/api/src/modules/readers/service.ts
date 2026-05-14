@@ -1,14 +1,15 @@
 import { and, eq, isNull } from 'drizzle-orm'
 import { db } from '../../db/client.js'
+import { users } from '../../db/schema/auth.js'
 import { cards } from '../../db/schema/cards.js'
 import { deviceTokens, devices } from '../../db/schema/devices.js'
-import { studentGuardians } from '../../db/schema/students.js'
+import { students, studentGuardians } from '../../db/schema/students.js'
 import { hashToken } from '../../lib/tokens.js'
 import { NotFoundError, UnauthorizedError } from '../../lib/errors.js'
-import { ymdInKarachi } from '../../lib/time.js'
+import { hhmmKarachi, ymdInKarachi } from '../../lib/time.js'
 import { tapEventsRepo } from '../tap-events/repository.js'
 import { recomputeAttendanceForDay } from '../attendance/service.js'
-import { dispatchInAppNotification } from '../notifications/service.js'
+import { dispatch } from '../notifications/service.js'
 import { broker, channels } from '../../services/realtime.js'
 
 export interface ResolvedDevice {
@@ -108,10 +109,11 @@ export async function ingestTap(input: IngestTapInput): Promise<IngestTapResult>
   const ymd = ymdInKarachi(input.occurredAt)
   const record = await recomputeAttendanceForDay(dev.schoolId, card.studentId, ymd)
 
-  // Fan out in-app notifications to guardians.
+  // Fan out notifications to guardians (in_app + whatsapp templates).
   const guardianRows = await db
-    .select({ userId: studentGuardians.userId })
+    .select({ userId: studentGuardians.userId, phone: users.phone })
     .from(studentGuardians)
+    .innerJoin(users, eq(users.id, studentGuardians.userId))
     .where(
       and(
         eq(studentGuardians.schoolId, dev.schoolId),
@@ -119,20 +121,33 @@ export async function ingestTap(input: IngestTapInput): Promise<IngestTapResult>
       ),
     )
 
+  const studentRows = await db
+    .select({ fullName: students.fullName })
+    .from(students)
+    .where(eq(students.id, card.studentId))
+    .limit(1)
+  const studentFullName = studentRows[0]?.fullName ?? ''
+
   const eventType = input.direction === 'in' ? 'tap_in' : 'tap_out'
   const title = input.direction === 'in' ? 'Arrived at school' : 'Left school'
   const body = `Tap at ${input.occurredAt.toISOString()}`
   let notificationCount = 0
   for (const g of guardianRows) {
-    const dispatched = await dispatchInAppNotification({
+    const fired = await dispatch({
       schoolId: dev.schoolId,
       recipientUserId: g.userId,
       event: eventType,
-      title,
-      body,
+      recipientPhone: g.phone,
+      payloads: {
+        inApp: { title, body },
+        whatsapp: {
+          templateName: 'fyntra_tap_event',
+          variables: [studentFullName, hhmmKarachi(input.occurredAt)],
+        },
+      },
       eventId: null,
     })
-    if (dispatched) notificationCount++
+    notificationCount += fired
   }
 
   // Broadcast on WS.

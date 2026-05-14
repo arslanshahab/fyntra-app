@@ -6,10 +6,11 @@ import { users } from '../../db/schema/auth.js'
 import { students, studentGuardians } from '../../db/schema/students.js'
 import { cards } from '../../db/schema/cards.js'
 import { devices, deviceTokens } from '../../db/schema/devices.js'
-import { notificationSettings } from '../../db/schema/notifications.js'
+import { notificationLogs, notificationSettings } from '../../db/schema/notifications.js'
 import { newId } from '../../lib/ids.js'
 import { hashToken } from '../../lib/tokens.js'
 import { ingestTap, resolveDeviceByToken } from './service.js'
+import { eq } from 'drizzle-orm'
 
 async function seed() {
   const schoolId = newId()
@@ -38,7 +39,7 @@ async function seed() {
   })
   await db.insert(notificationSettings).values({
     userId: parentId, schoolId,
-    whatsapp: false, sms: false, inApp: true,
+    whatsapp: true, sms: false, inApp: true,
     eventTapIn: true, eventTapOut: true, eventLate: true, eventAbsent: true,
     eventManualOverride: true, eventDeviceOffline: false,
   })
@@ -56,8 +57,8 @@ describe('reader service', () => {
     expect(ctx?.deviceId).toBe(deviceId)
   })
 
-  it('ingests a tap, creates record, writes in-app log', async () => {
-    const { tokenPlain } = await seed()
+  it('ingests a tap, creates record, writes in_app + whatsapp logs', async () => {
+    const { tokenPlain, parentId } = await seed()
     const result = await ingestTap({
       tokenPlain,
       rfidUid: 'AABBCCDD',
@@ -66,7 +67,17 @@ describe('reader service', () => {
     })
     expect(result.deduplicated).toBe(false)
     expect(result.record?.status).toBe('present')
-    expect(result.notificationCount).toBeGreaterThan(0)
+    expect(result.notificationCount).toBe(2)
+
+    const logs = await db
+      .select()
+      .from(notificationLogs)
+      .where(eq(notificationLogs.recipientUserId, parentId))
+    expect(logs.map((l) => l.channel).sort()).toEqual(['in_app', 'whatsapp'])
+    const wa = logs.find((l) => l.channel === 'whatsapp')
+    expect(wa).toBeDefined()
+    expect(wa!.payload.templateName).toBe('fyntra_tap_event')
+    expect(wa!.status).toBe('sent')
   })
 
   it('dedupes a same-direction tap within 30s', async () => {

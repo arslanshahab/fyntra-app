@@ -21,7 +21,14 @@ export const notificationLogs = pgTable(
     eventId: uuid('event_id').references(() => tapEvents.id, { onDelete: 'set null' }),
     status: notificationStatusEnum('status').notNull(),
     sentAt: timestamp('sent_at', { withTimezone: true }),
-    payload: jsonb('payload').$type<{ title: string; body: string; errorMessage?: string }>().notNull(),
+    payload: jsonb('payload').$type<{
+      title: string
+      body: string
+      errorMessage?: string
+      templateName?: string
+      variables?: string[]
+      dryRun?: boolean
+    }>().notNull(),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => ({

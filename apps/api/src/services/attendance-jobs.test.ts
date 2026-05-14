@@ -7,7 +7,7 @@ import { students, studentGuardians } from '../db/schema/students.js'
 import { cards } from '../db/schema/cards.js'
 import { devices } from '../db/schema/devices.js'
 import { attendanceRecords } from '../db/schema/attendance.js'
-import { notificationSettings } from '../db/schema/notifications.js'
+import { notificationLogs, notificationSettings } from '../db/schema/notifications.js'
 import { newId } from '../lib/ids.js'
 import { runAbsentJobForSchool } from './attendance-jobs.js'
 import { eq } from 'drizzle-orm'
@@ -34,11 +34,11 @@ async function seed(opts: { deviceStatus: 'online' | 'offline' }) {
   await db.insert(devices).values({ id: newId(), schoolId, label: 'gate', direction: 'in', status: opts.deviceStatus, lastHeartbeat: new Date() })
   await db.insert(notificationSettings).values({
     userId: parentId, schoolId,
-    whatsapp: false, sms: false, inApp: true,
+    whatsapp: true, sms: false, inApp: true,
     eventTapIn: true, eventTapOut: true, eventLate: true, eventAbsent: true,
     eventManualOverride: true, eventDeviceOffline: false,
   })
-  return { schoolId, studentId }
+  return { schoolId, studentId, parentId }
 }
 
 describe('runAbsentJobForSchool', () => {
@@ -47,7 +47,7 @@ describe('runAbsentJobForSchool', () => {
   })
 
   it('creates absent record + notifies parent when device online and no tap', async () => {
-    const { schoolId, studentId } = await seed({ deviceStatus: 'online' })
+    const { schoolId, studentId, parentId } = await seed({ deviceStatus: 'online' })
     const res = await runAbsentJobForSchool(schoolId, '2026-05-13')
     expect(res.markedAbsent).toBe(1)
     const recs = await db
@@ -55,6 +55,16 @@ describe('runAbsentJobForSchool', () => {
       .from(attendanceRecords)
       .where(eq(attendanceRecords.studentId, studentId))
     expect(recs[0]?.status).toBe('absent')
+
+    const logs = await db
+      .select()
+      .from(notificationLogs)
+      .where(eq(notificationLogs.recipientUserId, parentId))
+    expect(logs.map((l) => l.channel).sort()).toEqual(['in_app', 'whatsapp'])
+    const wa = logs.find((l) => l.channel === 'whatsapp')
+    expect(wa).toBeDefined()
+    expect(wa!.payload.templateName).toBe('fyntra_absent')
+    expect(wa!.status).toBe('sent')
   })
 
   it('marks unverified (not absent) and suppresses notify when entry device is offline', async () => {

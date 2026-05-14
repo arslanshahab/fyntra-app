@@ -1,6 +1,7 @@
 import { and, eq, inArray, isNull, or } from 'drizzle-orm'
 import cron from 'node-cron'
 import { db } from '../db/client.js'
+import { users } from '../db/schema/auth.js'
 import { schools } from '../db/schema/schools.js'
 import { students } from '../db/schema/students.js'
 import { studentGuardians } from '../db/schema/students.js'
@@ -9,8 +10,8 @@ import { devices } from '../db/schema/devices.js'
 import { attendanceRecords } from '../db/schema/attendance.js'
 import { newId } from '../lib/ids.js'
 import { broker, channels } from './realtime.js'
-import { ymdInKarachi } from '../lib/time.js'
-import { dispatchInAppNotification } from '../modules/notifications/service.js'
+import { karachiDayShort, ymdInKarachi } from '../lib/time.js'
+import { dispatch } from '../modules/notifications/service.js'
 
 export interface AbsentJobResult {
   markedAbsent: number
@@ -33,7 +34,7 @@ export async function runAbsentJobForSchool(schoolId: string, ymd: string): Prom
 
   // Active students with an active card and no record today.
   const activeStudents = await db
-    .select({ id: students.id })
+    .select({ id: students.id, fullName: students.fullName })
     .from(students)
     .innerJoin(cards, and(eq(cards.studentId, students.id), eq(cards.status, 'active'), isNull(cards.deletedAt)))
     .where(and(eq(students.schoolId, schoolId), eq(students.status, 'active')))
@@ -72,9 +73,11 @@ export async function runAbsentJobForSchool(schoolId: string, ymd: string): Prom
   // the notification path until the device fleet is healthy again.
   if (status === 'absent') {
     // Fan out 'absent' notifications to guardians of these students.
+    const nameByStudent = new Map(missing.map((s) => [s.id, s.fullName]))
     const guardians = await db
-      .select({ userId: studentGuardians.userId, studentId: studentGuardians.studentId })
+      .select({ userId: studentGuardians.userId, studentId: studentGuardians.studentId, phone: users.phone })
       .from(studentGuardians)
+      .innerJoin(users, eq(users.id, studentGuardians.userId))
       .where(
         and(
           eq(studentGuardians.schoolId, schoolId),
@@ -82,14 +85,21 @@ export async function runAbsentJobForSchool(schoolId: string, ymd: string): Prom
         ),
       )
     for (const g of guardians) {
-      const dispatched = await dispatchInAppNotification({
+      const studentFullName = nameByStudent.get(g.studentId) ?? ''
+      const fired = await dispatch({
         schoolId,
         recipientUserId: g.userId,
         event: 'absent',
-        title: 'Marked absent',
-        body: `No tap by ${ymd} cutoff`,
+        recipientPhone: g.phone,
+        payloads: {
+          inApp: { title: 'Marked absent', body: `No tap by ${ymd} cutoff` },
+          whatsapp: {
+            templateName: 'fyntra_absent',
+            variables: [studentFullName, karachiDayShort(ymd)],
+          },
+        },
       })
-      if (dispatched) {
+      if (fired > 0) {
         broker.publish(channels.student(g.studentId), { type: 'absent', studentId: g.studentId, date: ymd })
       }
     }

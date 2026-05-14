@@ -55,7 +55,14 @@ export const notificationsRepo = {
     channel: 'whatsapp' | 'sms' | 'in_app'
     eventId: string | null
     status: NotificationStatus
-    payload: { title: string; body: string; errorMessage?: string }
+    payload: {
+      title: string
+      body: string
+      errorMessage?: string
+      templateName?: string
+      variables?: string[]
+      dryRun?: boolean
+    }
     sentAt: Date | null
   }) {
     const id = newId()
@@ -90,6 +97,28 @@ export const notificationsRepo = {
     await db
       .update(notificationLogs)
       .set({ status: 'sent', sentAt: new Date() })
+      .where(and(eq(notificationLogs.schoolId, ctx.schoolId), eq(notificationLogs.id, id)))
+    return this.findLog(ctx, id)
+  },
+
+  async markLogResult(
+    ctx: TenantContext,
+    id: string,
+    status: NotificationStatus,
+    errorMessage?: string,
+  ) {
+    const existing = await this.findLog(ctx, id)
+    if (!existing) return undefined
+    const payload = errorMessage
+      ? { ...existing.payload, errorMessage }
+      : (() => {
+          // strip any stale errorMessage on success
+          const { errorMessage: _drop, ...rest } = existing.payload
+          return rest
+        })()
+    await db
+      .update(notificationLogs)
+      .set({ status, sentAt: status === 'sent' ? new Date() : null, payload })
       .where(and(eq(notificationLogs.schoolId, ctx.schoolId), eq(notificationLogs.id, id)))
     return this.findLog(ctx, id)
   },
