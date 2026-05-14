@@ -15,6 +15,7 @@ import { classesRoutes } from './modules/classes/routes.js'
 import { devicesRoutes } from './modules/devices/routes.js'
 import { cardsRoutes } from './modules/cards/routes.js'
 import { readerRoutes } from './modules/readers/routes.js'
+import { tapEventsRoutes } from './modules/tap-events/routes.js'
 import { wsRoutes } from './ws/routes.js'
 import { bootstrapAbsentJobs } from './services/attendance-jobs.js'
 import { startHeartbeatSweep } from './services/heartbeat-sweep.js'
@@ -75,6 +76,7 @@ export async function buildApp(): Promise<FastifyInstance> {
   await app.register(devicesRoutes)
   await app.register(cardsRoutes)
   await app.register(readerRoutes)
+  await app.register(tapEventsRoutes)
   await app.register(wsRoutes)
 
   if (env().NODE_ENV !== 'test') {
