@@ -8,7 +8,7 @@ import { NotFoundError, UnauthorizedError } from '../../lib/errors.js'
 import { ymdInKarachi } from '../../lib/time.js'
 import { tapEventsRepo } from '../tap-events/repository.js'
 import { recomputeAttendanceForDay } from '../attendance/service.js'
-import { notificationsRepo } from '../notifications/repository.js'
+import { dispatchInAppNotification } from '../notifications/service.js'
 import { broker, channels } from '../../services/realtime.js'
 
 export interface ResolvedDevice {
@@ -120,25 +120,19 @@ export async function ingestTap(input: IngestTapInput): Promise<IngestTapResult>
     )
 
   const eventType = input.direction === 'in' ? 'tap_in' : 'tap_out'
+  const title = input.direction === 'in' ? 'Arrived at school' : 'Left school'
+  const body = `Tap at ${input.occurredAt.toISOString()}`
   let notificationCount = 0
   for (const g of guardianRows) {
-    const settings = await notificationsRepo.findSettings(g.userId)
-    if (!settings || !settings.inApp) continue
-    const eventEnabled =
-      eventType === 'tap_in' ? settings.eventTapIn : settings.eventTapOut
-    if (!eventEnabled) continue
-    const title = input.direction === 'in' ? 'Arrived at school' : 'Left school'
-    const body = `Tap at ${input.occurredAt.toISOString()}`
-    await notificationsRepo.insertLog({
+    const dispatched = await dispatchInAppNotification({
       schoolId: dev.schoolId,
       recipientUserId: g.userId,
-      channel: 'in_app',
+      event: eventType,
+      title,
+      body,
       eventId: null,
-      status: 'sent',
-      payload: { title, body },
-      sentAt: new Date(),
     })
-    notificationCount++
+    if (dispatched) notificationCount++
   }
 
   // Broadcast on WS.

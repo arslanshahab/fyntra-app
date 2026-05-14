@@ -7,11 +7,10 @@ import { studentGuardians } from '../db/schema/students.js'
 import { cards } from '../db/schema/cards.js'
 import { devices } from '../db/schema/devices.js'
 import { attendanceRecords } from '../db/schema/attendance.js'
-import { notificationSettings } from '../db/schema/notifications.js'
-import { notificationLogs } from '../db/schema/notifications.js'
 import { newId } from '../lib/ids.js'
 import { broker, channels } from './realtime.js'
 import { ymdInKarachi } from '../lib/time.js'
+import { dispatchInAppNotification } from '../modules/notifications/service.js'
 
 export interface AbsentJobResult {
   markedAbsent: number
@@ -78,24 +77,16 @@ export async function runAbsentJobForSchool(schoolId: string, ymd: string): Prom
         ),
       )
     for (const g of guardians) {
-      const s = await db
-        .select()
-        .from(notificationSettings)
-        .where(eq(notificationSettings.userId, g.userId))
-        .limit(1)
-      const settings = s[0]
-      if (!settings?.inApp || !settings?.eventAbsent) continue
-      await db.insert(notificationLogs).values({
-        id: newId(),
+      const dispatched = await dispatchInAppNotification({
         schoolId,
         recipientUserId: g.userId,
-        channel: 'in_app',
-        eventId: null,
-        status: 'sent',
-        payload: { title: 'Marked absent', body: `No tap by ${ymd} cutoff` },
-        sentAt: new Date(),
+        event: 'absent',
+        title: 'Marked absent',
+        body: `No tap by ${ymd} cutoff`,
       })
-      broker.publish(channels.student(g.studentId), { type: 'absent', studentId: g.studentId, date: ymd })
+      if (dispatched) {
+        broker.publish(channels.student(g.studentId), { type: 'absent', studentId: g.studentId, date: ymd })
+      }
     }
   }
 
