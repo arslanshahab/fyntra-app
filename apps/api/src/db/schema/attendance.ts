@@ -22,7 +22,7 @@ export const tapEvents = pgTable(
     schoolId: uuid('school_id').notNull().references(() => schools.id, { onDelete: 'cascade' }),
     cardId: uuid('card_id').references(() => cards.id, { onDelete: 'set null' }),
     rfidUid: text('rfid_uid').notNull(),
-    deviceId: uuid('device_id').notNull().references(() => devices.id, { onDelete: 'restrict' }),
+    deviceId: uuid('device_id').references(() => devices.id, { onDelete: 'restrict' }),
     studentId: uuid('student_id').references(() => students.id, { onDelete: 'set null' }),
     direction: tapDirectionEnum('direction').notNull(),
     occurredAt: timestamp('occurred_at', { withTimezone: true }).notNull(),

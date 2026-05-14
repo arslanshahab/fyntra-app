@@ -1,4 +1,4 @@
-import { and, desc, eq, gte } from 'drizzle-orm'
+import { and, desc, eq, gte, lte } from 'drizzle-orm'
 import { db } from '../../db/client.js'
 import { tapEvents } from '../../db/schema/attendance.js'
 import { newId } from '../../lib/ids.js'
@@ -31,7 +31,7 @@ export const tapEventsRepo = {
     schoolId: string
     cardId: string | null
     rfidUid: string
-    deviceId: string
+    deviceId: string | null
     studentId: string | null
     direction: 'in' | 'out'
     occurredAt: Date
@@ -43,5 +43,22 @@ export const tapEventsRepo = {
     const id = newId()
     await db.insert(tapEvents).values({ id, ...input, deduplicated: input.deduplicated ?? false })
     return id
+  },
+  async listForRange(input: {
+    schoolId: string
+    from?: Date
+    to?: Date
+    studentId?: string
+  }) {
+    const conds = [eq(tapEvents.schoolId, input.schoolId)]
+    if (input.studentId) conds.push(eq(tapEvents.studentId, input.studentId))
+    if (input.from) conds.push(gte(tapEvents.occurredAt, input.from))
+    if (input.to) conds.push(lte(tapEvents.occurredAt, input.to))
+    return db
+      .select()
+      .from(tapEvents)
+      .where(and(...conds))
+      .orderBy(desc(tapEvents.occurredAt))
+      .limit(500)
   },
 }

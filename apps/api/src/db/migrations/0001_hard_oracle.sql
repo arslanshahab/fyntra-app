@@ -1,0 +1,1 @@
+ALTER TABLE "tap_events" ALTER COLUMN "device_id" DROP NOT NULL;
