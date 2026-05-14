@@ -113,6 +113,13 @@ export async function bootstrapAbsentJobs(): Promise<void> {
     const totalMins = m + s.absentThresholdMinutes
     const cronH = h + Math.floor(totalMins / 60)
     const cronM = totalMins % 60
+    if (cronH > 23) {
+      // Absent cutoff would cross midnight; not yet supported. Log and skip.
+      console.warn(
+        `[absent-job] school ${s.id} startTime ${s.startTime} + absentThresholdMinutes ${s.absentThresholdMinutes} exceeds 23:59 — skipping schedule`,
+      )
+      continue
+    }
     const task = cron.schedule(
       `${cronM} ${cronH} * * 1-5`,
       () => {
