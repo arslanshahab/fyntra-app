@@ -9,6 +9,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "dotenv": "^16.4.5",
     "nfc-pcsc": "^0.8.1",
     "ws": "^8.18.0"
   },

@@ -88,3 +88,40 @@ Plain `console.log`, one event per line, prefixed `[bridge]`. Errors go to stder
 [bridge] client disconnected (0 total)
 [bridge] reader detached: ACS ACR122U PICC Interface 00 00
 ```
+
+## Dual-emit to the API
+
+The bridge has two modes:
+
+- **Local-WS-only (default).** With no env vars set, behaviour is identical to Phase 1: every tap is broadcast on `ws://127.0.0.1:8787` and nothing else happens. The Simulate Tap UI in the admin app is the supported way to drive the system without a physical reader.
+- **Dual-emit.** Copy `.env.example` to `.env` and fill in the three vars. Each tap is now broadcast on the local WS **and** POSTed to `${FYNTRA_API_URL}/readers/tap`. The two paths are independent: if the api is down, fetch fails and the bridge logs the error to stderr — the WS broadcast still went through, the next tap retries.
+
+Env vars (loaded from `.env` via `dotenv/config`):
+
+| Var | Required | Default | Notes |
+| --- | --- | --- | --- |
+| `FYNTRA_API_URL` | for dual-emit | — | e.g. `http://localhost:3000`. Empty = WS-only mode. |
+| `FYNTRA_DEVICE_TOKEN` | when URL set | — | Plaintext device token; see below. |
+| `FYNTRA_DEVICE_DIRECTION` | no | `both` | `'in' \| 'out' \| 'both'`. See caveat below. |
+
+### Getting a device token
+
+```sh
+pnpm -F api db:seed
+```
+
+The seed prints every device's **plaintext** token to stdout — this is the only place the plaintext is shown; the database only stores the bcrypt hash. Copy one and drop it in your `.env`. Phase 2 will replace this with an admin UI that can mint+show a token on demand.
+
+### `FYNTRA_DEVICE_DIRECTION=both`
+
+The ACR122U doesn't know whether it sits at the entry gate or the exit gate. When `direction=both`, the bridge defaults every tap to `direction='in'` when posting to the api. Set to `in` or `out` explicitly when the physical reader is dedicated to one side.
+
+### Expected output
+
+After a successful dual-emit tap you should see:
+
+```
+[bridge] dual-emit enabled → POST http://localhost:3000/readers/tap (direction=both)
+[bridge] card_tapped uid=AABBCCDD reader="ACS ACR122U PICC Interface 00 00"
+[bridge] api accepted tap uid=AABBCCDD
+```

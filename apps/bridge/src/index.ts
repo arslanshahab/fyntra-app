@@ -1,9 +1,18 @@
+import 'dotenv/config';
 import { NFC, type Card, type Reader } from 'nfc-pcsc';
 import { WebSocketServer, WebSocket } from 'ws';
 
 const HOST = '127.0.0.1';
 const PORT = 8787;
 const DEDUP_MS = 500;
+
+type DeviceDirection = 'in' | 'out' | 'both';
+
+interface ApiConfig {
+  baseUrl: string;
+  token: string;
+  direction: DeviceDirection;
+}
 
 interface CardTappedMessage {
   type: 'card_tapped';
@@ -15,6 +24,58 @@ interface CardTappedMessage {
 const log = (msg: string) => console.log(`[bridge] ${msg}`);
 const err = (msg: string, e?: unknown) =>
   console.error(`[bridge] ${msg}`, e ?? '');
+
+const resolveApiConfig = (): ApiConfig | null => {
+  const rawUrl = process.env.FYNTRA_API_URL?.trim();
+  if (!rawUrl) {
+    log('FYNTRA_API_URL not set — running in local-WS-only mode');
+    return null;
+  }
+  const token = process.env.FYNTRA_DEVICE_TOKEN?.trim();
+  if (!token) {
+    err(
+      'FYNTRA_API_URL set but FYNTRA_DEVICE_TOKEN missing — running in local-WS-only mode',
+    );
+    return null;
+  }
+  const rawDirection = process.env.FYNTRA_DEVICE_DIRECTION?.trim().toLowerCase();
+  let direction: DeviceDirection = 'both';
+  if (rawDirection === 'in' || rawDirection === 'out' || rawDirection === 'both') {
+    direction = rawDirection;
+  } else if (rawDirection && rawDirection.length > 0) {
+    err(
+      `FYNTRA_DEVICE_DIRECTION="${rawDirection}" invalid — falling back to "both"`,
+    );
+  }
+  const baseUrl = rawUrl.replace(/\/+$/, '');
+  log(
+    `dual-emit enabled → POST ${baseUrl}/readers/tap (direction=${direction})`,
+  );
+  return { baseUrl, token, direction };
+};
+
+const apiConfig: ApiConfig | null = resolveApiConfig();
+
+const postTapToApi = async (uid: string, now: number): Promise<void> => {
+  if (!apiConfig) return;
+  const direction = apiConfig.direction === 'both' ? 'in' : apiConfig.direction;
+  const res = await fetch(`${apiConfig.baseUrl}/readers/tap`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
+      rfidUid: uid,
+      direction,
+      occurredAt: new Date(now).toISOString(),
+      deviceToken: apiConfig.token,
+    }),
+  });
+  if (!res.ok) {
+    const body = await res.text().catch(() => '');
+    err(`POST /readers/tap → ${res.status} ${body}`);
+    return;
+  }
+  log(`api accepted tap uid=${uid}`);
+};
 
 const wss = new WebSocketServer({ host: HOST, port: PORT });
 
@@ -74,6 +135,7 @@ nfc.on('reader', (reader: Reader) => {
     };
     log(`card_tapped uid=${uid} reader="${readerName}"`);
     broadcast(message);
+    postTapToApi(uid, now).catch((e) => err('api post failed:', e));
   });
 
   reader.on('error', (e: unknown) => err(`reader "${readerName}" error:`, e));

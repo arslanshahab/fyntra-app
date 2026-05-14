@@ -98,6 +98,9 @@ importers:
 
   apps/bridge:
     dependencies:
+      dotenv:
+        specifier: ^16.4.5
+        version: 16.6.1
       nfc-pcsc:
         specifier: ^0.8.1
         version: 0.8.1
