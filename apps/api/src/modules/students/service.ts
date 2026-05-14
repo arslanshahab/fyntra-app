@@ -43,3 +43,27 @@ export async function getStudent(ctx: TenantContext, id: string) {
     })),
   }
 }
+
+export async function getStudentTimeline(
+  ctx: TenantContext,
+  studentId: string,
+  from: string,
+  to: string,
+) {
+  const s = await studentsRepo.findById(ctx, studentId)
+  if (!s) throw new NotFoundError('Student not found')
+  if (ctx.role === 'parent') {
+    const isGuardian = await studentsRepo.isGuardianOf(ctx, studentId)
+    if (!isGuardian) throw new NotFoundError('Student not found')
+  }
+  const records = await studentsRepo.timelineForStudent(ctx, studentId, from, to)
+  return records.map((r) => ({
+    id: r.id,
+    studentId: r.studentId,
+    date: r.date,
+    firstInAt: r.firstInAt?.toISOString() ?? undefined,
+    lastOutAt: r.lastOutAt?.toISOString() ?? undefined,
+    status: r.status,
+    isManual: r.isManual,
+  }))
+}

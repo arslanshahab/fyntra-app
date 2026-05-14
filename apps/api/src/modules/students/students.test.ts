@@ -6,6 +6,7 @@ import { db } from '../../db/client.js'
 import { schools, classes } from '../../db/schema/schools.js'
 import { users } from '../../db/schema/auth.js'
 import { students } from '../../db/schema/students.js'
+import { attendanceRecords } from '../../db/schema/attendance.js'
 import { newId } from '../../lib/ids.js'
 
 let app: FastifyInstance
@@ -77,6 +78,41 @@ describe('GET /students', () => {
     const res = await app.inject({
       method: 'GET',
       url: `/students/${studentB}`,
+      headers: { authorization: `Bearer ${t}` },
+    })
+    expect(res.statusCode).toBe(404)
+  })
+
+  it('GET /students/:id/timeline returns records within range ordered by date', async () => {
+    const { schoolA, adminA, studentA } = await seedTwoSchools()
+    await db.insert(attendanceRecords).values([
+      { id: newId(), schoolId: schoolA, studentId: studentA, date: '2026-05-11', status: 'present', isManual: false },
+      { id: newId(), schoolId: schoolA, studentId: studentA, date: '2026-05-12', status: 'late', isManual: false },
+      { id: newId(), schoolId: schoolA, studentId: studentA, date: '2026-05-15', status: 'present', isManual: false },
+    ])
+    const t = token(app, { userId: adminA, schoolId: schoolA, role: 'admin' })
+    const res = await app.inject({
+      method: 'GET',
+      url: `/students/${studentA}/timeline?from=2026-05-11&to=2026-05-13`,
+      headers: { authorization: `Bearer ${t}` },
+    })
+    expect(res.statusCode).toBe(200)
+    const body = res.json() as Array<{ date: string; status: string }>
+    expect(body.map((r) => r.date)).toEqual(['2026-05-11', '2026-05-12'])
+  })
+
+  it('parent gets 404 on timeline of a student they do not guard', async () => {
+    const { schoolA, studentA } = await seedTwoSchools()
+    // Add a parent in school A who is NOT a guardian of studentA
+    const parentId = newId()
+    await db.insert(users).values({
+      id: parentId, schoolId: schoolA, role: 'parent',
+      fullName: 'NonGuardianParent', phone: '+923001000080', preferredLanguage: 'en',
+    })
+    const t = token(app, { userId: parentId, schoolId: schoolA, role: 'parent' })
+    const res = await app.inject({
+      method: 'GET',
+      url: `/students/${studentA}/timeline?from=2026-05-11&to=2026-05-13`,
       headers: { authorization: `Bearer ${t}` },
     })
     expect(res.statusCode).toBe(404)

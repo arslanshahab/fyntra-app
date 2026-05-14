@@ -1,6 +1,7 @@
-import { and, eq, ilike, inArray } from 'drizzle-orm'
+import { and, asc, eq, gte, ilike, inArray, lte } from 'drizzle-orm'
 import { db } from '../../db/client.js'
 import { students, studentGuardians } from '../../db/schema/students.js'
+import { attendanceRecords } from '../../db/schema/attendance.js'
 import { users } from '../../db/schema/auth.js'
 import type { TenantContext } from '../../types/tenant-context.js'
 
@@ -84,5 +85,36 @@ export const studentsRepo = {
         ),
       )
     return rows.map((r) => r.userId)
+  },
+
+  async timelineForStudent(ctx: TenantContext, studentId: string, from: string, to: string) {
+    const rows = await db
+      .select()
+      .from(attendanceRecords)
+      .where(
+        and(
+          eq(attendanceRecords.schoolId, ctx.schoolId),
+          eq(attendanceRecords.studentId, studentId),
+          gte(attendanceRecords.date, from),
+          lte(attendanceRecords.date, to),
+        ),
+      )
+      .orderBy(asc(attendanceRecords.date))
+    return rows
+  },
+
+  async isGuardianOf(ctx: TenantContext, studentId: string) {
+    const rows = await db
+      .select({ studentId: studentGuardians.studentId })
+      .from(studentGuardians)
+      .where(
+        and(
+          eq(studentGuardians.schoolId, ctx.schoolId),
+          eq(studentGuardians.userId, ctx.userId),
+          eq(studentGuardians.studentId, studentId),
+        ),
+      )
+      .limit(1)
+    return rows.length > 0
   },
 }
