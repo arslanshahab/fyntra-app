@@ -10,7 +10,9 @@ async function reset() {
   if (process.env.CONFIRM !== 'yes') {
     throw new Error('refusing to drop. set CONFIRM=yes to proceed.')
   }
-  await pool.query('DROP SCHEMA public CASCADE; CREATE SCHEMA public;')
+  await pool.query(
+    'DROP SCHEMA IF EXISTS public CASCADE; DROP SCHEMA IF EXISTS drizzle CASCADE; CREATE SCHEMA public;',
+  )
   const db = drizzle(pool)
   await migrate(db, { migrationsFolder: './src/db/migrations' })
   console.log('reset + migrated')
