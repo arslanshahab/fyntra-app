@@ -68,4 +68,27 @@ describe('runAbsentJobForSchool', () => {
       .where(eq(attendanceRecords.studentId, studentId))
     expect(recs[0]?.status).toBe('unverified')
   })
+
+  it('does not stomp a present record from a real tap', async () => {
+    const { schoolId, studentId } = await seed({ deviceStatus: 'online' })
+    // Pre-existing 'present' record (as if from a tap earlier in the morning)
+    await db.insert(attendanceRecords).values({
+      id: newId(),
+      schoolId,
+      studentId,
+      date: '2026-05-13',
+      firstInAt: new Date('2026-05-13T02:48:00Z'),
+      lastOutAt: null,
+      status: 'present',
+      isManual: false,
+    })
+    const res = await runAbsentJobForSchool(schoolId, '2026-05-13')
+    expect(res.markedAbsent).toBe(0)
+    expect(res.markedUnverified).toBe(0)
+    const recs = await db
+      .select()
+      .from(attendanceRecords)
+      .where(eq(attendanceRecords.studentId, studentId))
+    expect(recs[0]?.status).toBe('present')
+  })
 })
