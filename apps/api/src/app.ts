@@ -12,6 +12,7 @@ import { authRoutes } from './modules/auth/routes.js'
 import { meRoutes } from './modules/me/routes.js'
 import { studentsRoutes } from './modules/students/routes.js'
 import { readerRoutes } from './modules/readers/routes.js'
+import { wsRoutes } from './ws/routes.js'
 import { bootstrapAbsentJobs } from './services/attendance-jobs.js'
 import { startHeartbeatSweep } from './services/heartbeat-sweep.js'
 
@@ -68,6 +69,7 @@ export async function buildApp(): Promise<FastifyInstance> {
   await app.register(meRoutes)
   await app.register(studentsRoutes)
   await app.register(readerRoutes)
+  await app.register(wsRoutes)
 
   if (env().NODE_ENV !== 'test') {
     await bootstrapAbsentJobs()
