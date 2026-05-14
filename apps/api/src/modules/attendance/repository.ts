@@ -66,7 +66,8 @@ export const attendanceRepo = {
           updatedAt: new Date(),
         })
         .where(eq(attendanceRecords.id, existing.id))
-      return { ...existing, ...input }
+      const rec = await this.findRecord(input.schoolId, input.studentId, input.date)
+      return rec!
     }
     const id = newId()
     await db.insert(attendanceRecords).values({
