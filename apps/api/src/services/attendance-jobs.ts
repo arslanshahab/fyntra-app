@@ -65,6 +65,11 @@ export async function runAbsentJobForSchool(schoolId: string, ymd: string): Prom
   if (status === 'absent') count.markedAbsent = rows.length
   else count.markedUnverified = rows.length
 
+  // Why no fan-out for `unverified`: when all entry devices are offline, we
+  // can't tell whether a student actually arrived. Notifying parents with a
+  // misleading "marked absent" alert is worse than silence — they'll see the
+  // record's `unverified` status in the timeline and we deliberately suppress
+  // the notification path until the device fleet is healthy again.
   if (status === 'absent') {
     // Fan out 'absent' notifications to guardians of these students.
     const guardians = await db
