@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest'
 import type { FastifyInstance } from 'fastify'
+import { and, eq } from 'drizzle-orm'
 import { buildApp } from '../../app.js'
 import { truncateAll } from '../../../tests/helpers/db.js'
 import { db } from '../../db/client.js'
@@ -95,6 +96,91 @@ describe('reports routes', () => {
       headers: { authorization: `Bearer ${t}` },
     })
     expect(res.statusCode).toBe(404)
+  })
+
+  it('GET /attendance surfaces cardAnomaly=true and omits the other two flags', async () => {
+    const { schoolA, adminA, studentA } = await seedTwoSchools()
+    // Flip the default row to cardAnomaly=true; leftWithoutScan/flaggedForReview stay false.
+    await db
+      .update(attendanceRecords)
+      .set({ cardAnomaly: true })
+      .where(
+        and(eq(attendanceRecords.schoolId, schoolA), eq(attendanceRecords.studentId, studentA)),
+      )
+    const t = token(app, { userId: adminA, schoolId: schoolA, role: 'admin' })
+    const res = await app.inject({
+      method: 'GET',
+      url: '/attendance?date=2026-05-13',
+      headers: { authorization: `Bearer ${t}` },
+    })
+    expect(res.statusCode).toBe(200)
+    // Parse raw payload to verify omitted keys aren't merely undefined but absent.
+    const parsed = JSON.parse(res.payload) as Array<Record<string, unknown>>
+    expect(parsed).toHaveLength(1)
+    const row = parsed[0]!
+    expect(row.cardAnomaly).toBe(true)
+    expect('leftWithoutScan' in row).toBe(false)
+    expect('flaggedForReview' in row).toBe(false)
+  })
+
+  it('GET /attendance default row JSON contains none of the anomaly keys', async () => {
+    const { schoolA, adminA } = await seedTwoSchools()
+    const t = token(app, { userId: adminA, schoolId: schoolA, role: 'admin' })
+    const res = await app.inject({
+      method: 'GET',
+      url: '/attendance?date=2026-05-13',
+      headers: { authorization: `Bearer ${t}` },
+    })
+    expect(res.statusCode).toBe(200)
+    const parsed = JSON.parse(res.payload) as Array<Record<string, unknown>>
+    expect(parsed).toHaveLength(1)
+    const row = parsed[0]!
+    expect('cardAnomaly' in row).toBe(false)
+    expect('leftWithoutScan' in row).toBe(false)
+    expect('flaggedForReview' in row).toBe(false)
+  })
+
+  it('GET /attendance?anomalies=true returns only the flagged row', async () => {
+    const { schoolA, adminA, studentA, classA } = await seedTwoSchools()
+    // Add a second student + a flagged attendance row alongside the default
+    // (unflagged) one seeded by seedTwoSchools.
+    const flaggedStudent = newId()
+    await db.insert(students).values([
+      {
+        id: flaggedStudent,
+        schoolId: schoolA,
+        classId: classA,
+        fullName: 'FlaggedStudent',
+        rollNumber: '002',
+        status: 'active',
+      },
+    ])
+    const flaggedRowId = newId()
+    await db.insert(attendanceRecords).values([
+      {
+        id: flaggedRowId,
+        schoolId: schoolA,
+        studentId: flaggedStudent,
+        date: '2026-05-13',
+        status: 'present',
+        isManual: false,
+        flaggedForReview: true,
+      },
+    ])
+    const t = token(app, { userId: adminA, schoolId: schoolA, role: 'admin' })
+    const res = await app.inject({
+      method: 'GET',
+      url: '/attendance?date=2026-05-13&anomalies=true',
+      headers: { authorization: `Bearer ${t}` },
+    })
+    expect(res.statusCode).toBe(200)
+    const body = res.json() as Array<{ id: string; studentId: string; flaggedForReview?: boolean }>
+    expect(body).toHaveLength(1)
+    expect(body[0]?.id).toBe(flaggedRowId)
+    expect(body[0]?.studentId).toBe(flaggedStudent)
+    expect(body[0]?.flaggedForReview).toBe(true)
+    // Sanity: the unflagged default row for studentA is NOT in the result.
+    expect(body.map((r) => r.studentId)).not.toContain(studentA)
   })
 
   it('GET /reports/attendance.csv returns proper headers + headers row', async () => {

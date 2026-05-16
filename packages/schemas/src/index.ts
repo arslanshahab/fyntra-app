@@ -132,6 +132,12 @@ export const attendanceRecordSchema = z.object({
   lastOutAt: z.string().optional(),
   status: attendanceStatusSchema,
   isManual: z.boolean(),
+  // Anomaly flags — omitted from the wire when false (the 99% case).
+  // See apps/api/src/modules/reports/service.ts for the "falsy → undefined"
+  // mapping that keeps default rows clean.
+  cardAnomaly: z.boolean().optional(),
+  leftWithoutScan: z.boolean().optional(),
+  flaggedForReview: z.boolean().optional(),
 })
 export type AttendanceRecord = z.infer<typeof attendanceRecordSchema>
 

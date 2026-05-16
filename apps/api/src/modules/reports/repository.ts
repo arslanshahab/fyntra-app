@@ -1,4 +1,4 @@
-import { and, asc, eq, gte, inArray, lte } from 'drizzle-orm'
+import { and, asc, eq, gte, inArray, lte, or } from 'drizzle-orm'
 import { db } from '../../db/client.js'
 import { attendanceRecords } from '../../db/schema/attendance.js'
 import { students } from '../../db/schema/students.js'
@@ -10,6 +10,7 @@ export interface AttendanceFilters {
   from?: string
   to?: string
   classId?: string
+  anomalies?: boolean
 }
 
 export const reportsRepo = {
@@ -36,6 +37,18 @@ export const reportsRepo = {
       const ids = studentRows.map((s) => s.id)
       if (ids.length === 0) return []
       conds.push(inArray(attendanceRecords.studentId, ids))
+    }
+
+    if (filters.anomalies) {
+      // `or(...)` with non-empty args returns SQL<unknown>; the `!` reflects
+      // that we know it isn't undefined here.
+      conds.push(
+        or(
+          eq(attendanceRecords.cardAnomaly, true),
+          eq(attendanceRecords.leftWithoutScan, true),
+          eq(attendanceRecords.flaggedForReview, true),
+        )!,
+      )
     }
 
     return db

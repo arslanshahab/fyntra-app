@@ -28,6 +28,12 @@ export async function listAttendance(ctx: TenantContext, filters: AttendanceFilt
     lastOutAt: r.lastOutAt?.toISOString() ?? undefined,
     status: r.status,
     isManual: r.isManual,
+    // Anomaly flags are NOT NULL DEFAULT FALSE in the DB, so `false ||
+    // undefined` yields undefined and JSON.stringify drops the key — the
+    // wire stays clean for the 99% of rows without any anomaly.
+    cardAnomaly: r.cardAnomaly || undefined,
+    leftWithoutScan: r.leftWithoutScan || undefined,
+    flaggedForReview: r.flaggedForReview || undefined,
   }))
 }
 

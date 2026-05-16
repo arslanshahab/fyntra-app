@@ -9,6 +9,13 @@ const listQuery = z.object({
   from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   classId: z.string().optional(),
+  // Explicit "true"/"false" rather than z.coerce.boolean() — the latter
+  // treats any non-empty string as truthy (including "false"), which is a
+  // common footgun for query-string booleans.
+  anomalies: z
+    .enum(['true', 'false'])
+    .transform((v) => v === 'true')
+    .optional(),
 })
 
 const csvQuery = z.object({

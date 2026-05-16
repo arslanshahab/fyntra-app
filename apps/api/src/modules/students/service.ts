@@ -67,5 +67,8 @@ export async function getStudentTimeline(
     lastOutAt: r.lastOutAt?.toISOString() ?? undefined,
     status: r.status,
     isManual: r.isManual,
+    cardAnomaly: r.cardAnomaly || undefined,
+    leftWithoutScan: r.leftWithoutScan || undefined,
+    flaggedForReview: r.flaggedForReview || undefined,
   }))
 }
