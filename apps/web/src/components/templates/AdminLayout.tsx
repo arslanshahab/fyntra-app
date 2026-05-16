@@ -56,24 +56,38 @@ export function AdminLayout() {
   }
 
   return (
-    <div className="min-h-dvh bg-slate-50">
+    <div className="min-h-dvh bg-stone-50">
       <a
         href="#admin-main"
-        className="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-50 focus:rounded-md focus:bg-white focus:px-3 focus:py-2 focus:text-sm focus:font-medium focus:text-brand-700 focus:shadow focus:ring-2 focus:ring-brand-500"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-50 focus:rounded-md focus:bg-white focus:px-3 focus:py-2 focus:text-sm focus:font-medium focus:text-brand-700 focus:shadow-elev-2 focus:ring-2 focus:ring-brand-500"
       >
         {t('common.skipToContent')}
       </a>
-      <header className="border-b border-slate-200 bg-white">
+      <header className="border-b border-stone-200 bg-white">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-6 py-4">
-          <div>
-            <p className="text-[10px] font-medium uppercase tracking-wide text-slate-500">
-              {t('app.name')} · {t('admin.dashboardTitle')}
+          <div className="flex items-center gap-2.5">
+            <div
+              aria-hidden="true"
+              className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-600 text-white shadow-elev-1"
+            >
+              <span className="font-display text-sm font-bold leading-none">F</span>
+            </div>
+            <p className="font-display text-base font-semibold tracking-tight text-stone-900">
+              {t('app.name')}
             </p>
-            <p className="text-sm font-medium text-slate-900">{user ? user.fullName : ''}</p>
+            <span aria-hidden="true" className="text-stone-300">
+              ·
+            </span>
+            <p className="text-sm text-stone-500">{t('admin.role')}</p>
           </div>
-          <Button variant="ghost" size="sm" onClick={onSignOut}>
-            {t('common.signOut')}
-          </Button>
+          <div className="flex items-center gap-3">
+            {user ? (
+              <p className="hidden text-sm font-medium text-stone-900 sm:block">{user.fullName}</p>
+            ) : null}
+            <Button variant="ghost" size="sm" onClick={onSignOut}>
+              {t('common.signOut')}
+            </Button>
+          </div>
         </div>
       </header>
 
@@ -89,10 +103,10 @@ export function AdminLayout() {
                     end={item.end}
                     className={({ isActive }) =>
                       cn(
-                        'flex items-center gap-2 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium',
+                        'flex items-center gap-2 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium transition-colors',
                         isActive
                           ? 'bg-brand-50 text-brand-700 ring-1 ring-inset ring-brand-100'
-                          : 'text-slate-600 hover:bg-slate-100',
+                          : 'text-stone-600 hover:bg-stone-100',
                       )
                     }
                   >
@@ -101,7 +115,7 @@ export function AdminLayout() {
                     {showBadge ? (
                       <span
                         aria-label={t('admin.anomaly.title')}
-                        className="ml-auto inline-flex min-w-[1.25rem] items-center justify-center rounded-full bg-status-late/15 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-status-late ring-1 ring-inset ring-status-late/30"
+                        className="ml-auto inline-flex min-w-[1.25rem] items-center justify-center rounded-full bg-status-late/15 px-1.5 py-0.5 font-mono text-[10px] font-semibold leading-none tabular-nums text-status-late ring-1 ring-inset ring-status-late/30"
                       >
                         {anomalyCount}
                       </span>

@@ -18,15 +18,16 @@
     "switchTo": "اردو"
   },
   "login": {
-    "heading": "Sign in to Fyntra",
     "phoneStep": {
-      "body": "Enter your phone number to receive a one-time code.",
+      "heading": "Welcome.",
+      "body": "Sign in to see your child's day.",
       "phoneLabel": "Phone number",
       "phonePlaceholder": "+923001234567",
       "submit": "Send code",
       "invalidPhone": "Enter a valid phone number in international format (e.g. +923001234567 or +971501234567)."
     },
     "otpStep": {
+      "heading": "Check your messages.",
       "body": "We sent a 4-digit code to {{phone}}.",
       "otpLabel": "One-time code",
       "submit": "Verify",
@@ -202,6 +203,7 @@
     }
   },
   "admin": {
+    "role": "Admin",
     "dashboardTitle": "Dashboard",
     "today": "Today, {{date}}",
     "nav": {

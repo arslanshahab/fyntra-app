@@ -32,9 +32,11 @@ export function LiveTapFeed({ school }: LiveTapFeedProps) {
     <section
       aria-live="polite"
       aria-label={t('admin.liveFeed.title')}
-      className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200"
+      className="rounded-2xl bg-white p-5 shadow-elev-1 ring-1 ring-stone-200"
     >
-      <h2 className="text-sm font-semibold text-slate-900">{t('admin.liveFeed.title')}</h2>
+      <h2 className="font-display text-base font-semibold tracking-tight text-stone-900">
+        {t('admin.liveFeed.title')}
+      </h2>
       <div className="mt-4">
         {feed.isLoading ? (
           <div role="status" aria-label={t('common.loading')} className="py-6 text-center">
@@ -43,15 +45,15 @@ export function LiveTapFeed({ school }: LiveTapFeedProps) {
         ) : feed.isError ? (
           <p
             role="alert"
-            className="rounded-lg bg-status-alarm/10 px-3 py-2 text-sm text-status-alarm"
+            className="rounded-lg bg-status-alarm/10 px-3 py-2 text-sm text-status-alarm ring-1 ring-status-alarm/20"
           >
             {t('admin.liveFeed.loadError')}
           </p>
         ) : events.length === 0 ? (
-          <p className="text-sm text-slate-500">{t('admin.liveFeed.empty')}</p>
+          <p className="text-sm text-stone-500">{t('admin.liveFeed.empty')}</p>
         ) : (
           <>
-            <ul className="divide-y divide-slate-100">
+            <ul className="divide-y divide-stone-100">
               {events.map((event) => {
                 const student =
                   (event.studentId ? studentsById.get(event.studentId) : undefined) ??
@@ -65,22 +67,22 @@ export function LiveTapFeed({ school }: LiveTapFeedProps) {
                       className={
                         isIn
                           ? 'flex h-8 w-8 items-center justify-center rounded-full bg-status-present/10 text-status-present'
-                          : 'flex h-8 w-8 items-center justify-center rounded-full bg-status-notyet/10 text-status-notyet'
+                          : 'flex h-8 w-8 items-center justify-center rounded-full bg-status-notyet/15 text-status-notyet'
                       }
                     >
                       <Icon icon={isIn ? ArrowDownLeft : ArrowUpRight} size="sm" />
                     </span>
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium text-slate-900">
+                      <p className="truncate text-sm font-medium text-stone-900">
                         {student?.fullName ?? t('admin.unknownStudent')}
                       </p>
-                      <p className="truncate text-xs text-slate-500">
+                      <p className="truncate text-xs text-stone-500">
                         {isIn ? t('admin.liveFeed.in') : t('admin.liveFeed.out')}
                         {' · '}
                         {device?.label ?? (event.source === 'manual' ? t('admin.liveFeed.manualEntry') : event.deviceId ? t('admin.liveFeed.removedDevice') : '—')}
                       </p>
                     </div>
-                    <span className="flex-shrink-0 text-xs tabular-nums text-slate-500">
+                    <span className="flex-shrink-0 font-mono text-xs tabular-nums text-stone-500">
                       {formatTimeInKarachi(event.occurredAt)}
                     </span>
                   </li>
@@ -94,11 +96,12 @@ export function LiveTapFeed({ school }: LiveTapFeedProps) {
                   size="sm"
                   onClick={() => void feed.fetchNextPage()}
                   disabled={feed.isFetchingNextPage}
+                  isLoading={feed.isFetchingNextPage}
                 >
-                  {feed.isFetchingNextPage ? t('common.loading') : t('admin.liveFeed.loadMore')}
+                  {t('admin.liveFeed.loadMore')}
                 </Button>
               ) : events.length > 0 ? (
-                <p className="text-xs text-slate-400">{t('admin.liveFeed.endOfList')}</p>
+                <p className="text-xs text-stone-400">{t('admin.liveFeed.endOfList')}</p>
               ) : null}
             </div>
           </>

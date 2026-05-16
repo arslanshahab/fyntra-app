@@ -1,50 +1,69 @@
 import { useTranslation } from 'react-i18next'
 import { formatDistanceToNow } from 'date-fns'
 
-import { Spinner } from '../atoms/Spinner'
+import { Badge } from '../atoms/Badge'
 import { useDevicesQuery } from '../../features/devices/queries'
 import { cn } from '../../utils/cn'
+
+function DeviceRowSkeleton() {
+  return (
+    <li
+      aria-hidden="true"
+      className="flex animate-pulse items-center justify-between gap-3 py-2"
+    >
+      <div className="flex items-center gap-3">
+        <div className="h-3 w-3 rounded-full bg-stone-100" />
+        <div className="h-3.5 w-28 rounded bg-stone-100" />
+      </div>
+      <div className="space-y-1">
+        <div className="h-3 w-12 rounded bg-stone-100" />
+        <div className="h-2.5 w-16 rounded bg-stone-100" />
+      </div>
+    </li>
+  )
+}
 
 export function DeviceStatusList() {
   const { t } = useTranslation()
   const devices = useDevicesQuery()
 
   return (
-    <section className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
-      <h2 className="text-sm font-semibold text-slate-900">{t('admin.devices.title')}</h2>
+    <section className="rounded-2xl bg-white p-5 shadow-elev-1 ring-1 ring-stone-200">
+      <h2 className="font-display text-base font-semibold tracking-tight text-stone-900">
+        {t('admin.devices.title')}
+      </h2>
       <div className="mt-4">
         {devices.isLoading ? (
-          <div role="status" aria-label={t('common.loading')} className="py-4 text-center">
-            <Spinner size="sm" />
-          </div>
+          <ul className="space-y-3" aria-busy="true">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <DeviceRowSkeleton key={i} />
+            ))}
+          </ul>
         ) : !devices.data || devices.data.length === 0 ? (
-          <p className="text-sm text-slate-500">{t('admin.devices.empty')}</p>
+          <p className="text-sm text-stone-500">{t('admin.devices.empty')}</p>
         ) : (
           <ul className="space-y-3">
             {devices.data.map((device) => {
               const online = device.status === 'online'
               return (
                 <li key={device.id} className="flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-3">
+                  <div className="flex min-w-0 items-center gap-3">
                     <span
                       aria-hidden="true"
                       className={cn(
-                        'h-2.5 w-2.5 rounded-full',
+                        'h-2.5 w-2.5 flex-shrink-0 rounded-full',
                         online ? 'bg-status-present' : 'bg-status-alarm',
                       )}
                     />
-                    <span className="text-sm font-medium text-slate-900">{device.label}</span>
+                    <span className="truncate text-sm font-medium text-stone-900">
+                      {device.label}
+                    </span>
                   </div>
-                  <div className="text-right">
-                    <p
-                      className={cn(
-                        'text-xs font-medium',
-                        online ? 'text-status-present' : 'text-status-alarm',
-                      )}
-                    >
+                  <div className="flex flex-shrink-0 flex-col items-end gap-0.5">
+                    <Badge tone={online ? 'present' : 'absent'}>
                       {online ? t('admin.devices.online') : t('admin.devices.offline')}
-                    </p>
-                    <p className="text-[11px] text-slate-500">
+                    </Badge>
+                    <p className="font-mono text-[10px] tabular-nums text-stone-500">
                       {t('admin.devices.lastHeartbeat', {
                         time: formatDistanceToNow(new Date(device.lastHeartbeat), {
                           addSuffix: true,

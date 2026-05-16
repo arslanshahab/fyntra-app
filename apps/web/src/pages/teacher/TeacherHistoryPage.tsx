@@ -1,6 +1,8 @@
+import { CalendarX, UserX } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 import { Spinner } from '../../components/atoms/Spinner'
+import { StatusCard } from '../../components/molecules/StatusCard'
 import { useClassAttendanceRange } from '../../features/attendance/queries'
 import { useMeQuery } from '../../features/auth/queries'
 import { useStudentsQuery } from '../../features/students/queries'
@@ -43,6 +45,21 @@ function summarize(records: AttendanceRecord[]): DailySummary[] {
   return [...byDate.values()].sort((a, b) => (a.date < b.date ? 1 : -1))
 }
 
+function HistoryRowSkeleton() {
+  return (
+    <tr aria-hidden="true" className="animate-pulse">
+      <td className="px-4 py-2.5">
+        <div className="h-3.5 w-28 rounded bg-stone-100" />
+      </td>
+      {Array.from({ length: 5 }).map((_, i) => (
+        <td key={i} className="px-4 py-2.5">
+          <div className="ml-auto h-3.5 w-8 rounded bg-stone-100" />
+        </td>
+      ))}
+    </tr>
+  )
+}
+
 export function TeacherHistoryPage() {
   const { t } = useTranslation()
   const me = useMeQuery()
@@ -58,7 +75,7 @@ export function TeacherHistoryPage() {
       <div
         role="status"
         aria-label={t('common.loading')}
-        className="flex items-center justify-center rounded-2xl bg-white p-12 shadow-sm ring-1 ring-slate-200"
+        className="flex items-center justify-center rounded-2xl bg-white p-12 shadow-elev-1 ring-1 ring-stone-200"
       >
         <Spinner />
       </div>
@@ -66,79 +83,77 @@ export function TeacherHistoryPage() {
   }
 
   if (!klass) {
-    return (
-      <p className="rounded-2xl bg-white p-6 text-sm text-slate-500 shadow-sm ring-1 ring-slate-200">
-        {t('teacher.noClass')}
-      </p>
-    )
+    return <StatusCard icon={UserX} body={t('teacher.noClass')} />
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <header>
-        <h1 className="text-xl font-semibold text-slate-900">
+        <h1 className="font-display text-2xl font-semibold tracking-tight text-stone-900">
           {t('teacher.history.title', { name: klass.name })}
         </h1>
-        <p className="mt-0.5 text-sm text-slate-500">{t('teacher.history.subtitle')}</p>
+        <p className="mt-0.5 text-sm text-stone-500">{t('teacher.history.subtitle')}</p>
       </header>
 
-      <div className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200">
-        {range.isLoading ? (
-          <div role="status" aria-label={t('common.loading')} className="p-12 text-center">
-            <Spinner />
-          </div>
-        ) : summaries.length === 0 ? (
-          <p className="p-8 text-center text-sm text-slate-500">{t('teacher.history.empty')}</p>
-        ) : (
-          <table className="min-w-full divide-y divide-slate-200 text-sm">
-            <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
-              <tr>
-                <th scope="col" className="px-4 py-3 text-left font-medium">
-                  {t('teacher.history.table.date')}
-                </th>
-                <th scope="col" className="px-4 py-3 text-right font-medium">
-                  {t('teacher.history.table.present')}
-                </th>
-                <th scope="col" className="px-4 py-3 text-right font-medium">
-                  {t('teacher.history.table.late')}
-                </th>
-                <th scope="col" className="px-4 py-3 text-right font-medium">
-                  {t('teacher.history.table.absent')}
-                </th>
-                <th scope="col" className="px-4 py-3 text-right font-medium">
-                  {t('teacher.history.table.leftEarly')}
-                </th>
-                <th scope="col" className="px-4 py-3 text-right font-medium">
-                  {t('teacher.history.table.total')}
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {summaries.map((d) => (
-                <tr key={d.date}>
-                  <td className="px-4 py-2.5 text-slate-700">{formatTimelineDate(d.date)}</td>
-                  <td className="px-4 py-2.5 text-right tabular-nums text-status-present">
-                    {d.present}
-                  </td>
-                  <td className="px-4 py-2.5 text-right tabular-nums text-status-late">{d.late}</td>
-                  <td className="px-4 py-2.5 text-right tabular-nums text-status-absent">
-                    {d.absent}
-                  </td>
-                  <td className="px-4 py-2.5 text-right tabular-nums text-slate-500">
-                    {d.leftEarly}
-                  </td>
-                  <td className="px-4 py-2.5 text-right tabular-nums text-slate-900">
-                    {d.total}
-                    {expectedRoster && d.total !== expectedRoster ? (
-                      <span className="ml-1 text-xs text-slate-400">/ {expectedRoster}</span>
-                    ) : null}
-                  </td>
+      {!range.isLoading && summaries.length === 0 ? (
+        <StatusCard icon={CalendarX} body={t('teacher.history.empty')} />
+      ) : (
+        <div className="overflow-hidden rounded-2xl bg-white shadow-elev-1 ring-1 ring-stone-200">
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-stone-200 text-sm">
+              <thead className="bg-stone-50 text-micro uppercase text-stone-500">
+                <tr>
+                  <th scope="col" className="px-4 py-3 text-left font-semibold">
+                    {t('teacher.history.table.date')}
+                  </th>
+                  <th scope="col" className="px-4 py-3 text-right font-semibold">
+                    {t('teacher.history.table.present')}
+                  </th>
+                  <th scope="col" className="px-4 py-3 text-right font-semibold">
+                    {t('teacher.history.table.late')}
+                  </th>
+                  <th scope="col" className="px-4 py-3 text-right font-semibold">
+                    {t('teacher.history.table.absent')}
+                  </th>
+                  <th scope="col" className="px-4 py-3 text-right font-semibold">
+                    {t('teacher.history.table.leftEarly')}
+                  </th>
+                  <th scope="col" className="px-4 py-3 text-right font-semibold">
+                    {t('teacher.history.table.total')}
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
+              </thead>
+              <tbody className="divide-y divide-stone-100">
+                {range.isLoading
+                  ? Array.from({ length: 6 }).map((_, i) => <HistoryRowSkeleton key={i} />)
+                  : summaries.map((d) => (
+                      <tr key={d.date} className="transition-colors hover:bg-stone-50">
+                        <td className="px-4 py-2.5 text-stone-700">{formatTimelineDate(d.date)}</td>
+                        <td className="px-4 py-2.5 text-right font-mono tabular-nums text-status-present">
+                          {d.present}
+                        </td>
+                        <td className="px-4 py-2.5 text-right font-mono tabular-nums text-status-late">
+                          {d.late}
+                        </td>
+                        <td className="px-4 py-2.5 text-right font-mono tabular-nums text-status-absent">
+                          {d.absent}
+                        </td>
+                        <td className="px-4 py-2.5 text-right font-mono tabular-nums text-stone-500">
+                          {d.leftEarly}
+                        </td>
+                        <td className="px-4 py-2.5 text-right font-mono tabular-nums text-stone-900">
+                          {d.total}
+                          {expectedRoster && d.total !== expectedRoster ? (
+                            <span className="ml-1 text-xs text-stone-400">/ {expectedRoster}</span>
+                          ) : null}
+                        </td>
+                      </tr>
+                    ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

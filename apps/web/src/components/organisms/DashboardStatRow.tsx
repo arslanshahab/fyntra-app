@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next'
 
-import { StatBlock } from '../molecules/StatBlock'
+import { StatBlock, StatBlockSkeleton } from '../molecules/StatBlock'
 import type { DashboardStats } from '../../utils/dashboardStats'
 
 interface DashboardStatRowProps {
@@ -26,6 +26,17 @@ export function DashboardStatRow({ stats }: DashboardStatRowProps) {
         tone="notyet"
         hint={hint}
       />
+    </div>
+  )
+}
+
+export function DashboardStatRowSkeleton() {
+  return (
+    <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <StatBlockSkeleton />
+      <StatBlockSkeleton />
+      <StatBlockSkeleton />
+      <StatBlockSkeleton />
     </div>
   )
 }

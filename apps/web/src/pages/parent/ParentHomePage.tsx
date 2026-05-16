@@ -1,17 +1,19 @@
-import { Settings as SettingsIcon } from 'lucide-react'
+import { AlertTriangle, Settings as SettingsIcon, Users } from 'lucide-react'
+import { formatInTimeZone } from 'date-fns-tz'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 
 import { Button } from '../../components/atoms/Button'
 import { Icon } from '../../components/atoms/Icon'
-import { Spinner } from '../../components/atoms/Spinner'
 import { ChildCard } from '../../components/molecules/ChildCard'
+import { StatusCard } from '../../components/molecules/StatusCard'
 import { useTodayAttendance } from '../../features/attendance/queries'
 import { useMeQuery } from '../../features/auth/queries'
 import { useDevicesQuery } from '../../features/devices/queries'
 import { useAuthStore } from '../../stores/auth'
 import type { Device, School, Student } from '@fyntra/schemas'
 import { deriveLiveStatus } from '../../utils/attendanceStatus'
+import { KARACHI_TZ } from '../../utils/datetime'
 
 interface ChildRowProps {
   student: Student
@@ -19,19 +21,37 @@ interface ChildRowProps {
   devices: Device[]
 }
 
+function ChildCardSkeleton() {
+  return (
+    <article
+      aria-hidden="true"
+      className="overflow-hidden rounded-hero bg-white shadow-elev-1 ring-1 ring-stone-200"
+    >
+      <div className="h-1.5 w-full bg-stone-100" />
+      <div className="animate-pulse p-6">
+        <div className="flex items-center gap-3">
+          <div className="h-10 w-10 rounded-full bg-stone-100" />
+          <div className="flex-1 space-y-1.5">
+            <div className="h-2.5 w-24 rounded bg-stone-100" />
+            <div className="h-4 w-40 rounded bg-stone-100" />
+          </div>
+        </div>
+        <div className="mt-6 space-y-2.5">
+          <div className="h-8 w-3/4 rounded bg-stone-100" />
+          <div className="h-3.5 w-1/2 rounded bg-stone-100" />
+        </div>
+        <div className="mt-6 h-12 w-full rounded-xl bg-stone-100" />
+      </div>
+    </article>
+  )
+}
+
 function ChildRow({ student, school, devices }: ChildRowProps) {
   const navigate = useNavigate()
   const today = useTodayAttendance(student.id, school)
 
   if (today.isLoading) {
-    return (
-      <div
-        data-testid={`child-card-loading-${student.id}`}
-        className="flex items-center justify-center rounded-2xl bg-white p-8 shadow-sm ring-1 ring-slate-200"
-      >
-        <Spinner />
-      </div>
-    )
+    return <ChildCardSkeleton />
   }
 
   const status = deriveLiveStatus({
@@ -64,17 +84,21 @@ export function ParentHomePage() {
   }
 
   const isLoading = me.isLoading || devicesQuery.isLoading
+  const todayLabel = formatInTimeZone(new Date(), KARACHI_TZ, 'EEEE, MMM d')
 
   return (
-    <main className="min-h-dvh bg-slate-50">
-      <header className="sticky top-0 z-10 border-b border-slate-200 bg-white/95 backdrop-blur">
-        <div className="mx-auto flex max-w-md items-center justify-between px-5 py-4">
-          <div>
-            <p className="text-[10px] font-medium uppercase tracking-wide text-slate-500">
+    <main className="min-h-dvh bg-stone-50">
+      <header className="sticky top-0 z-10 border-b border-stone-200 bg-white/90 backdrop-blur">
+        <div className="mx-auto flex max-w-md items-center justify-between px-5 py-3">
+          <div className="flex items-center gap-2">
+            <div
+              aria-hidden="true"
+              className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-600 text-white shadow-elev-1"
+            >
+              <span className="font-display text-sm font-bold leading-none">F</span>
+            </div>
+            <p className="font-display text-base font-semibold tracking-tight text-stone-900">
               {t('app.name')}
-            </p>
-            <p className="text-sm font-medium text-slate-900">
-              {me.data ? t('parent.greeting', { name: me.data.user.fullName }) : ''}
             </p>
           </div>
           <div className="flex items-center gap-1">
@@ -82,7 +106,7 @@ export function ParentHomePage() {
               type="button"
               onClick={() => navigate('/parent/settings')}
               aria-label={t('parent.openSettings')}
-              className="rounded-md p-2 text-slate-600 hover:bg-slate-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+              className="rounded-md p-2 text-stone-600 transition-colors hover:bg-stone-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
             >
               <Icon icon={SettingsIcon} size="md" />
             </button>
@@ -93,37 +117,31 @@ export function ParentHomePage() {
         </div>
       </header>
 
-      <div className="mx-auto max-w-md space-y-4 p-5">
+      <div className="mx-auto max-w-md space-y-4 px-5 pb-10 pt-6">
+        <div>
+          <h1 className="font-display text-3xl font-semibold tracking-tight text-stone-900">
+            {me.data ? t('parent.greeting', { name: me.data.user.fullName }) : ' '}
+          </h1>
+          <p className="mt-1 text-sm text-stone-500">{todayLabel}</p>
+        </div>
+
         {isLoading ? (
-          <div
-            role="status"
-            aria-label={t('common.loading')}
-            className="flex items-center justify-center rounded-2xl bg-white p-12 shadow-sm ring-1 ring-slate-200"
-          >
-            <Spinner />
-          </div>
+          <ChildCardSkeleton />
         ) : me.isError ? (
-          <div
-            role="alert"
-            className="rounded-2xl bg-status-alarm/10 p-5 text-sm text-status-alarm"
-          >
-            <p className="font-medium">{t('parent.loadError')}</p>
-            <Button
-              variant="secondary"
-              size="sm"
-              className="mt-3"
-              onClick={() => {
+          <StatusCard
+            tone="alarm"
+            icon={AlertTriangle}
+            body={t('parent.loadError')}
+            action={{
+              label: t('common.retry'),
+              onClick: () => {
                 void me.refetch()
                 void devicesQuery.refetch()
-              }}
-            >
-              {t('common.retry')}
-            </Button>
-          </div>
+              },
+            }}
+          />
         ) : (me.data?.children ?? []).length === 0 ? (
-          <div className="rounded-2xl bg-white p-6 text-sm text-slate-600 shadow-sm ring-1 ring-slate-200">
-            {t('parent.noChildren')}
-          </div>
+          <StatusCard icon={Users} body={t('parent.noChildren')} />
         ) : (
           (me.data?.children ?? []).map((child) => (
             <ChildRow

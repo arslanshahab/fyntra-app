@@ -14,9 +14,8 @@ interface ChildCardProps {
   onOpenTimeline: () => void
 }
 
-// Tone → accent classes for the top stripe and the leading dot. The hero
-// answers the README §10 "one question per screen" rule, so the colour
-// reads at-a-glance from across the room.
+// Tone → accent classes. The stripe + dot answer the README §10 "one question
+// per screen" rule: tone reads at-a-glance before any text is parsed.
 const toneAccent: Record<
   ReturnType<typeof toneFor>,
   { stripe: string; dot: string; text: string }
@@ -103,33 +102,42 @@ export function ChildCard({ student, status, onOpenTimeline }: ChildCardProps) {
   return (
     <article
       data-testid={`child-card-${student.id}`}
-      className="relative overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200"
+      className="relative overflow-hidden rounded-hero bg-white shadow-elev-2 ring-1 ring-stone-200"
     >
       <div className={cn('h-1.5 w-full', accent.stripe)} aria-hidden="true" />
-      <div className="p-5">
+      <div className="p-6">
         <div className="flex items-center gap-3">
           <Avatar name={student.fullName} src={student.photoUrl} size="md" />
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-medium text-slate-500">{student.rollNumber}</p>
-            <p className="truncate text-base font-semibold text-slate-900">{student.fullName}</p>
+            <p className="text-micro font-medium uppercase text-stone-500">
+              {student.rollNumber}
+            </p>
+            <p className="truncate text-base font-semibold text-stone-900">{student.fullName}</p>
           </div>
         </div>
 
-        <div className="mt-5 flex items-start gap-3">
+        <div className="mt-6 flex items-start gap-3">
           <span
             aria-hidden="true"
-            className={cn('mt-2 h-2.5 w-2.5 flex-shrink-0 rounded-full', accent.dot)}
+            className={cn('mt-3 h-3 w-3 flex-shrink-0 rounded-full', accent.dot)}
           />
-          <div>
-            <h2 className={cn('text-lg font-semibold leading-snug', accent.text)}>{title}</h2>
-            <p className="mt-1 text-sm leading-relaxed text-slate-600">{subtitle}</p>
+          <div className="min-w-0 flex-1">
+            <h2
+              className={cn(
+                'font-display text-display font-semibold tracking-tight',
+                accent.text,
+              )}
+            >
+              {title}
+            </h2>
+            <p className="mt-1.5 text-sm leading-relaxed text-stone-600">{subtitle}</p>
           </div>
         </div>
 
         <button
           type="button"
           onClick={onOpenTimeline}
-          className="mt-5 inline-flex w-full items-center justify-between rounded-lg bg-slate-50 px-4 py-3 text-sm font-medium text-slate-700 ring-1 ring-inset ring-slate-200 hover:bg-slate-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+          className="mt-6 inline-flex w-full items-center justify-between rounded-xl bg-stone-50 px-4 py-3 text-sm font-medium text-stone-700 ring-1 ring-inset ring-stone-200 transition-colors hover:bg-stone-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
         >
           <span>{t('parent.viewTimeline')}</span>
           <Icon icon={ChevronRight} size="sm" className="rtl:rotate-180" />

@@ -17,7 +17,7 @@ const toneClasses: Record<BadgeTone, string> = {
   notyet: 'bg-status-notyet/10 text-status-notyet ring-status-notyet/30',
   unverified: 'bg-status-unverified/10 text-status-unverified ring-status-unverified/30',
   absent: 'bg-status-absent/10 text-status-absent ring-status-absent/30',
-  neutral: 'bg-slate-100 text-slate-700 ring-slate-200',
+  neutral: 'bg-stone-100 text-stone-700 ring-stone-200',
 }
 
 const sizeClasses: Record<BadgeSize, string> = {

@@ -68,9 +68,17 @@ const TeacherHistoryPage = lazy(() =>
   import('../pages/teacher/TeacherHistoryPage').then((m) => ({ default: m.TeacherHistoryPage })),
 )
 
+// Dev-only: design system reference page. The lazy import lives inside the
+// import.meta.env.DEV branch so production builds tree-shake it out entirely.
+const StyleguidePage = import.meta.env.DEV
+  ? lazy(() =>
+      import('../pages/dev/StyleguidePage').then((m) => ({ default: m.StyleguidePage })),
+    )
+  : null
+
 function FullPageSpinner() {
   return (
-    <div role="status" className="min-h-dvh flex items-center justify-center bg-slate-50">
+    <div role="status" className="min-h-dvh flex items-center justify-center bg-stone-50">
       <Spinner size="lg" />
     </div>
   )
@@ -80,6 +88,16 @@ export function AppRoutes() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
+      {StyleguidePage ? (
+        <Route
+          path="/dev/styleguide"
+          element={
+            <Suspense fallback={<FullPageSpinner />}>
+              <StyleguidePage />
+            </Suspense>
+          }
+        />
+      ) : null}
       <Route
         element={
           <RequireAuth>

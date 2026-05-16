@@ -1,10 +1,11 @@
-import { ChevronLeft } from 'lucide-react'
+import { AlertTriangle, ChevronLeft } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 
 import { Icon } from '../../components/atoms/Icon'
 import { Spinner } from '../../components/atoms/Spinner'
 import { Switch } from '../../components/atoms/Switch'
+import { StatusCard } from '../../components/molecules/StatusCard'
 import {
   useNotificationSettingsQuery,
   useUpdateNotificationSettingsMutation,
@@ -46,62 +47,68 @@ export function ParentSettingsPage() {
   }
 
   return (
-    <main className="min-h-dvh bg-slate-50">
-      <header className="sticky top-0 z-10 border-b border-slate-200 bg-white/95 backdrop-blur">
+    <main className="min-h-dvh bg-stone-50">
+      <header className="sticky top-0 z-10 border-b border-stone-200 bg-white/90 backdrop-blur">
         <div className="mx-auto flex max-w-md items-center gap-2 px-3 py-3">
           <button
             type="button"
             onClick={() => navigate('/parent')}
             aria-label={t('parent.settings.back')}
-            className="rounded-md p-2 text-slate-600 hover:bg-slate-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+            className="rounded-md p-2 text-stone-600 transition-colors hover:bg-stone-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
           >
             <Icon icon={ChevronLeft} size="md" className="rtl:rotate-180" />
           </button>
-          <p className="truncate text-sm font-semibold text-slate-900">
+          <p className="truncate font-display text-base font-semibold tracking-tight text-stone-900">
             {t('parent.settings.title')}
           </p>
         </div>
       </header>
 
-      <div className="mx-auto max-w-md space-y-4 p-5">
+      <div className="mx-auto max-w-md space-y-4 px-5 pb-10 pt-6">
         {settingsQuery.isLoading ? (
           <div
             role="status"
             aria-label={t('common.loading')}
-            className="flex items-center justify-center rounded-2xl bg-white p-12 shadow-sm ring-1 ring-slate-200"
+            className="flex items-center justify-center rounded-2xl bg-white p-12 shadow-elev-1 ring-1 ring-stone-200"
           >
             <Spinner />
           </div>
         ) : settingsQuery.isError || !settings ? (
-          <p role="alert" className="rounded-2xl bg-status-alarm/10 p-5 text-sm text-status-alarm">
-            {t('parent.settings.loadError')}
-          </p>
+          <StatusCard
+            tone="alarm"
+            icon={AlertTriangle}
+            body={t('parent.settings.loadError')}
+            action={{
+              label: t('common.retry'),
+              onClick: () => void settingsQuery.refetch(),
+            }}
+          />
         ) : (
           <>
             {update.isError ? (
               <p
                 role="alert"
-                className="rounded-lg bg-status-alarm/10 px-3 py-2 text-sm text-status-alarm"
+                className="rounded-lg bg-status-alarm/10 px-3 py-2 text-sm text-status-alarm ring-1 ring-status-alarm/20"
               >
                 {t('parent.settings.saveError')}
               </p>
             ) : null}
 
-            <section className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
-              <h2 className="text-sm font-semibold text-slate-900">
+            <section className="rounded-2xl bg-white p-5 shadow-elev-1 ring-1 ring-stone-200">
+              <h2 className="font-display text-base font-semibold text-stone-900">
                 {t('parent.settings.channelsHeading')}
               </h2>
-              <p className="mt-0.5 text-xs text-slate-500">{t('parent.settings.channelsHint')}</p>
+              <p className="mt-0.5 text-xs text-stone-500">{t('parent.settings.channelsHint')}</p>
               <ul className="mt-4 space-y-4">
                 {PARENT_CHANNELS.map((channel) => {
                   const id = `channel-${channel}`
                   return (
                     <li key={channel} className="flex items-start justify-between gap-3">
                       <label htmlFor={id} className="min-w-0 cursor-pointer">
-                        <p className="text-sm font-medium text-slate-900">
+                        <p className="text-sm font-medium text-stone-900">
                           {t(`parent.settings.channel.${channel}`)}
                         </p>
-                        <p className="mt-0.5 text-xs text-slate-500">
+                        <p className="mt-0.5 text-xs text-stone-500">
                           {t(`parent.settings.channel.${channel}Hint`)}
                         </p>
                       </label>
@@ -117,21 +124,21 @@ export function ParentSettingsPage() {
               </ul>
             </section>
 
-            <section className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
-              <h2 className="text-sm font-semibold text-slate-900">
+            <section className="rounded-2xl bg-white p-5 shadow-elev-1 ring-1 ring-stone-200">
+              <h2 className="font-display text-base font-semibold text-stone-900">
                 {t('parent.settings.eventsHeading')}
               </h2>
-              <p className="mt-0.5 text-xs text-slate-500">{t('parent.settings.eventsHint')}</p>
+              <p className="mt-0.5 text-xs text-stone-500">{t('parent.settings.eventsHint')}</p>
               <ul className="mt-4 space-y-4">
                 {PARENT_EVENTS.map((event) => {
                   const id = `event-${event}`
                   return (
                     <li key={event} className="flex items-start justify-between gap-3">
                       <label htmlFor={id} className="min-w-0 cursor-pointer">
-                        <p className="text-sm font-medium text-slate-900">
+                        <p className="text-sm font-medium text-stone-900">
                           {t(`parent.settings.event.${event}`)}
                         </p>
-                        <p className="mt-0.5 text-xs text-slate-500">
+                        <p className="mt-0.5 text-xs text-stone-500">
                           {t(`parent.settings.event.${event}Hint`)}
                         </p>
                       </label>
@@ -147,12 +154,12 @@ export function ParentSettingsPage() {
               </ul>
             </section>
 
-            <section className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
-              <h2 className="text-sm font-semibold text-slate-900">
+            <section className="rounded-2xl bg-white p-5 shadow-elev-1 ring-1 ring-stone-200">
+              <h2 className="font-display text-base font-semibold text-stone-900">
                 {t('parent.settings.languageHeading')}
               </h2>
-              <p className="mt-0.5 text-xs text-slate-500">{t('parent.settings.languageHint')}</p>
-              <div className="mt-4 grid grid-cols-2 gap-1 rounded-lg bg-slate-100 p-1">
+              <p className="mt-0.5 text-xs text-stone-500">{t('parent.settings.languageHint')}</p>
+              <div className="mt-4 grid grid-cols-2 gap-1 rounded-lg bg-stone-100 p-1">
                 {(['en', 'ur'] as const).map((lng) => (
                   <button
                     key={lng}
@@ -161,8 +168,8 @@ export function ParentSettingsPage() {
                     onClick={() => void i18n.changeLanguage(lng)}
                     className={
                       activeLocale === lng
-                        ? 'rounded-md bg-white px-3 py-1.5 text-sm font-medium text-slate-900 shadow-sm'
-                        : 'rounded-md px-3 py-1.5 text-sm font-medium text-slate-600 hover:text-slate-900'
+                        ? 'rounded-md bg-white px-3 py-1.5 text-sm font-medium text-stone-900 shadow-elev-1'
+                        : 'rounded-md px-3 py-1.5 text-sm font-medium text-stone-600 transition-colors hover:text-stone-900'
                     }
                   >
                     {t(`parent.settings.language.${lng}`)}

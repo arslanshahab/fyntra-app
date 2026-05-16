@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { Languages } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { z } from 'zod'
@@ -83,114 +84,139 @@ export function LoginPage() {
     void i18n.changeLanguage(isUrdu ? 'en' : 'ur')
   }
 
+  const heading =
+    step === 'phone' ? t('login.phoneStep.heading') : t('login.otpStep.heading')
+  const body =
+    step === 'phone' ? t('login.phoneStep.body') : t('login.otpStep.body', { phone })
+
   return (
-    <main className="min-h-dvh flex items-center justify-center p-6 bg-slate-50">
-      <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-sm ring-1 ring-slate-200">
-        <div className="flex items-start justify-between">
+    <main className="min-h-dvh flex flex-col items-center justify-center bg-gradient-to-b from-brand-50/60 via-stone-50 to-stone-50 px-5 py-10">
+      <div className="w-full max-w-md">
+        <div className="mb-8 flex items-center justify-center gap-3">
+          <div
+            aria-hidden="true"
+            className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-600 text-white shadow-elev-1"
+          >
+            <span className="font-display text-xl font-bold leading-none">F</span>
+          </div>
           <div>
-            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+            <p className="font-display text-xl font-semibold tracking-tight text-stone-900">
               {t('app.name')}
             </p>
-            <h1 className="mt-1 text-2xl font-semibold tracking-tight text-slate-900">
-              {t('login.heading')}
-            </h1>
+            <p className="text-xs text-stone-500">{t('app.tagline')}</p>
           </div>
-          <button
-            type="button"
-            onClick={toggleLanguage}
-            aria-label={t('language.switchTo')}
-            className="text-xs font-medium text-brand-600 hover:text-brand-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 rounded"
-          >
-            {t('language.switchTo')}
-          </button>
         </div>
 
-        {topError ? (
-          <div
-            role="alert"
-            className="mt-4 rounded-lg bg-status-alarm/10 px-3 py-2 text-sm text-status-alarm"
-          >
-            {topError}
-          </div>
-        ) : null}
+        <div className="rounded-hero bg-white p-7 shadow-elev-2 ring-1 ring-stone-200">
+          <h1 className="font-display text-display-lg font-semibold tracking-tight text-stone-900">
+            {heading}
+          </h1>
+          <p className="mt-2 text-sm leading-relaxed text-stone-600">{body}</p>
 
-        {step === 'phone' ? (
-          <form noValidate className="mt-6 space-y-4" onSubmit={onSubmitPhone}>
-            <p className="text-sm text-slate-600">{t('login.phoneStep.body')}</p>
-            <div>
-              <label htmlFor="phone" className="block text-sm font-medium text-slate-700">
-                {t('login.phoneStep.phoneLabel')}
-              </label>
-              <Input
-                id="phone"
-                type="tel"
-                inputMode="tel"
-                autoComplete="tel"
-                placeholder={t('login.phoneStep.phonePlaceholder')}
-                hasError={!!phoneForm.formState.errors.phone}
-                aria-describedby="phone-error"
-                className="mt-1"
-                {...phoneForm.register('phone')}
-              />
-              {phoneForm.formState.errors.phone ? (
-                <p id="phone-error" className="mt-1 text-xs text-status-alarm">
-                  {t('login.phoneStep.invalidPhone')}
-                </p>
-              ) : null}
-            </div>
-            <Button
-              type="submit"
-              className="w-full"
-              isLoading={requestOtp.isPending}
-              disabled={requestOtp.isPending}
+          {topError ? (
+            <div
+              role="alert"
+              className="mt-5 rounded-lg bg-status-alarm/10 px-3 py-2 text-sm text-status-alarm ring-1 ring-status-alarm/20"
             >
-              {t('login.phoneStep.submit')}
-            </Button>
-          </form>
-        ) : (
-          <form noValidate className="mt-6 space-y-4" onSubmit={onSubmitOtp}>
-            <p className="text-sm text-slate-600">{t('login.otpStep.body', { phone })}</p>
-            <div>
-              <label htmlFor="otp" className="block text-sm font-medium text-slate-700">
-                {t('login.otpStep.otpLabel')}
-              </label>
-              <Input
-                id="otp"
-                type="text"
-                inputMode="numeric"
-                autoComplete="one-time-code"
-                maxLength={4}
-                placeholder="1234"
-                hasError={!!otpForm.formState.errors.otp}
-                aria-describedby="otp-error"
-                className="mt-1 tracking-[0.5em] text-center"
-                {...otpForm.register('otp')}
-              />
-              {otpForm.formState.errors.otp ? (
-                <p id="otp-error" className="mt-1 text-xs text-status-alarm">
-                  {t('login.otpStep.invalidOtp')}
-                </p>
-              ) : null}
+              {topError}
             </div>
-            <Button
-              type="submit"
-              className="w-full"
-              isLoading={verifyOtp.isPending}
-              disabled={verifyOtp.isPending}
-            >
-              {t('login.otpStep.submit')}
-            </Button>
+          ) : null}
+
+          {step === 'phone' ? (
+            <form noValidate className="mt-6 space-y-4" onSubmit={onSubmitPhone}>
+              <div>
+                <label htmlFor="phone" className="block text-sm font-medium text-stone-700">
+                  {t('login.phoneStep.phoneLabel')}
+                </label>
+                <Input
+                  id="phone"
+                  type="tel"
+                  inputMode="tel"
+                  autoComplete="tel"
+                  placeholder={t('login.phoneStep.phonePlaceholder')}
+                  hasError={!!phoneForm.formState.errors.phone}
+                  aria-describedby="phone-error"
+                  className="mt-1.5"
+                  {...phoneForm.register('phone')}
+                />
+                {phoneForm.formState.errors.phone ? (
+                  <p id="phone-error" className="mt-1.5 text-xs text-status-alarm">
+                    {t('login.phoneStep.invalidPhone')}
+                  </p>
+                ) : null}
+              </div>
+              <Button
+                type="submit"
+                size="lg"
+                className="w-full"
+                isLoading={requestOtp.isPending}
+                disabled={requestOtp.isPending}
+              >
+                {t('login.phoneStep.submit')}
+              </Button>
+            </form>
+          ) : (
+            <form noValidate className="mt-6 space-y-4" onSubmit={onSubmitOtp}>
+              <div>
+                <label htmlFor="otp" className="block text-sm font-medium text-stone-700">
+                  {t('login.otpStep.otpLabel')}
+                </label>
+                <Input
+                  id="otp"
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  maxLength={4}
+                  placeholder="••••"
+                  hasError={!!otpForm.formState.errors.otp}
+                  aria-describedby="otp-error"
+                  className="mt-1.5 h-14 text-center font-mono text-2xl font-medium tracking-[0.5em] tabular-nums placeholder:text-stone-300"
+                  {...otpForm.register('otp')}
+                />
+                {otpForm.formState.errors.otp ? (
+                  <p id="otp-error" className="mt-1.5 text-xs text-status-alarm">
+                    {t('login.otpStep.invalidOtp')}
+                  </p>
+                ) : null}
+              </div>
+              <Button
+                type="submit"
+                size="lg"
+                className="w-full"
+                isLoading={verifyOtp.isPending}
+                disabled={verifyOtp.isPending}
+              >
+                {t('login.otpStep.submit')}
+              </Button>
+              <button
+                type="button"
+                onClick={() => setStep('phone')}
+                className="block w-full rounded-md py-2 text-sm text-stone-500 hover:text-stone-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+              >
+                {t('login.otpStep.back')}
+              </button>
+            </form>
+          )}
+
+          <div className="mt-7 flex justify-center border-t border-stone-100 pt-5">
             <button
               type="button"
-              onClick={() => setStep('phone')}
-              className="w-full text-sm text-slate-500 hover:text-slate-700 focus:outline-none focus-visible:underline"
+              onClick={toggleLanguage}
+              className="inline-flex items-center gap-2 rounded-md px-2 py-1 text-sm text-stone-500 transition-colors hover:text-stone-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
             >
-              {t('login.otpStep.back')}
+              <Languages aria-hidden="true" className="h-4 w-4" />
+              <span className={isUrdu ? 'font-sans' : 'font-urdu'}>
+                {t('language.switchTo')}
+              </span>
             </button>
-          </form>
-        )}
+          </div>
+        </div>
 
-        <p className="mt-6 text-xs leading-relaxed text-slate-400">{t('login.demoHint')}</p>
+        {import.meta.env.DEV ? (
+          <p className="mt-6 text-center text-xs leading-relaxed text-stone-400">
+            {t('login.demoHint')}
+          </p>
+        ) : null}
       </div>
     </main>
   )
