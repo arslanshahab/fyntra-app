@@ -32,15 +32,16 @@ export function useDevicesQuery() {
   })
 }
 
-// Cache-friendly single-device lookup: select from the list cache when
-// available so the detail page doesn't refetch on a navigation that already
-// has the row in memory.
 export function useDeviceQuery(id: string | undefined) {
+  const client = useQueryClient()
   return useQuery({
     queryKey: id ? deviceKeys.detail(id) : ['devices', 'detail', 'undefined'],
     queryFn: () => apiGet(`/devices/${id!}`, deviceSchema),
     enabled: Boolean(id),
     staleTime: 30_000,
+    // Seed from the list cache so direct nav from /admin/devices doesn't flash a spinner.
+    initialData: () =>
+      id ? client.getQueryData<Device[]>(deviceKeys.list)?.find((d) => d.id === id) : undefined,
   })
 }
 
@@ -88,8 +89,10 @@ export function useDeleteDevice() {
   const client = useQueryClient()
   return useMutation<{ ok: true }, Error, string>({
     mutationFn: (id) => apiDelete(`/devices/${id}`, okResponseSchema),
-    onSuccess: () => {
+    onSuccess: (_data, id) => {
       void client.invalidateQueries({ queryKey: deviceKeys.list })
+      void client.invalidateQueries({ queryKey: deviceKeys.detail(id) })
+      void client.invalidateQueries({ queryKey: deviceKeys.tokens(id) })
     },
   })
 }
