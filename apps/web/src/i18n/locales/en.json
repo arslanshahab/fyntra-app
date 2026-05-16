@@ -238,7 +238,18 @@
       "devices": "Devices",
       "reports": "Reports",
       "notifications": "Notifications",
-      "anomalies": "Anomalies"
+      "anomalies": "Anomalies",
+      "section": {
+        "overview": "Overview",
+        "people": "People",
+        "infrastructure": "Infrastructure",
+        "operations": "Operations"
+      }
+    },
+    "anomalyHeadline": {
+      "allClear": "All clear",
+      "needsReview_one": "{{count}} anomaly needs review",
+      "needsReview_other": "{{count}} anomalies need review"
     },
     "stats": {
       "present": "Present",
