@@ -1,4 +1,5 @@
 import {
+  AlertTriangle,
   Bell,
   CreditCard,
   FileSpreadsheet,
@@ -12,8 +13,10 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 
 import { Button } from '../atoms/Button'
 import { Icon } from '../atoms/Icon'
+import { useAnomalyList } from '../../features/attendance/queries'
 import { useAuthStore } from '../../stores/auth'
 import { cn } from '../../utils/cn'
+import { dateStrInKarachi } from '../../utils/datetime'
 
 interface NavItem {
   to: string
@@ -29,13 +32,23 @@ const NAV: NavItem[] = [
   { to: '/admin/devices', labelKey: 'admin.nav.devices', icon: Radio },
   { to: '/admin/reports', labelKey: 'admin.nav.reports', icon: FileSpreadsheet },
   { to: '/admin/notifications', labelKey: 'admin.nav.notifications', icon: Bell },
+  { to: '/admin/anomalies', labelKey: 'admin.nav.anomalies', icon: AlertTriangle },
 ]
+
+function from7DaysAgo(): string {
+  return dateStrInKarachi(new Date(Date.now() - 7 * 86400000))
+}
 
 export function AdminLayout() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const user = useAuthStore((s) => s.user)
   const clearAuth = useAuthStore((s) => s.clearAuth)
+
+  // Sidebar anomaly badge — cached for 60s in the queryClient so re-renders
+  // across admin pages don't re-fetch.
+  const anomalies = useAnomalyList(from7DaysAgo(), dateStrInKarachi())
+  const anomalyCount = anomalies.data?.length ?? 0
 
   const onSignOut = () => {
     clearAuth()
@@ -67,25 +80,36 @@ export function AdminLayout() {
       <div className="mx-auto max-w-7xl px-6 py-6 lg:grid lg:grid-cols-[200px_1fr] lg:gap-8">
         <nav aria-label={t('admin.dashboardTitle')} className="mb-4 lg:mb-0">
           <ul className="flex gap-1 overflow-x-auto lg:flex-col lg:space-y-1 lg:overflow-visible">
-            {NAV.map((item) => (
-              <li key={item.to}>
-                <NavLink
-                  to={item.to}
-                  end={item.end}
-                  className={({ isActive }) =>
-                    cn(
-                      'flex items-center gap-2 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium',
-                      isActive
-                        ? 'bg-brand-50 text-brand-700 ring-1 ring-inset ring-brand-100'
-                        : 'text-slate-600 hover:bg-slate-100',
-                    )
-                  }
-                >
-                  <Icon icon={item.icon} size="sm" />
-                  {t(item.labelKey)}
-                </NavLink>
-              </li>
-            ))}
+            {NAV.map((item) => {
+              const showBadge = item.to === '/admin/anomalies' && anomalyCount > 0
+              return (
+                <li key={item.to}>
+                  <NavLink
+                    to={item.to}
+                    end={item.end}
+                    className={({ isActive }) =>
+                      cn(
+                        'flex items-center gap-2 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium',
+                        isActive
+                          ? 'bg-brand-50 text-brand-700 ring-1 ring-inset ring-brand-100'
+                          : 'text-slate-600 hover:bg-slate-100',
+                      )
+                    }
+                  >
+                    <Icon icon={item.icon} size="sm" />
+                    {t(item.labelKey)}
+                    {showBadge ? (
+                      <span
+                        aria-label={t('admin.anomaly.title')}
+                        className="ml-auto inline-flex min-w-[1.25rem] items-center justify-center rounded-full bg-status-late/15 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-status-late ring-1 ring-inset ring-status-late/30"
+                      >
+                        {anomalyCount}
+                      </span>
+                    ) : null}
+                  </NavLink>
+                </li>
+              )
+            })}
           </ul>
         </nav>
 

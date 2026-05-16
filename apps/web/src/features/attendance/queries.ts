@@ -26,6 +26,20 @@ export const attendanceKeys = {
     ['attendance', 'class', classId, 'range', from, to] as const,
 }
 
+export const anomalyKeys = {
+  list: (from: string, to: string) => ['attendance', 'anomalies', from, to] as const,
+}
+
+/** Attendance rows flagged with cardAnomaly / leftWithoutScan / flaggedForReview. */
+export function useAnomalyList(from: string, to: string) {
+  return useQuery({
+    queryKey: anomalyKeys.list(from, to),
+    queryFn: () =>
+      apiGet(`/attendance?from=${from}&to=${to}&anomalies=true`, attendanceListSchema),
+    staleTime: 60_000,
+  })
+}
+
 /** Today's attendance row for a student. Polls inside the school window. */
 export function useTodayAttendance(studentId: string | undefined, school: School | undefined) {
   const { refetchInterval } = useRealtime(school)

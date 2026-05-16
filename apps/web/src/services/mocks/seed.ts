@@ -315,6 +315,13 @@ export function buildSeed(options: BuildSeedOptions = {}): SeedStore {
       const lastOutAt =
         outOffset === null ? undefined : dateAtTime(dateStr, addMinutes('13:30', outOffset))
 
+      // Sprinkle a small number of anomaly flags onto recent `present` rows
+      // so the admin Anomaly Center has a non-zero badge in the last 7 days.
+      // Reuses the deterministic prng so seeded counts are stable for tests.
+      const recent = dayOffset < 7
+      const cardAnomaly = recent && status === 'present' && prng.chance(0.03)
+      const leftWithoutScan = recent && status === 'present' && prng.chance(0.05)
+
       attendance.push({
         id: `att_${student.id}_${dateStr}`,
         studentId: student.id,
@@ -323,6 +330,8 @@ export function buildSeed(options: BuildSeedOptions = {}): SeedStore {
         ...(lastOutAt ? { lastOutAt } : {}),
         status,
         isManual: false,
+        ...(cardAnomaly ? { cardAnomaly: true } : {}),
+        ...(leftWithoutScan ? { leftWithoutScan: true } : {}),
       })
 
       // Tap events: one for each non-null in/out.

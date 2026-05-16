@@ -207,7 +207,8 @@
       "cards": "کارڈز",
       "devices": "ڈیوائسز",
       "reports": "رپورٹس",
-      "notifications": "نوٹیفیکیشنز"
+      "notifications": "نوٹیفیکیشنز",
+      "anomalies": "بے ضابطگیاں"
     },
     "stats": {
       "present": "حاضر",
@@ -371,6 +372,20 @@
         "sms": "SMS",
         "in_app": "ان ایپ"
       }
+    },
+    "anomaly": {
+      "title": "بے ضابطگی سینٹر",
+      "subtitle": "حاضری کے ریکارڈ جنہیں جانچنا ضروری ہے",
+      "empty": "اس رینج میں کوئی بے ضابطگی نہیں۔ سب کچھ ٹھیک ہے۔",
+      "fromLabel": "از",
+      "toLabel": "تا",
+      "reasons": {
+        "cardAnomaly": "کارڈ بدلا گیا",
+        "leftWithoutScan": "ٹیپ آؤٹ نہیں",
+        "flaggedForReview": "جانچ درکار"
+      },
+      "viewTimeline": "ٹائم لائن دیکھیں",
+      "loadError": "بے ضابطگیاں لوڈ نہیں ہو سکیں۔"
     },
     "loadError": "ہم سکول کے سرور تک نہیں پہنچ سکے۔",
     "unknownStudent": "نامعلوم طالب علم"

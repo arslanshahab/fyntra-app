@@ -351,6 +351,7 @@ export const handlers = [
     const from = url.searchParams.get('from')
     const to = url.searchParams.get('to')
     const classId = url.searchParams.get('classId')
+    const anomalies = url.searchParams.get('anomalies')
 
     let result = seedStore.attendance
     if (date) result = result.filter((a) => a.date === date)
@@ -361,6 +362,11 @@ export const handlers = [
         seedStore.students.filter((s) => s.classId === classId).map((s) => s.id),
       )
       result = result.filter((a) => studentIds.has(a.studentId))
+    }
+    if (anomalies === 'true') {
+      result = result.filter(
+        (a) => a.cardAnomaly === true || a.leftWithoutScan === true || a.flaggedForReview === true,
+      )
     }
     return HttpResponse.json(result)
   }),

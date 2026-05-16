@@ -207,7 +207,8 @@
       "cards": "Cards",
       "devices": "Devices",
       "reports": "Reports",
-      "notifications": "Notifications"
+      "notifications": "Notifications",
+      "anomalies": "Anomalies"
     },
     "stats": {
       "present": "Present",
@@ -372,6 +373,20 @@
         "sms": "SMS",
         "in_app": "In-app"
       }
+    },
+    "anomaly": {
+      "title": "Anomaly Center",
+      "subtitle": "Attendance records that need review",
+      "empty": "No anomalies in this range. Nice and quiet.",
+      "fromLabel": "From",
+      "toLabel": "To",
+      "reasons": {
+        "cardAnomaly": "Card swapped",
+        "leftWithoutScan": "No tap-out",
+        "flaggedForReview": "Needs review"
+      },
+      "viewTimeline": "View timeline",
+      "loadError": "Couldn't load anomalies."
     },
     "loadError": "Couldn't reach the school server.",
     "unknownStudent": "Unknown student"

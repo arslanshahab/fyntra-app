@@ -42,6 +42,9 @@ const AdminNotificationsPage = lazy(() =>
     default: m.AdminNotificationsPage,
   })),
 )
+const AdminAnomalyCenter = lazy(() =>
+  import('../pages/admin/AdminAnomalyCenter').then((m) => ({ default: m.AdminAnomalyCenter })),
+)
 
 const ParentHomePage = lazy(() =>
   import('../pages/parent/ParentHomePage').then((m) => ({ default: m.ParentHomePage })),
@@ -100,6 +103,7 @@ export function AppRoutes() {
           <Route path="devices" element={<AdminDevicesPage />} />
           <Route path="reports" element={<AdminReportsPage />} />
           <Route path="notifications" element={<AdminNotificationsPage />} />
+          <Route path="anomalies" element={<AdminAnomalyCenter />} />
         </Route>
         <Route
           path="/teacher"
