@@ -238,7 +238,18 @@
       "devices": "ڈیوائسز",
       "reports": "رپورٹس",
       "notifications": "نوٹیفیکیشنز",
-      "anomalies": "بے ضابطگیاں"
+      "anomalies": "بے ضابطگیاں",
+      "section": {
+        "overview": "جائزہ",
+        "people": "لوگ",
+        "infrastructure": "انفراسٹرکچر",
+        "operations": "آپریشنز"
+      }
+    },
+    "anomalyHeadline": {
+      "allClear": "سب ٹھیک ہے",
+      "needsReview_one": "{{count}} بے ضابطگی کا جائزہ ضروری",
+      "needsReview_other": "{{count}} بے ضابطگیوں کا جائزہ ضروری"
     },
     "stats": {
       "present": "حاضر",

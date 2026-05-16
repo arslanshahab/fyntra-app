@@ -25,18 +25,62 @@ interface NavItem {
   end?: boolean
 }
 
-const NAV: NavItem[] = [
-  { to: '/admin', labelKey: 'admin.nav.dashboard', icon: Home, end: true },
-  { to: '/admin/students', labelKey: 'admin.nav.students', icon: Users },
-  { to: '/admin/cards', labelKey: 'admin.nav.cards', icon: CreditCard },
-  { to: '/admin/devices', labelKey: 'admin.nav.devices', icon: Radio },
-  { to: '/admin/reports', labelKey: 'admin.nav.reports', icon: FileSpreadsheet },
-  { to: '/admin/notifications', labelKey: 'admin.nav.notifications', icon: Bell },
-  { to: '/admin/anomalies', labelKey: 'admin.nav.anomalies', icon: AlertTriangle },
+interface NavGroup {
+  labelKey: string
+  items: NavItem[]
+}
+
+const NAV_GROUPS: NavGroup[] = [
+  {
+    labelKey: 'admin.nav.section.overview',
+    items: [{ to: '/admin', labelKey: 'admin.nav.dashboard', icon: Home, end: true }],
+  },
+  {
+    labelKey: 'admin.nav.section.people',
+    items: [
+      { to: '/admin/students', labelKey: 'admin.nav.students', icon: Users },
+      { to: '/admin/cards', labelKey: 'admin.nav.cards', icon: CreditCard },
+    ],
+  },
+  {
+    labelKey: 'admin.nav.section.infrastructure',
+    items: [{ to: '/admin/devices', labelKey: 'admin.nav.devices', icon: Radio }],
+  },
+  {
+    labelKey: 'admin.nav.section.operations',
+    items: [
+      { to: '/admin/reports', labelKey: 'admin.nav.reports', icon: FileSpreadsheet },
+      { to: '/admin/notifications', labelKey: 'admin.nav.notifications', icon: Bell },
+      { to: '/admin/anomalies', labelKey: 'admin.nav.anomalies', icon: AlertTriangle },
+    ],
+  },
 ]
+
+const FLAT_NAV: NavItem[] = NAV_GROUPS.flatMap((g) => g.items)
 
 function from7DaysAgo(): string {
   return dateStrInKarachi(new Date(Date.now() - 7 * 86400000))
+}
+
+function navLinkClass({ isActive }: { isActive: boolean }) {
+  return cn(
+    'flex items-center gap-2 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+    isActive
+      ? 'bg-brand-50 text-brand-700 ring-1 ring-inset ring-brand-100'
+      : 'text-stone-600 hover:bg-stone-100',
+  )
+}
+
+function AnomalyBadge({ count }: { count: number }) {
+  const { t } = useTranslation()
+  return (
+    <span
+      aria-label={t('admin.anomaly.title')}
+      className="ml-auto inline-flex min-w-[1.25rem] items-center justify-center rounded-full bg-status-late/15 px-1.5 py-0.5 font-mono text-[10px] font-semibold leading-none tabular-nums text-status-late ring-1 ring-inset ring-status-late/30"
+    >
+      {count}
+    </span>
+  )
 }
 
 export function AdminLayout() {
@@ -93,38 +137,51 @@ export function AdminLayout() {
 
       <div className="mx-auto max-w-7xl px-6 py-6 lg:grid lg:grid-cols-[200px_1fr] lg:gap-8">
         <nav aria-label={t('admin.dashboardTitle')} className="mb-4 lg:mb-0">
-          <ul className="flex gap-1 overflow-x-auto lg:flex-col lg:space-y-1 lg:overflow-visible">
-            {NAV.map((item) => {
+          {/* Mobile / tablet — flat horizontal scroll row (section labels would
+              wrap awkwardly inside a single-line scroller). */}
+          <ul className="flex gap-1 overflow-x-auto lg:hidden">
+            {FLAT_NAV.map((item) => {
               const showBadge = item.to === '/admin/anomalies' && anomalyCount > 0
               return (
                 <li key={item.to}>
-                  <NavLink
-                    to={item.to}
-                    end={item.end}
-                    className={({ isActive }) =>
-                      cn(
-                        'flex items-center gap-2 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium transition-colors',
-                        isActive
-                          ? 'bg-brand-50 text-brand-700 ring-1 ring-inset ring-brand-100'
-                          : 'text-stone-600 hover:bg-stone-100',
-                      )
-                    }
-                  >
+                  <NavLink to={item.to} end={item.end} className={navLinkClass}>
                     <Icon icon={item.icon} size="sm" />
                     {t(item.labelKey)}
-                    {showBadge ? (
-                      <span
-                        aria-label={t('admin.anomaly.title')}
-                        className="ml-auto inline-flex min-w-[1.25rem] items-center justify-center rounded-full bg-status-late/15 px-1.5 py-0.5 font-mono text-[10px] font-semibold leading-none tabular-nums text-status-late ring-1 ring-inset ring-status-late/30"
-                      >
-                        {anomalyCount}
-                      </span>
-                    ) : null}
+                    {showBadge ? <AnomalyBadge count={anomalyCount} /> : null}
                   </NavLink>
                 </li>
               )
             })}
           </ul>
+
+          {/* Desktop — grouped vertical sidebar. */}
+          <div className="hidden lg:block">
+            {NAV_GROUPS.map((group, gIdx) => (
+              <div
+                key={group.labelKey}
+                className={cn('space-y-1', gIdx > 0 && 'mt-3 border-t border-stone-100 pt-3')}
+              >
+                <p className="px-3 pb-1 text-micro font-semibold uppercase text-stone-500">
+                  {t(group.labelKey)}
+                </p>
+                <ul className="space-y-1">
+                  {group.items.map((item) => {
+                    const showBadge =
+                      item.to === '/admin/anomalies' && anomalyCount > 0
+                    return (
+                      <li key={item.to}>
+                        <NavLink to={item.to} end={item.end} className={navLinkClass}>
+                          <Icon icon={item.icon} size="sm" />
+                          {t(item.labelKey)}
+                          {showBadge ? <AnomalyBadge count={anomalyCount} /> : null}
+                        </NavLink>
+                      </li>
+                    )
+                  })}
+                </ul>
+              </div>
+            ))}
+          </div>
         </nav>
 
         <main id="admin-main" className="min-w-0">
