@@ -6,82 +6,7 @@ lands.
 
 ---
 
-## 1. Live freshness indicator on parent home
-
-**Problem.** A parent opens the app to find out whether their child has
-tapped in. There is no signal of *when* the data was last fetched. If a
-device is briefly offline or the network is slow, the parent might be looking
-at five-minute-stale data and not know it. For a child-safety product, that
-trust gap is the single biggest emotional miss.
-
-**Proposed UX.** A small line under the greeting:
-`Refreshed 12 seconds ago · live ●` — subtle pulsing dot when freshness
-under 30s, amber 30s–2min, red over 2min. Optional companion: pull-to-refresh
-gesture on mobile that re-runs the relevant queries.
-
-**Audience.** Parents primarily; also useful on the Admin live tap feed.
-
-**Effort.** Small. Query timestamps are already available from TanStack
-Query (`dataUpdatedAt`). The static indicator is ~1–2h. Pull-to-refresh
-adds 1–2h with a small custom hook or a library.
-
----
-
-## 2. Sort children by attendance urgency
-
-**Problem.** A parent with 2+ children sees an unordered list. The card most
-likely to need attention (absent / unverified) might be second or third.
-
-**Proposed UX.** Default sort: `absent → unverified → not_yet → late →
-at_school → left`. The "needs attention" card always lands on top. Optional
-companion: a one-line summary above the list ("1 child not yet at school").
-
-**Audience.** Parents with 2+ children.
-
-**Effort.** Tiny — sort function on the existing children array, ~30 min.
-Summary line is another ~30 min if approved.
-
----
-
-## 3. Enrich ChildCard with duration on campus + last gate location
-
-**Problem.** The status hero says "Ali is at school" but doesn't tell parents
-*how long* their child has been there or *which gate* they tapped in at.
-Both are derivable from data the page already has.
-
-**Proposed UX.** Below the status subtitle, a thin divider, then two micro
-rows: `3h 12m on campus` (mono numeric) and `Main gate · Reader 02` (stone
-secondary text). Hide on `pre_school` / `not_yet` / `no_card` where the
-metadata doesn't apply.
-
-**Audience.** Parents.
-
-**Effort.** Small — `formatDuration(firstInAt, now)` helper, last-device
-lookup from the live feed query, new i18n keys. ~1–2h.
-
----
-
-## 4. "Today / Yesterday" relative date labels on the timeline
-
-**Problem.** Timeline day rows currently read as `Mon, May 14`. A parent
-glancing at the page has to do the mental math to know which row is *today*
-or *yesterday* — the rows most likely to be relevant to a same-day check-in
-question.
-
-**Proposed UX.** When the row date matches the user's current Karachi-tz
-date, render `Today · Mon, May 14`. When it's yesterday, `Yesterday · Sun,
-May 13`. Older rows keep the current short format. Relative prefix uses
-stone-900 weight, the date metadata stone-500 — visual hierarchy reflects
-recency.
-
-**Audience.** Parents.
-
-**Effort.** Tiny — `relativeDayLabel(dateStr, now)` helper, one i18n key
-pair, ~30 min including Urdu translation.
-
----
-
-## 5. Filter chips on Teacher Today
+## 1. Filter chips on Teacher Today
 
 **Problem.** In a 30-student class, a teacher who wants to find "who hasn't
 tapped in yet" has to scan the whole table. The Status column shows the
@@ -99,7 +24,7 @@ and basic responsive treatment.
 
 ---
 
-## 6. Responsive teacher today layout (table → card list on mobile)
+## 2. Responsive teacher today layout (table → card list on mobile)
 
 **Problem.** The teacher today table is wider than a 360px phone viewport.
 Currently it horizontal-scrolls inside the card, which is functional but
@@ -119,7 +44,7 @@ single mono line, and the Override button as a full-width secondary. Above
 
 ---
 
-## 7. Admin sidebar nav grouping
+## 3. Admin sidebar nav grouping
 
 **Problem.** The admin sidebar currently lists seven items as one flat list
 (Dashboard, Students, Cards, Devices, Reports, Notifications, Anomalies).
@@ -142,7 +67,7 @@ section headers. ~30 min including i18n keys.
 
 ---
 
-## 8. "All clear / N anomalies" headline on admin dashboard
+## 4. "All clear / N anomalies" headline on admin dashboard
 
 **Problem.** Admin opens the dashboard and has to scan four numbers to know
 whether anything needs attention. The aggregate state ("everything's fine"

@@ -97,9 +97,16 @@ const config: Config = {
           '0%': { opacity: '0', transform: 'translateY(-4px)' },
           '100%': { opacity: '1', transform: 'translateY(0)' },
         },
+        // Gentle dot pulse for the freshness chip when data is recent. Subtle
+        // opacity sway, not a scale, so it reads as "live" without distraction.
+        'fresh-pulse': {
+          '0%, 100%': { opacity: '1' },
+          '50%': { opacity: '0.5' },
+        },
       },
       animation: {
         'fade-in-up': 'fade-in-up 240ms ease-out both',
+        'fresh-pulse': 'fresh-pulse 1.6s ease-in-out infinite',
       },
     },
   },

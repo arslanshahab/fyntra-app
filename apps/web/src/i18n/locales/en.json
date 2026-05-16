@@ -11,7 +11,13 @@
     "save": "Save",
     "signOut": "Sign out",
     "back": "Back",
-    "skipToContent": "Skip to main content"
+    "skipToContent": "Skip to main content",
+    "freshness": {
+      "justNow": "Just now",
+      "secondsAgo": "{{count}}s ago",
+      "minutesAgo": "{{count}}m ago",
+      "hoursAgo": "{{count}}h ago"
+    }
   },
   "language": {
     "current": "English",
@@ -108,6 +114,16 @@
     "loadError": "We couldn't reach the school server. Pull to try again.",
     "viewTimeline": "View 30-day history",
     "openSettings": "Notification settings",
+    "summary": {
+      "needsAttention_one": "{{count}} child needs your attention",
+      "needsAttention_other": "{{count}} children need your attention"
+    },
+    "metadata": {
+      "justArrived": "Just arrived",
+      "durationMinutesOnly": "{{minutes}}m on campus",
+      "durationHoursMinutes": "{{hours}}h {{minutes}}m on campus",
+      "lastSeenAtLabel": "Last seen at"
+    },
     "settings": {
       "title": "Notification settings",
       "back": "Back to home",
@@ -195,6 +211,10 @@
     "removedDevice": "(removed device)",
     "loadEarlier": "Load earlier",
     "endOfHistory": "Beginning of history",
+    "relativeDay": {
+      "today": "Today",
+      "yesterday": "Yesterday"
+    },
     "statusLabel": {
       "present": "Present",
       "late": "Late",

@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 
 import { Button } from '../atoms/Button'
 import { Icon } from '../atoms/Icon'
+import { FreshnessChip } from '../molecules/FreshnessChip'
 import { useLiveTapFeed } from '../../features/attendance/queries'
 import { useDevicesQuery } from '../../features/devices/queries'
 import { useStudentsQuery } from '../../features/students/queries'
@@ -77,9 +78,12 @@ export function LiveTapFeed({ school }: LiveTapFeedProps) {
       aria-label={t('admin.liveFeed.title')}
       className="rounded-2xl bg-white p-5 shadow-elev-1 ring-1 ring-stone-200"
     >
-      <h2 className="font-display text-base font-semibold tracking-tight text-stone-900">
-        {t('admin.liveFeed.title')}
-      </h2>
+      <div className="flex items-baseline justify-between gap-2">
+        <h2 className="font-display text-base font-semibold tracking-tight text-stone-900">
+          {t('admin.liveFeed.title')}
+        </h2>
+        <FreshnessChip updatedAt={feed.dataUpdatedAt} />
+      </div>
       <div className="mt-4">
         {feed.isLoading ? (
           <div aria-busy="true" aria-label={t('common.loading')}>

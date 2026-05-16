@@ -59,3 +59,32 @@ export function formatTimelineDate(ymdDate: string): string {
     'EEE, MMM d',
   )
 }
+
+/**
+ * Returns 'today' / 'yesterday' when `ymdDate` matches the current or previous
+ * Karachi-tz day, or null otherwise. Callers render the prefix as a label and
+ * compose with `formatTimelineDate` for the suffix.
+ */
+export function relativeDayPrefix(
+  ymdDate: string,
+  now: Date = new Date(),
+): 'today' | 'yesterday' | null {
+  const today = dateStrInKarachi(now)
+  if (ymdDate === today) return 'today'
+  const yesterday = dateStrInKarachi(new Date(now.getTime() - 86400000))
+  if (ymdDate === yesterday) return 'yesterday'
+  return null
+}
+
+/**
+ * Split a millisecond duration into whole hours + remainder minutes. Negative
+ * inputs clamp to zero so callers never need a guard. The parent ChildCard
+ * uses this to render "3h 12m on campus" under the status hero.
+ */
+export function splitDuration(ms: number): { hours: number; minutes: number } {
+  const totalMinutes = Math.max(0, Math.floor(ms / 60_000))
+  return {
+    hours: Math.floor(totalMinutes / 60),
+    minutes: totalMinutes % 60,
+  }
+}
