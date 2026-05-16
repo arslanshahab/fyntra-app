@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { UserX, Users } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import { LogIn, LogOut, UserX, Users } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 import { Avatar } from '../../components/atoms/Avatar'
@@ -25,6 +25,18 @@ interface OverrideState {
   student: Student
   direction: TapDirection
   reason: string
+}
+
+type RosterFilter = 'all' | 'not_yet' | 'late' | 'absent' | 'left_early'
+
+const ROSTER_FILTERS: RosterFilter[] = ['all', 'not_yet', 'late', 'absent', 'left_early']
+
+const filterLabelKey: Record<RosterFilter, string> = {
+  all: 'teacher.today.filter.all',
+  not_yet: 'teacher.today.status.not_yet',
+  late: 'teacher.today.status.late',
+  absent: 'teacher.today.status.absent',
+  left_early: 'teacher.today.status.left_early',
 }
 
 function RosterRowSkeleton() {
@@ -55,6 +67,26 @@ function RosterRowSkeleton() {
   )
 }
 
+function MobileRosterCardSkeleton() {
+  return (
+    <div
+      aria-hidden="true"
+      className="animate-pulse rounded-2xl bg-white p-4 shadow-elev-1 ring-1 ring-stone-200"
+    >
+      <div className="flex items-start gap-3">
+        <div className="h-8 w-8 rounded-full bg-stone-100" />
+        <div className="flex-1 space-y-1.5">
+          <div className="h-3.5 w-36 rounded bg-stone-100" />
+          <div className="h-3 w-16 rounded bg-stone-100" />
+        </div>
+      </div>
+      <div className="mt-3 h-5 w-20 rounded-full bg-stone-100" />
+      <div className="mt-3 h-3 w-32 rounded bg-stone-100" />
+      <div className="mt-4 h-11 w-full rounded-lg bg-stone-100" />
+    </div>
+  )
+}
+
 export function TeacherTodayPage() {
   const { t } = useTranslation()
   const me = useMeQuery()
@@ -65,11 +97,50 @@ export function TeacherTodayPage() {
 
   const [override, setOverride] = useState<OverrideState | null>(null)
   const [banner, setBanner] = useState<{ kind: 'success' | 'error'; text: string } | null>(null)
+  const [filter, setFilter] = useState<RosterFilter>('all')
 
-  const attendanceByStudent = new Map((attendance.data ?? []).map((a) => [a.studentId, a]))
-  const sortedRoster = [...(students.data ?? [])].sort((a, b) =>
-    a.rollNumber.localeCompare(b.rollNumber),
+  const attendanceByStudent = useMemo(
+    () => new Map((attendance.data ?? []).map((a) => [a.studentId, a])),
+    [attendance.data],
   )
+  const sortedRoster = useMemo(
+    () =>
+      [...(students.data ?? [])].sort((a, b) =>
+        a.rollNumber.localeCompare(b.rollNumber),
+      ),
+    [students.data],
+  )
+
+  const filterCounts = useMemo(() => {
+    const c: Record<RosterFilter, number> = {
+      all: sortedRoster.length,
+      not_yet: 0,
+      late: 0,
+      absent: 0,
+      left_early: 0,
+    }
+    for (const s of sortedRoster) {
+      const a = attendanceByStudent.get(s.id)
+      if (!a) {
+        c.not_yet += 1
+        continue
+      }
+      if (a.status === 'late') c.late += 1
+      else if (a.status === 'absent') c.absent += 1
+      else if (a.status === 'left_early') c.left_early += 1
+    }
+    return c
+  }, [sortedRoster, attendanceByStudent])
+
+  const filteredRoster = useMemo(() => {
+    if (filter === 'all') return sortedRoster
+    return sortedRoster.filter((s) => {
+      const a = attendanceByStudent.get(s.id)
+      if (filter === 'not_yet') return !a
+      if (!a) return false
+      return a.status === filter
+    })
+  }, [sortedRoster, attendanceByStudent, filter])
 
   const submitOverride = () => {
     if (!override || !override.reason.trim()) return
@@ -156,10 +227,44 @@ export function TeacherTodayPage() {
         </div>
       ) : null}
 
+      {!isLoadingRoster && sortedRoster.length > 0 ? (
+        <div role="tablist" aria-label={t('teacher.today.filter.label')} className="flex flex-wrap gap-2">
+          {ROSTER_FILTERS.map((f) => {
+            const active = filter === f
+            return (
+              <button
+                key={f}
+                type="button"
+                role="tab"
+                aria-selected={active}
+                onClick={() => setFilter(f)}
+                className={
+                  active
+                    ? 'inline-flex items-center gap-1.5 rounded-full bg-brand-50 px-3 py-1.5 text-sm font-medium text-brand-700 ring-1 ring-inset ring-brand-100 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500'
+                    : 'inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-sm font-medium text-stone-600 ring-1 ring-inset ring-stone-200 transition-colors hover:bg-stone-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500'
+                }
+              >
+                <span>{t(filterLabelKey[f])}</span>
+                <span
+                  className={
+                    active
+                      ? 'font-mono text-xs tabular-nums text-brand-700/80'
+                      : 'font-mono text-xs tabular-nums text-stone-400'
+                  }
+                >
+                  {filterCounts[f]}
+                </span>
+              </button>
+            )
+          })}
+        </div>
+      ) : null}
+
       {!isLoadingRoster && sortedRoster.length === 0 ? (
         <StatusCard icon={Users} body={t('teacher.today.empty')} />
       ) : (
-        <div className="overflow-hidden rounded-2xl bg-white shadow-elev-1 ring-1 ring-stone-200">
+        <>
+        <div className="hidden overflow-hidden rounded-2xl bg-white shadow-elev-1 ring-1 ring-stone-200 sm:block">
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-stone-200 text-sm">
               <thead className="bg-stone-50 text-micro uppercase text-stone-500">
@@ -182,9 +287,19 @@ export function TeacherTodayPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-stone-100">
-                {isLoadingRoster
-                  ? Array.from({ length: 6 }).map((_, i) => <RosterRowSkeleton key={i} />)
-                  : sortedRoster.map((student) => {
+                {isLoadingRoster ? (
+                  Array.from({ length: 6 }).map((_, i) => <RosterRowSkeleton key={i} />)
+                ) : filteredRoster.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={5}
+                      className="px-4 py-8 text-center text-sm text-stone-500"
+                    >
+                      {t('teacher.today.filter.noMatch')}
+                    </td>
+                  </tr>
+                ) : (
+                  filteredRoster.map((student) => {
                       const a = attendanceByStudent.get(student.id)
                       const tone = a ? statusTone[a.status] : 'notyet'
                       const statusKey = a ? a.status : 'not_yet'
@@ -244,11 +359,83 @@ export function TeacherTodayPage() {
                           </td>
                         </tr>
                       )
-                    })}
+                    })
+                )}
               </tbody>
             </table>
           </div>
         </div>
+
+        <div className="space-y-3 sm:hidden">
+          {isLoadingRoster ? (
+            Array.from({ length: 6 }).map((_, i) => <MobileRosterCardSkeleton key={i} />)
+          ) : filteredRoster.length === 0 ? (
+            <div className="rounded-2xl bg-white p-6 text-center text-sm text-stone-500 shadow-elev-1 ring-1 ring-stone-200">
+              {t('teacher.today.filter.noMatch')}
+            </div>
+          ) : (
+            filteredRoster.map((student) => {
+              const a = attendanceByStudent.get(student.id)
+              const tone = a ? statusTone[a.status] : 'notyet'
+              const statusKey = a ? a.status : 'not_yet'
+              return (
+                <article
+                  key={student.id}
+                  className="rounded-2xl bg-white p-4 shadow-elev-1 ring-1 ring-stone-200"
+                >
+                  <div className="flex items-start gap-3">
+                    <Avatar name={student.fullName} src={student.photoUrl} size="sm" />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-medium text-stone-900">
+                        {student.fullName}
+                      </p>
+                      <p className="font-mono text-xs text-stone-500">
+                        {student.rollNumber}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="mt-3 flex flex-wrap items-center gap-2">
+                    <Badge tone={tone} size="md">
+                      {t(`teacher.today.status.${statusKey}`)}
+                    </Badge>
+                    {a?.isManual ? (
+                      <Badge tone="neutral">{t('teacher.today.manualBadge')}</Badge>
+                    ) : null}
+                  </div>
+                  <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-stone-700">
+                    <span className="inline-flex items-center gap-1.5">
+                      <LogIn aria-hidden="true" className="h-3.5 w-3.5 text-stone-400" />
+                      <span className="font-mono tabular-nums">
+                        {a?.firstInAt ? formatTimeInKarachi(a.firstInAt) : '—'}
+                      </span>
+                    </span>
+                    <span className="inline-flex items-center gap-1.5">
+                      <LogOut aria-hidden="true" className="h-3.5 w-3.5 text-stone-400" />
+                      <span className="font-mono tabular-nums">
+                        {a?.lastOutAt ? formatTimeInKarachi(a.lastOutAt) : '—'}
+                      </span>
+                    </span>
+                  </div>
+                  <Button
+                    variant="secondary"
+                    size="md"
+                    className="mt-4 w-full"
+                    onClick={() =>
+                      setOverride({
+                        student,
+                        direction: a?.firstInAt ? 'out' : 'in',
+                        reason: '',
+                      })
+                    }
+                  >
+                    {t('teacher.today.override')}
+                  </Button>
+                </article>
+              )
+            })
+          )}
+        </div>
+        </>
       )}
 
       {override ? (

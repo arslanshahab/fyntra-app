@@ -92,6 +92,11 @@
       "direction": {
         "in": "In",
         "out": "Out"
+      },
+      "filter": {
+        "label": "Filter roster",
+        "all": "All",
+        "noMatch": "No students match this filter."
       }
     },
     "history": {
