@@ -78,7 +78,9 @@ function DayRow({ record, studentId, isOpen, onToggle }: DayRowProps) {
                   </span>
                   <span className="truncate text-xs text-slate-500">
                     {t('timeline.atDevice', {
-                      device: (event.deviceId ? devicesById.get(event.deviceId)?.label : undefined) ?? event.deviceId ?? '—',
+                      device:
+                        (event.deviceId ? devicesById.get(event.deviceId)?.label : undefined) ??
+                        (event.deviceId ? t('timeline.removedDevice') : '—'),
                     })}
                   </span>
                 </li>

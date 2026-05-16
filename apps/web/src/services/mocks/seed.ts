@@ -8,6 +8,7 @@ import type {
   Card,
   Class,
   Device,
+  DeviceToken,
   NotificationLog,
   NotificationSettings,
   School,
@@ -121,6 +122,7 @@ export interface SeedStore {
   students: Student[]
   cards: Card[]
   devices: Device[]
+  deviceTokens: DeviceToken[]
   users: User[]
   attendance: AttendanceRecord[]
   tapEvents: TapEvent[]
@@ -268,6 +270,15 @@ export function buildSeed(options: BuildSeedOptions = {}): SeedStore {
     },
   ]
 
+  // One issued, unrevoked token per device — enough to demo the tokens table.
+  const tokenIssuedAt = new Date(today.getTime() - 7 * 86400000).toISOString()
+  const deviceTokens: DeviceToken[] = devices.map((d, i) => ({
+    id: `dtk_${i + 1}`,
+    deviceId: d.id,
+    label: `${d.label} dev token`,
+    createdAt: tokenIssuedAt,
+  }))
+
   // Attendance, tap events, notifications across the last `timelineDays`.
   const attendance: AttendanceRecord[] = []
   const tapEvents: TapEvent[] = []
@@ -405,6 +416,7 @@ export function buildSeed(options: BuildSeedOptions = {}): SeedStore {
     students,
     cards,
     devices,
+    deviceTokens,
     users,
     attendance,
     tapEvents,

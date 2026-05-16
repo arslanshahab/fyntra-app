@@ -72,3 +72,10 @@ export async function apiPatch<S extends ZodTypeAny>(
 ): Promise<z.infer<S>> {
   return schema.parse(await request('PATCH', path, body)) as z.infer<S>
 }
+
+export async function apiDelete<S extends ZodTypeAny>(
+  path: string,
+  schema: S,
+): Promise<z.infer<S>> {
+  return schema.parse(await request('DELETE', path)) as z.infer<S>
+}

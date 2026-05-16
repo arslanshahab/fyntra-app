@@ -1,5 +1,5 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { I18nextProvider } from 'react-i18next'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
@@ -45,10 +45,10 @@ describe('AdminDevicesPage', () => {
     useAuthStore.setState({ token: `tok_${admin.id}`, user: admin })
   })
 
-  it('renders both seed gate devices as cards', async () => {
+  it('renders both seed gate devices as table rows', async () => {
     renderPage()
-    expect(await screen.findByRole('heading', { level: 2, name: 'Main Gate' })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { level: 2, name: 'Side Gate' })).toBeInTheDocument()
+    expect(await screen.findByRole('link', { name: 'Main Gate' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Side Gate' })).toBeInTheDocument()
   })
 
   it('shows the simulate tap panel with the bridge status indicator', async () => {
@@ -61,7 +61,7 @@ describe('AdminDevicesPage', () => {
   it('submits a simulated tap with a known seed UID', async () => {
     const user = userEvent.setup()
     renderPage()
-    await screen.findByRole('heading', { level: 2, name: 'Main Gate' })
+    await screen.findByRole('link', { name: 'Main Gate' })
     const knownUid = seedStore.cards[0]!.rfidUid
     const uidInput = screen.getByLabelText(/rfid uid/i) as HTMLInputElement
     await user.type(uidInput, knownUid)
@@ -69,5 +69,30 @@ describe('AdminDevicesPage', () => {
     await waitFor(() => {
       expect(screen.getByText(/tap submitted/i)).toBeInTheDocument()
     })
+  })
+
+  it('opens the create-device modal when "New device" is clicked', async () => {
+    const user = userEvent.setup()
+    renderPage()
+    await screen.findByRole('link', { name: 'Main Gate' })
+    await user.click(screen.getByRole('button', { name: /new device/i }))
+    expect(await screen.findByRole('dialog', { name: /add device/i })).toBeInTheDocument()
+  })
+
+  it('creates a new device and shows it in the list', async () => {
+    const user = userEvent.setup()
+    renderPage()
+    await screen.findByRole('link', { name: 'Main Gate' })
+
+    await user.click(screen.getByRole('button', { name: /new device/i }))
+    const dialog = await screen.findByRole('dialog', { name: /add device/i })
+
+    const labelInput = await within(dialog).findByLabelText(/^label$/i)
+    await user.type(labelInput, 'Back Gate')
+    await user.click(within(dialog).getByRole('button', { name: /create device/i }))
+
+    // Success banner + the new row appears in the list (query invalidated).
+    expect(await screen.findByText(/device added/i)).toBeInTheDocument()
+    expect(await screen.findByRole('link', { name: 'Back Gate' })).toBeInTheDocument()
   })
 })

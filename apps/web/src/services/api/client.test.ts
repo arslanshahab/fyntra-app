@@ -4,7 +4,7 @@ import { http, HttpResponse } from 'msw'
 import { z } from 'zod'
 
 import { useAuthStore } from '../../stores/auth'
-import { ApiError, apiGet, apiPost } from './client'
+import { ApiError, apiDelete, apiGet, apiPost } from './client'
 
 const responseSchema = z.object({ value: z.number() })
 
@@ -15,6 +15,7 @@ const BASE = '*/api'
 const handlers = [
   http.get(`${BASE}/echo`, () => HttpResponse.json({ value: 42 })),
   http.post(`${BASE}/echo`, async ({ request }) => HttpResponse.json(await request.json())),
+  http.delete(`${BASE}/echo`, () => HttpResponse.json({ value: 7 })),
   http.get(`${BASE}/bad-shape`, () => HttpResponse.json({ value: 'not-a-number' })),
   http.get(`${BASE}/needs-auth`, ({ request }) => {
     const auth = request.headers.get('authorization')
@@ -66,5 +67,12 @@ describe('apiPost', () => {
   it('round-trips a JSON body and validates the response', async () => {
     const data = await apiPost('/echo', { value: 99 }, responseSchema)
     expect(data).toEqual({ value: 99 })
+  })
+})
+
+describe('apiDelete', () => {
+  it('parses the response against the provided schema', async () => {
+    const data = await apiDelete('/echo', responseSchema)
+    expect(data).toEqual({ value: 7 })
   })
 })

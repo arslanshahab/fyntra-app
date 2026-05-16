@@ -76,7 +76,7 @@ export function LiveTapFeed({ school }: LiveTapFeedProps) {
                     <p className="truncate text-xs text-slate-500">
                       {isIn ? t('admin.liveFeed.in') : t('admin.liveFeed.out')}
                       {' · '}
-                      {device?.label ?? (event.source === 'manual' ? t('admin.liveFeed.manualEntry') : event.deviceId)}
+                      {device?.label ?? (event.source === 'manual' ? t('admin.liveFeed.manualEntry') : event.deviceId ? t('admin.liveFeed.removedDevice') : '—')}
                     </p>
                   </div>
                   <span className="flex-shrink-0 text-xs tabular-nums text-slate-500">

@@ -34,6 +34,11 @@ const AdminCardsPage = lazy(() =>
 const AdminDevicesPage = lazy(() =>
   import('../pages/admin/AdminDevicesPage').then((m) => ({ default: m.AdminDevicesPage })),
 )
+const AdminDeviceDetailPage = lazy(() =>
+  import('../pages/admin/AdminDeviceDetailPage').then((m) => ({
+    default: m.AdminDeviceDetailPage,
+  })),
+)
 const AdminReportsPage = lazy(() =>
   import('../pages/admin/AdminReportsPage').then((m) => ({ default: m.AdminReportsPage })),
 )
@@ -101,6 +106,7 @@ export function AppRoutes() {
           <Route path="students/:id" element={<AdminStudentDetailPage />} />
           <Route path="cards" element={<AdminCardsPage />} />
           <Route path="devices" element={<AdminDevicesPage />} />
+          <Route path="devices/:id" element={<AdminDeviceDetailPage />} />
           <Route path="reports" element={<AdminReportsPage />} />
           <Route path="notifications" element={<AdminNotificationsPage />} />
           <Route path="anomalies" element={<AdminAnomalyCenter />} />

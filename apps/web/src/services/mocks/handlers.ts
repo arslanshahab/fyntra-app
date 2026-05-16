@@ -4,12 +4,23 @@
 import { delay, http, HttpResponse } from 'msw'
 import { formatInTimeZone } from 'date-fns-tz'
 
-import type { AttendanceRecord, Card, CardAuditEntry, TapEvent, User } from '@fyntra/schemas'
+import type {
+  AttendanceRecord,
+  Card,
+  CardAuditEntry,
+  Device,
+  DeviceToken,
+  TapEvent,
+  User,
+} from '@fyntra/schemas'
 import {
   assignCardRequestSchema,
+  createDeviceRequestSchema,
+  createDeviceTokenRequestSchema,
   manualTapEventRequestSchema,
   notificationSettingsSchema,
   patchCardRequestSchema,
+  patchDeviceRequestSchema,
   replaceCardRequestSchema,
   requestOtpRequestSchema,
   simulateTapRequestSchema,
@@ -262,6 +273,79 @@ export const handlers = [
     const device = seedStore.devices.find((d) => d.id === params.id)
     if (!device) return HttpResponse.json({ error: 'Not found' }, { status: 404 })
     return HttpResponse.json(device)
+  }),
+
+  http.post(`${API}/devices`, async ({ request }) => {
+    await latency()
+    const body = createDeviceRequestSchema.safeParse(await request.json())
+    if (!body.success) return HttpResponse.json({ error: 'Invalid body' }, { status: 400 })
+    const device: Device = {
+      id: `dev_${Date.now().toString(36)}_${Math.floor(Math.random() * 1_000_000).toString(36)}`,
+      schoolId: seedStore.school.id,
+      label: body.data.label,
+      direction: body.data.direction,
+      status: 'offline',
+      lastHeartbeat: new Date().toISOString(),
+    }
+    seedStore.devices.push(device)
+    return HttpResponse.json(device)
+  }),
+
+  http.patch(`${API}/devices/:id`, async ({ params, request }) => {
+    await latency()
+    const body = patchDeviceRequestSchema.safeParse(await request.json())
+    if (!body.success) return HttpResponse.json({ error: 'Invalid body' }, { status: 400 })
+    const device = seedStore.devices.find((d) => d.id === params.id)
+    if (!device) return HttpResponse.json({ error: 'Not found' }, { status: 404 })
+    if (body.data.label !== undefined) device.label = body.data.label
+    if (body.data.direction !== undefined) device.direction = body.data.direction
+    return HttpResponse.json(device)
+  }),
+
+  http.delete(`${API}/devices/:id`, async ({ params }) => {
+    await latency()
+    const idx = seedStore.devices.findIndex((d) => d.id === params.id)
+    if (idx === -1) return HttpResponse.json({ error: 'Not found' }, { status: 404 })
+    // Drop from GET response and cascade-revoke tokens to mirror the api's
+    // soft-delete behaviour.
+    seedStore.devices.splice(idx, 1)
+    seedStore.deviceTokens = seedStore.deviceTokens.filter((t) => t.deviceId !== params.id)
+    return HttpResponse.json({ ok: true })
+  }),
+
+  http.get(`${API}/devices/:id/tokens`, async ({ params }) => {
+    await latency()
+    const device = seedStore.devices.find((d) => d.id === params.id)
+    if (!device) return HttpResponse.json({ error: 'Not found' }, { status: 404 })
+    const tokens = seedStore.deviceTokens.filter((t) => t.deviceId === params.id)
+    return HttpResponse.json(tokens)
+  }),
+
+  http.post(`${API}/devices/:id/tokens`, async ({ params, request }) => {
+    await latency()
+    const device = seedStore.devices.find((d) => d.id === params.id)
+    if (!device) return HttpResponse.json({ error: 'Not found' }, { status: 404 })
+    const body = createDeviceTokenRequestSchema.safeParse(await request.json())
+    if (!body.success) return HttpResponse.json({ error: 'Invalid body' }, { status: 400 })
+    const plaintext = `dtk_${Math.random().toString(36).slice(2)}${Math.random().toString(36).slice(2)}`
+    const deviceToken: DeviceToken = {
+      id: `dtk_${Date.now().toString(36)}_${Math.floor(Math.random() * 1_000_000).toString(36)}`,
+      deviceId: device.id,
+      label: body.data.label,
+      createdAt: new Date().toISOString(),
+    }
+    seedStore.deviceTokens.push(deviceToken)
+    return HttpResponse.json({ token: plaintext, deviceToken })
+  }),
+
+  http.delete(`${API}/devices/:id/tokens/:tokenId`, async ({ params }) => {
+    await latency()
+    const token = seedStore.deviceTokens.find(
+      (t) => t.id === params.tokenId && t.deviceId === params.id,
+    )
+    if (!token) return HttpResponse.json({ error: 'Not found' }, { status: 404 })
+    token.revokedAt = new Date().toISOString()
+    return HttpResponse.json(token)
   }),
 
   // --- Tap events ---------------------------------------------------------

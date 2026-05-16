@@ -191,6 +191,7 @@
     "in": "In",
     "out": "Out",
     "atDevice": "at {{device}}",
+    "removedDevice": "(removed device)",
     "statusLabel": {
       "present": "Present",
       "late": "Late",
@@ -223,7 +224,8 @@
       "loadError": "Couldn't load tap events.",
       "in": "In",
       "out": "Out",
-      "manualEntry": "Manual entry"
+      "manualEntry": "Manual entry",
+      "removedDevice": "(removed device)"
     },
     "devices": {
       "title": "Gate devices",
@@ -238,6 +240,70 @@
         "in": "Entry only",
         "out": "Exit only",
         "both": "Entry / Exit"
+      },
+      "newButton": "New device",
+      "labelHeader": "Label",
+      "directionHeader": "Direction",
+      "statusHeader": "Status",
+      "lastSeenHeader": "Last seen",
+      "loadError": "Couldn't load devices.",
+      "actionError": "Action failed. Please try again.",
+      "createSuccess": "Device added.",
+      "updateSuccess": "Device updated.",
+      "deleteSuccess": "Device removed.",
+      "back": "Back to devices",
+      "create": {
+        "title": "Add device",
+        "labelLabel": "Label",
+        "labelPlaceholder": "e.g. Main Gate",
+        "directionLabel": "Direction",
+        "submit": "Create device"
+      },
+      "detail": {
+        "title": "Device details",
+        "saveError": "Couldn't save changes.",
+        "labelLabel": "Label",
+        "directionLabel": "Direction",
+        "deleteButton": "Delete device",
+        "deleteTitle": "Delete this device?",
+        "deleteBody": "This soft-deletes \"{{label}}\" and revokes all of its tokens. Historical tap events stay on file but will show as (removed device).",
+        "deleteConfirm": "Delete device",
+        "deleteError": "Couldn't delete the device."
+      },
+      "tokens": {
+        "heading": "Device tokens",
+        "subheading": "Tokens authenticate the bridge to this device. Issue a new token to replace a lost one; revoke compromised tokens immediately.",
+        "empty": "No tokens issued for this device yet.",
+        "loadError": "Couldn't load tokens.",
+        "issueButton": "Issue new token",
+        "table": {
+          "label": "Label",
+          "created": "Created",
+          "revoked": "Revoked",
+          "actions": "Actions"
+        },
+        "revokeAction": "Revoke",
+        "active": "Active",
+        "revoke": {
+          "title": "Revoke this token?",
+          "body": "Revoking \"{{label}}\" will immediately invalidate it. The bridge using it will need a new token.",
+          "confirm": "Revoke token",
+          "error": "Couldn't revoke the token."
+        },
+        "issue": {
+          "title": "Issue device token",
+          "body": "Generate a new authentication token for this device. The plaintext value is shown once — copy it now.",
+          "labelLabel": "Token label",
+          "labelPlaceholder": "e.g. Bridge 1",
+          "submit": "Generate token",
+          "error": "Couldn't issue the token.",
+          "successTitle": "Token created",
+          "successBody": "Copy this token and store it somewhere safe. For your security, the plaintext value will not be shown again.",
+          "tokenLabel": "Plaintext token",
+          "copy": "Copy",
+          "copied": "Copied",
+          "done": "Done"
+        }
       }
     },
     "simulate": {
