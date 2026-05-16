@@ -105,6 +105,27 @@ export const deviceSchema = z.object({
 })
 export type Device = z.infer<typeof deviceSchema>
 
+export const deviceTokenSchema = z.object({
+  id: idSchema,
+  deviceId: idSchema,
+  label: z.string(),
+  createdAt: z.string(),
+  revokedAt: z.string().optional(),
+})
+export type DeviceToken = z.infer<typeof deviceTokenSchema>
+
+export const createDeviceRequestSchema = z.object({
+  label: z.string().min(1).max(80),
+  direction: deviceDirectionSchema,
+})
+export const patchDeviceRequestSchema = z.object({
+  label: z.string().min(1).max(80).optional(),
+  direction: deviceDirectionSchema.optional(),
+})
+export const createDeviceTokenRequestSchema = z.object({
+  label: z.string().min(1).max(80),
+})
+
 export const tapDirectionSchema = z.enum(['in', 'out'])
 export type TapDirection = z.infer<typeof tapDirectionSchema>
 export const tapSourceSchema = z.enum(['device', 'manual'])
