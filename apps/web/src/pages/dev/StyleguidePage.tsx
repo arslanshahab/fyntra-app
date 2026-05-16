@@ -464,7 +464,9 @@ export function StyleguidePage() {
             {/* Tap row sample */}
             <article className="rounded-2xl bg-white p-6 shadow-elev-1 ring-1 ring-stone-200">
               <div className="flex items-center justify-between">
-                <h3 className="text-sm font-semibold text-stone-900">Live taps</h3>
+                <h3 className="font-display text-base font-semibold tracking-tight text-stone-900">
+                  Live taps
+                </h3>
                 <span className="text-xs text-stone-500">just now</span>
               </div>
               <ul className="mt-3 divide-y divide-stone-100">

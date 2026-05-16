@@ -117,8 +117,8 @@ export function AdminCardsPage() {
             onClick={() => setStatusFilter(f.value)}
             className={
               statusFilter === f.value
-                ? 'rounded-full bg-brand-50 px-3 py-1.5 text-sm font-medium text-brand-700 ring-1 ring-inset ring-brand-100 transition-colors'
-                : 'rounded-full bg-white px-3 py-1.5 text-sm font-medium text-stone-600 ring-1 ring-inset ring-stone-200 transition-colors hover:bg-stone-50'
+                ? 'rounded-full bg-brand-50 px-3 py-1.5 text-sm font-medium text-brand-700 ring-1 ring-inset ring-brand-100 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500'
+                : 'rounded-full bg-white px-3 py-1.5 text-sm font-medium text-stone-600 ring-1 ring-inset ring-stone-200 transition-colors hover:bg-stone-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500'
             }
           >
             {t(f.key)}
@@ -180,7 +180,7 @@ export function AdminCardsPage() {
                                 onClick={() => setExpandedId(isExpanded ? null : card.id)}
                                 aria-expanded={isExpanded}
                                 aria-label={t('admin.cards.toggleHistory')}
-                                className="rounded p-1 text-stone-400 transition-colors hover:bg-stone-100 hover:text-stone-700"
+                                className="rounded p-1 text-stone-400 transition-colors hover:bg-stone-100 hover:text-stone-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
                               >
                                 <Icon icon={isExpanded ? ChevronDown : ChevronRight} size="sm" />
                               </button>

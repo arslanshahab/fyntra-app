@@ -182,8 +182,8 @@ export function ParentSettingsPage() {
                     onClick={() => void i18n.changeLanguage(lng)}
                     className={
                       activeLocale === lng
-                        ? 'rounded-md bg-white px-3 py-1.5 text-sm font-medium text-stone-900 shadow-elev-1'
-                        : 'rounded-md px-3 py-1.5 text-sm font-medium text-stone-600 transition-colors hover:text-stone-900'
+                        ? 'rounded-md bg-white px-3 py-1.5 text-sm font-medium text-stone-900 shadow-elev-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-500'
+                        : 'rounded-md px-3 py-1.5 text-sm font-medium text-stone-600 transition-colors hover:text-stone-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-500'
                     }
                   >
                     {t(`parent.settings.language.${lng}`)}

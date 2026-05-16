@@ -208,7 +208,7 @@ export function AdminDevicesPage() {
                 <label
                   key={d}
                   className={cn(
-                    'cursor-pointer rounded-full px-3 py-1.5 text-sm font-medium ring-1 ring-inset transition-colors',
+                    'cursor-pointer rounded-full px-3 py-1.5 text-sm font-medium ring-1 ring-inset transition-colors focus-within:ring-2 focus-within:ring-brand-500',
                     newDirection === d
                       ? 'bg-brand-50 text-brand-700 ring-brand-200'
                       : 'bg-white text-stone-600 ring-stone-200 hover:bg-stone-50',
