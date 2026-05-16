@@ -1,7 +1,6 @@
 import { CalendarX, UserX } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
-import { Spinner } from '../../components/atoms/Spinner'
 import { StatusCard } from '../../components/molecules/StatusCard'
 import { useClassAttendanceRange } from '../../features/attendance/queries'
 import { useMeQuery } from '../../features/auth/queries'
@@ -72,12 +71,24 @@ export function TeacherHistoryPage() {
 
   if (me.isLoading) {
     return (
-      <div
-        role="status"
-        aria-label={t('common.loading')}
-        className="flex items-center justify-center rounded-2xl bg-white p-12 shadow-elev-1 ring-1 ring-stone-200"
-      >
-        <Spinner />
+      <div aria-busy="true" aria-label={t('common.loading')} className="space-y-5">
+        <div className="animate-pulse">
+          <div className="h-7 w-64 rounded bg-stone-100" />
+          <div className="mt-1.5 h-3.5 w-72 rounded bg-stone-100" />
+        </div>
+        <div className="overflow-hidden rounded-2xl bg-white shadow-elev-1 ring-1 ring-stone-200">
+          <div className="h-12 animate-pulse border-b border-stone-200 bg-stone-50" />
+          <ul className="animate-pulse divide-y divide-stone-100">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <li key={i} className="grid grid-cols-6 items-center gap-2 px-4 py-2.5">
+                <div className="h-3.5 w-20 rounded bg-stone-100" />
+                {Array.from({ length: 5 }).map((_, j) => (
+                  <div key={j} className="ml-auto h-3.5 w-8 rounded bg-stone-100" />
+                ))}
+              </li>
+            ))}
+          </ul>
+        </div>
       </div>
     )
   }

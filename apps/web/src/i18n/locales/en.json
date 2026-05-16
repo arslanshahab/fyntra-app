@@ -231,7 +231,12 @@
       "manualEntry": "Manual entry",
       "removedDevice": "(removed device)",
       "loadMore": "Load earlier",
-      "endOfList": "No earlier events"
+      "endOfList": "No earlier events",
+      "bucket": {
+        "justNow": "Just now",
+        "earlierToday": "Earlier today",
+        "yesterday": "Yesterday"
+      }
     },
     "devices": {
       "title": "Gate devices",

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ArrowRight, Check, ChevronRight, Search } from 'lucide-react'
+import { ArrowRight, Check, ChevronRight, LogIn, LogOut, Search } from 'lucide-react'
 
 import { Avatar } from '../../components/atoms/Avatar'
 import { Badge } from '../../components/atoms/Badge'
@@ -469,9 +469,9 @@ export function StyleguidePage() {
               </div>
               <ul className="mt-3 divide-y divide-stone-100">
                 {[
-                  { name: 'Ahmed Khan', sub: 'In · Main gate', time: '7:42 AM', tone: 'present' },
-                  { name: 'Hira Mahmood', sub: 'In · Main gate', time: '7:41 AM', tone: 'present' },
-                  { name: 'Rida Faisal', sub: 'Out · Side gate', time: '2:14 PM', tone: 'notyet' },
+                  { name: 'Ahmed Khan', sub: 'In · Main gate', time: '7:42 AM', dir: 'in' as const },
+                  { name: 'Hira Mahmood', sub: 'In · Main gate', time: '7:41 AM', dir: 'in' as const },
+                  { name: 'Rida Faisal', sub: 'Out · Side gate', time: '2:14 PM', dir: 'out' as const },
                 ].map((e) => (
                   <li
                     key={e.name}
@@ -480,12 +480,12 @@ export function StyleguidePage() {
                     <span
                       aria-hidden="true"
                       className={`flex h-8 w-8 items-center justify-center rounded-full ${
-                        e.tone === 'present'
+                        e.dir === 'in'
                           ? 'bg-status-present/10 text-status-present'
                           : 'bg-status-notyet/15 text-status-notyet'
                       }`}
                     >
-                      <ArrowRight className="h-4 w-4" />
+                      {e.dir === 'in' ? <LogIn className="h-4 w-4" /> : <LogOut className="h-4 w-4" />}
                     </span>
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium text-stone-900">{e.name}</p>

@@ -231,7 +231,12 @@
       "manualEntry": "مینوئل اندراج",
       "removedDevice": "(ہٹا دی گئی ڈیوائس)",
       "loadMore": "پہلے کا لوڈ کریں",
-      "endOfList": "کوئی پرانے ایونٹس نہیں"
+      "endOfList": "کوئی پرانے ایونٹس نہیں",
+      "bucket": {
+        "justNow": "ابھی",
+        "earlierToday": "آج پہلے",
+        "yesterday": "کل"
+      }
     },
     "devices": {
       "title": "گیٹ ڈیوائسز",

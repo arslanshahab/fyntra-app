@@ -60,27 +60,29 @@ export function SimulateTapPanel({ devices }: SimulateTapPanelProps) {
   }
 
   return (
-    <section className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+    <section className="rounded-2xl bg-white p-5 shadow-elev-1 ring-1 ring-stone-200">
       <div className="flex items-center justify-between gap-3">
-        <h2 className="text-sm font-semibold text-slate-900">{t('admin.simulate.title')}</h2>
+        <h2 className="font-display text-base font-semibold tracking-tight text-stone-900">
+          {t('admin.simulate.title')}
+        </h2>
         <div className="flex items-center gap-2">
           <span
             aria-hidden="true"
             className={cn('h-2 w-2 rounded-full', statusDot[bridge.status])}
           />
-          <span className="text-xs font-medium text-slate-600">
+          <span className="text-xs font-medium text-stone-600">
             {t(`admin.simulate.bridge.${bridge.status}`)}
           </span>
         </div>
       </div>
 
-      <p className="mt-2 text-xs leading-relaxed text-slate-500">
+      <p className="mt-2 text-xs leading-relaxed text-stone-500">
         {t('admin.simulate.help', { url: bridge.url })}
       </p>
 
       <form noValidate className="mt-4 space-y-4" onSubmit={submit}>
         <div>
-          <label htmlFor="sim-uid" className="block text-sm font-medium text-slate-700">
+          <label htmlFor="sim-uid" className="block text-sm font-medium text-stone-700">
             {t('admin.simulate.uidLabel')}
           </label>
           <input
@@ -90,16 +92,16 @@ export function SimulateTapPanel({ devices }: SimulateTapPanelProps) {
             onChange={(e) => setUid(e.target.value.toUpperCase())}
             placeholder="AABBCCDD"
             autoComplete="off"
-            className="mt-1 block h-11 w-full rounded-lg border border-slate-300 bg-white px-3 font-mono text-sm uppercase tracking-wider text-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+            className="mt-1.5 block h-11 w-full rounded-lg border border-stone-300 bg-white px-3 font-mono text-sm uppercase tracking-wider text-stone-900 placeholder:text-stone-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
           />
         </div>
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <p className="block text-sm font-medium text-slate-700">
+            <p className="block text-sm font-medium text-stone-700">
               {t('admin.simulate.directionLabel')}
             </p>
-            <div className="mt-1 grid grid-cols-2 gap-1 rounded-lg bg-slate-100 p-1">
+            <div className="mt-1.5 grid grid-cols-2 gap-1 rounded-lg bg-stone-100 p-1">
               {(['in', 'out'] as const).map((opt) => (
                 <button
                   key={opt}
@@ -108,8 +110,8 @@ export function SimulateTapPanel({ devices }: SimulateTapPanelProps) {
                   aria-pressed={direction === opt}
                   className={
                     direction === opt
-                      ? 'rounded-md bg-white px-3 py-1.5 text-sm font-medium text-slate-900 shadow-sm'
-                      : 'rounded-md px-3 py-1.5 text-sm font-medium text-slate-600 hover:text-slate-900'
+                      ? 'rounded-md bg-white px-3 py-1.5 text-sm font-medium text-stone-900 shadow-elev-1'
+                      : 'rounded-md px-3 py-1.5 text-sm font-medium text-stone-600 transition-colors hover:text-stone-900'
                   }
                 >
                   {t(`admin.simulate.direction.${opt}`)}
@@ -118,14 +120,14 @@ export function SimulateTapPanel({ devices }: SimulateTapPanelProps) {
             </div>
           </div>
           <div>
-            <label htmlFor="sim-device" className="block text-sm font-medium text-slate-700">
+            <label htmlFor="sim-device" className="block text-sm font-medium text-stone-700">
               {t('admin.simulate.deviceLabel')}
             </label>
             <select
               id="sim-device"
               value={deviceId}
               onChange={(e) => setDeviceId(e.target.value)}
-              className="mt-1 block h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+              className="mt-1.5 block h-11 w-full rounded-lg border border-stone-300 bg-white px-3 text-sm text-stone-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
             >
               {devices.map((d) => (
                 <option key={d.id} value={d.id}>
@@ -141,8 +143,8 @@ export function SimulateTapPanel({ devices }: SimulateTapPanelProps) {
             role={banner.kind === 'error' ? 'alert' : 'status'}
             className={
               banner.kind === 'success'
-                ? 'rounded-lg bg-status-present/10 px-3 py-2 text-sm text-status-present'
-                : 'rounded-lg bg-status-alarm/10 px-3 py-2 text-sm text-status-alarm'
+                ? 'rounded-lg bg-status-present/10 px-3 py-2 text-sm text-status-present ring-1 ring-status-present/20'
+                : 'rounded-lg bg-status-alarm/10 px-3 py-2 text-sm text-status-alarm ring-1 ring-status-alarm/20'
             }
           >
             {banner.text}

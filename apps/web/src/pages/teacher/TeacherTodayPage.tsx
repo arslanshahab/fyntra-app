@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { Avatar } from '../../components/atoms/Avatar'
 import { Badge } from '../../components/atoms/Badge'
 import { Button } from '../../components/atoms/Button'
-import { Spinner } from '../../components/atoms/Spinner'
+import { Modal } from '../../components/molecules/Modal'
 import { StatusCard } from '../../components/molecules/StatusCard'
 import { useClassAttendanceToday, useManualTapMutation } from '../../features/attendance/queries'
 import { useMeQuery } from '../../features/auth/queries'
@@ -96,12 +96,27 @@ export function TeacherTodayPage() {
 
   if (me.isLoading) {
     return (
-      <div
-        role="status"
-        aria-label={t('common.loading')}
-        className="flex items-center justify-center rounded-2xl bg-white p-12 shadow-elev-1 ring-1 ring-stone-200"
-      >
-        <Spinner />
+      <div aria-busy="true" aria-label={t('common.loading')} className="space-y-5">
+        <div className="animate-pulse">
+          <div className="h-7 w-40 rounded bg-stone-100" />
+          <div className="mt-1.5 h-3.5 w-56 rounded bg-stone-100" />
+        </div>
+        <div className="overflow-hidden rounded-2xl bg-white shadow-elev-1 ring-1 ring-stone-200">
+          <div className="h-12 animate-pulse border-b border-stone-200 bg-stone-50" />
+          <ul className="animate-pulse divide-y divide-stone-100">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <li key={i} className="flex items-center gap-3 px-4 py-3">
+                <div className="h-8 w-8 rounded-full bg-stone-100" />
+                <div className="flex-1 space-y-1.5">
+                  <div className="h-3.5 w-32 rounded bg-stone-100" />
+                  <div className="h-3 w-16 rounded bg-stone-100" />
+                </div>
+                <div className="h-5 w-16 rounded-full bg-stone-100" />
+                <div className="ml-3 h-7 w-16 rounded-md bg-stone-100" />
+              </li>
+            ))}
+          </ul>
+        </div>
       </div>
     )
   }
@@ -237,13 +252,10 @@ export function TeacherTodayPage() {
       )}
 
       {override ? (
-        <div
-          role="dialog"
-          aria-label={t('teacher.today.overrideDialogTitle', { name: override.student.fullName })}
-          className="fixed inset-0 z-20 flex items-center justify-center bg-stone-900/50 p-4 backdrop-blur-sm"
+        <Modal
+          label={t('teacher.today.overrideDialogTitle', { name: override.student.fullName })}
         >
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-elev-3 ring-1 ring-stone-200">
-            <h2 className="font-display text-lg font-semibold tracking-tight text-stone-900">
+          <h2 className="font-display text-lg font-semibold tracking-tight text-stone-900">
               {t('teacher.today.overrideDialogTitle', { name: override.student.fullName })}
             </h2>
             <p className="mt-1 text-sm text-stone-600">{t('teacher.today.overrideDialogBody')}</p>
@@ -298,8 +310,7 @@ export function TeacherTodayPage() {
                 {t('teacher.today.submitOverride')}
               </Button>
             </div>
-          </div>
-        </div>
+          </Modal>
       ) : null}
     </div>
   )

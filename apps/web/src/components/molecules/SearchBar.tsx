@@ -16,7 +16,7 @@ export function SearchBar({ value, onChange, placeholder, className, ariaLabel }
     <div className={cn('relative', className)}>
       <Search
         aria-hidden="true"
-        className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 rtl:left-auto rtl:right-3"
+        className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400 rtl:left-auto rtl:right-3"
       />
       <Input
         type="search"

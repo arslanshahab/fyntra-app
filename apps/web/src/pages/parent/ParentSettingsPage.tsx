@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 
 import { Icon } from '../../components/atoms/Icon'
-import { Spinner } from '../../components/atoms/Spinner'
 import { Switch } from '../../components/atoms/Switch'
 import { StatusCard } from '../../components/molecules/StatusCard'
 import {
@@ -66,12 +65,27 @@ export function ParentSettingsPage() {
 
       <div className="mx-auto max-w-md space-y-4 px-5 pb-10 pt-6">
         {settingsQuery.isLoading ? (
-          <div
-            role="status"
-            aria-label={t('common.loading')}
-            className="flex items-center justify-center rounded-2xl bg-white p-12 shadow-elev-1 ring-1 ring-stone-200"
-          >
-            <Spinner />
+          <div aria-busy="true" aria-label={t('common.loading')} className="space-y-4">
+            {Array.from({ length: 3 }).map((_, sectionIdx) => (
+              <section
+                key={sectionIdx}
+                className="animate-pulse rounded-2xl bg-white p-5 shadow-elev-1 ring-1 ring-stone-200"
+              >
+                <div className="h-4 w-32 rounded bg-stone-100" />
+                <div className="mt-1.5 h-3 w-44 rounded bg-stone-100" />
+                <ul className="mt-4 space-y-4">
+                  {Array.from({ length: 3 }).map((_, rowIdx) => (
+                    <li key={rowIdx} className="flex items-start justify-between gap-3">
+                      <div className="flex-1 space-y-1.5">
+                        <div className="h-3.5 w-24 rounded bg-stone-100" />
+                        <div className="h-3 w-36 rounded bg-stone-100" />
+                      </div>
+                      <div className="h-6 w-11 rounded-full bg-stone-100" />
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ))}
           </div>
         ) : settingsQuery.isError || !settings ? (
           <StatusCard

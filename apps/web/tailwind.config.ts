@@ -90,6 +90,17 @@ const config: Config = {
         'elev-2': '0 1px 2px rgba(28, 24, 18, 0.04), 0 4px 12px rgba(28, 24, 18, 0.05)',
         'elev-3': '0 2px 4px rgba(28, 24, 18, 0.05), 0 12px 32px rgba(28, 24, 18, 0.08)',
       },
+      keyframes: {
+        // Used on LiveTapFeed entries so new taps fade in instead of popping.
+        // Pair with motion-safe: so reduced-motion users get instant rendering.
+        'fade-in-up': {
+          '0%': { opacity: '0', transform: 'translateY(-4px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+      },
+      animation: {
+        'fade-in-up': 'fade-in-up 240ms ease-out both',
+      },
     },
   },
   plugins: [],

@@ -1,11 +1,11 @@
 import { useState } from 'react'
-import { Download } from 'lucide-react'
+import { Download, FileSpreadsheet } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 import { Badge } from '../../components/atoms/Badge'
 import { Button } from '../../components/atoms/Button'
 import { Icon } from '../../components/atoms/Icon'
-import { Spinner } from '../../components/atoms/Spinner'
+import { StatusCard } from '../../components/molecules/StatusCard'
 import { useClassesQuery } from '../../features/classes/queries'
 import { downloadAttendanceCsv, useAttendanceReportQuery } from '../../features/reports/queries'
 import { useStudentsQuery } from '../../features/students/queries'
@@ -55,29 +55,31 @@ export function AdminReportsPage() {
   const preview = (report.data ?? []).slice(0, 20)
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <header className="flex items-baseline justify-between gap-2">
-        <h1 className="text-xl font-semibold text-slate-900">{t('admin.reports.title')}</h1>
+        <h1 className="font-display text-2xl font-semibold tracking-tight text-stone-900">
+          {t('admin.reports.title')}
+        </h1>
         {report.data ? (
-          <span className="text-sm text-slate-500">
+          <span className="font-mono text-sm tabular-nums text-stone-500">
             {t('admin.reports.totalRows', { count: report.data.length })}
           </span>
         ) : null}
       </header>
 
-      <section className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+      <section className="rounded-2xl bg-white p-5 shadow-elev-1 ring-1 ring-stone-200">
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-          <label className="block text-sm font-medium text-slate-700">
+          <label className="block text-sm font-medium text-stone-700">
             {t('admin.reports.from')}
             <input
               type="date"
               value={from}
               max={to}
               onChange={(e) => setFrom(e.target.value)}
-              className="mt-1 block h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+              className="mt-1.5 block h-11 w-full rounded-lg border border-stone-300 bg-white px-3 text-sm text-stone-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
             />
           </label>
-          <label className="block text-sm font-medium text-slate-700">
+          <label className="block text-sm font-medium text-stone-700">
             {t('admin.reports.to')}
             <input
               type="date"
@@ -85,15 +87,15 @@ export function AdminReportsPage() {
               min={from}
               max={today}
               onChange={(e) => setTo(e.target.value)}
-              className="mt-1 block h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+              className="mt-1.5 block h-11 w-full rounded-lg border border-stone-300 bg-white px-3 text-sm text-stone-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
             />
           </label>
-          <label className="block text-sm font-medium text-slate-700">
+          <label className="block text-sm font-medium text-stone-700">
             {t('admin.reports.classFilter')}
             <select
               value={classId}
               onChange={(e) => setClassId(e.target.value)}
-              className="mt-1 block h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+              className="mt-1.5 block h-11 w-full rounded-lg border border-stone-300 bg-white px-3 text-sm text-stone-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
             >
               <option value="">{t('admin.reports.allClasses')}</option>
               {(classes.data ?? []).map((c) => (
@@ -105,11 +107,14 @@ export function AdminReportsPage() {
           </label>
         </div>
 
-        <div className="mt-4 flex items-center justify-between">
+        <div className="mt-4 flex items-center justify-between gap-3">
           {downloadError ? (
-            <p role="alert" className="text-sm text-status-alarm">
+            <div
+              role="alert"
+              className="rounded-lg bg-status-alarm/10 px-3 py-1.5 text-sm text-status-alarm ring-1 ring-status-alarm/20"
+            >
               {downloadError}
-            </p>
+            </div>
           ) : (
             <span />
           )}
@@ -124,69 +129,87 @@ export function AdminReportsPage() {
         </div>
       </section>
 
-      <section className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200">
-        <h2 className="border-b border-slate-200 px-5 py-3 text-sm font-semibold text-slate-900">
-          {t('admin.reports.preview')}
-        </h2>
-        {report.isLoading ? (
-          <div role="status" aria-label={t('common.loading')} className="p-8 text-center">
-            <Spinner />
-          </div>
-        ) : !report.data || report.data.length === 0 ? (
-          <p className="p-8 text-center text-sm text-slate-500">{t('admin.reports.empty')}</p>
-        ) : (
-          <table className="min-w-full divide-y divide-slate-200 text-sm">
-            <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
-              <tr>
-                <th scope="col" className="px-4 py-3 text-left font-medium">
-                  {t('admin.reports.table.date')}
-                </th>
-                <th scope="col" className="px-4 py-3 text-left font-medium">
-                  {t('admin.reports.table.student')}
-                </th>
-                <th scope="col" className="px-4 py-3 text-left font-medium">
-                  {t('admin.reports.table.status')}
-                </th>
-                <th scope="col" className="px-4 py-3 text-left font-medium">
-                  {t('admin.reports.table.firstIn')}
-                </th>
-                <th scope="col" className="px-4 py-3 text-left font-medium">
-                  {t('admin.reports.table.lastOut')}
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {preview.map((row) => (
-                <tr key={row.id}>
-                  <td className="px-4 py-2.5 text-slate-700">{formatTimelineDate(row.date)}</td>
-                  <td className="px-4 py-2.5 text-slate-700">
-                    {studentsById.get(row.studentId)?.fullName ?? row.studentId}
-                  </td>
-                  <td className="px-4 py-2.5">
-                    <Badge tone={statusTone[row.status]}>
-                      {t(`timeline.statusLabel.${row.status}`)}
-                    </Badge>
-                  </td>
-                  <td className="px-4 py-2.5 text-slate-700 tabular-nums">
-                    {row.firstInAt ? formatTimeInKarachi(row.firstInAt) : '—'}
-                  </td>
-                  <td className="px-4 py-2.5 text-slate-700 tabular-nums">
-                    {row.lastOutAt ? formatTimeInKarachi(row.lastOutAt) : '—'}
-                  </td>
+      {!report.isLoading && (!report.data || report.data.length === 0) ? (
+        <StatusCard icon={FileSpreadsheet} body={t('admin.reports.empty')} />
+      ) : (
+        <section className="overflow-hidden rounded-2xl bg-white shadow-elev-1 ring-1 ring-stone-200">
+          <h2 className="border-b border-stone-200 px-5 py-3 font-display text-base font-semibold tracking-tight text-stone-900">
+            {t('admin.reports.preview')}
+          </h2>
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-stone-200 text-sm">
+              <thead className="bg-stone-50 text-micro uppercase text-stone-500">
+                <tr>
+                  <th scope="col" className="px-4 py-3 text-left font-semibold">
+                    {t('admin.reports.table.date')}
+                  </th>
+                  <th scope="col" className="px-4 py-3 text-left font-semibold">
+                    {t('admin.reports.table.student')}
+                  </th>
+                  <th scope="col" className="px-4 py-3 text-left font-semibold">
+                    {t('admin.reports.table.status')}
+                  </th>
+                  <th scope="col" className="px-4 py-3 text-left font-semibold">
+                    {t('admin.reports.table.firstIn')}
+                  </th>
+                  <th scope="col" className="px-4 py-3 text-left font-semibold">
+                    {t('admin.reports.table.lastOut')}
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-        {report.data && report.data.length > preview.length ? (
-          <p className="border-t border-slate-100 px-5 py-3 text-xs text-slate-500">
-            {t('admin.reports.previewLimit', {
-              shown: preview.length,
-              total: report.data.length,
-            })}
-          </p>
-        ) : null}
-      </section>
+              </thead>
+              <tbody className="divide-y divide-stone-100">
+                {report.isLoading
+                  ? Array.from({ length: 6 }).map((_, i) => (
+                      <tr key={i} aria-hidden="true" className="animate-pulse">
+                        <td className="px-4 py-2.5">
+                          <div className="h-3.5 w-24 rounded bg-stone-100" />
+                        </td>
+                        <td className="px-4 py-2.5">
+                          <div className="h-3.5 w-32 rounded bg-stone-100" />
+                        </td>
+                        <td className="px-4 py-2.5">
+                          <div className="h-5 w-16 rounded-full bg-stone-100" />
+                        </td>
+                        <td className="px-4 py-2.5">
+                          <div className="h-3.5 w-14 rounded bg-stone-100" />
+                        </td>
+                        <td className="px-4 py-2.5">
+                          <div className="h-3.5 w-14 rounded bg-stone-100" />
+                        </td>
+                      </tr>
+                    ))
+                  : preview.map((row) => (
+                    <tr key={row.id} className="transition-colors hover:bg-stone-50">
+                      <td className="px-4 py-2.5 text-stone-700">{formatTimelineDate(row.date)}</td>
+                      <td className="px-4 py-2.5 text-stone-700">
+                        {studentsById.get(row.studentId)?.fullName ?? row.studentId}
+                      </td>
+                      <td className="px-4 py-2.5">
+                        <Badge tone={statusTone[row.status]}>
+                          {t(`timeline.statusLabel.${row.status}`)}
+                        </Badge>
+                      </td>
+                      <td className="px-4 py-2.5 font-mono tabular-nums text-stone-700">
+                        {row.firstInAt ? formatTimeInKarachi(row.firstInAt) : '—'}
+                      </td>
+                      <td className="px-4 py-2.5 font-mono tabular-nums text-stone-700">
+                        {row.lastOutAt ? formatTimeInKarachi(row.lastOutAt) : '—'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          {report.data && report.data.length > preview.length ? (
+            <p className="border-t border-stone-100 px-5 py-3 text-xs text-stone-500">
+              {t('admin.reports.previewLimit', {
+                shown: preview.length,
+                total: report.data.length,
+              })}
+            </p>
+          ) : null}
+        </section>
+      )}
     </div>
   )
 }
