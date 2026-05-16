@@ -356,6 +356,9 @@ export const handlers = [
     const from = url.searchParams.get('from')
     const to = url.searchParams.get('to')
     const studentId = url.searchParams.get('studentId')
+    const cursor = url.searchParams.get('cursor')
+    const limitRaw = Number(url.searchParams.get('limit') ?? '100')
+    const limit = Math.max(1, Math.min(500, Number.isFinite(limitRaw) ? limitRaw : 100))
 
     let result = seedStore.tapEvents
     if (studentId) {
@@ -366,8 +369,21 @@ export const handlers = [
     }
     if (from) result = result.filter((e) => e.occurredAt >= from)
     if (to) result = result.filter((e) => e.occurredAt <= to)
-    result = [...result].sort((a, b) => (a.occurredAt < b.occurredAt ? 1 : -1))
-    return HttpResponse.json(result)
+
+    // Newest-first by occurredAt. We paginate by `id` matching the api side:
+    // when a cursor is supplied, return rows strictly older than the cursor
+    // row in the sorted order.
+    const sorted = [...result].sort((a, b) => (a.occurredAt < b.occurredAt ? 1 : -1))
+    let startIdx = 0
+    if (cursor) {
+      const idx = sorted.findIndex((e) => e.id === cursor)
+      startIdx = idx >= 0 ? idx + 1 : sorted.length
+    }
+    const page = sorted.slice(startIdx, startIdx + limit)
+    const hasMore = startIdx + limit < sorted.length
+    const headers: Record<string, string> = {}
+    if (hasMore && page.length > 0) headers['x-next-cursor'] = page[page.length - 1]!.id
+    return HttpResponse.json(page, { headers })
   }),
 
   http.post(`${API}/tap-events/manual`, async ({ request }) => {

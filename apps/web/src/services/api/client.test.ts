@@ -4,7 +4,7 @@ import { http, HttpResponse } from 'msw'
 import { z } from 'zod'
 
 import { useAuthStore } from '../../stores/auth'
-import { ApiError, apiDelete, apiGet, apiPost } from './client'
+import { ApiError, apiDelete, apiGet, apiGetWithHeaders, apiPost } from './client'
 
 const responseSchema = z.object({ value: z.number() })
 
@@ -23,6 +23,9 @@ const handlers = [
     return HttpResponse.json({ error: 'no auth' }, { status: 401 })
   }),
   http.get(`${BASE}/server-error`, () => HttpResponse.json({ msg: 'boom' }, { status: 500 })),
+  http.get(`${BASE}/with-cursor`, () =>
+    HttpResponse.json({ value: 1 }, { headers: { 'x-next-cursor': 'cursor_42' } }),
+  ),
 ]
 
 const server = setupServer(...handlers)
@@ -74,5 +77,17 @@ describe('apiDelete', () => {
   it('parses the response against the provided schema', async () => {
     const data = await apiDelete('/echo', responseSchema)
     expect(data).toEqual({ value: 7 })
+  })
+})
+
+describe('apiGetWithHeaders', () => {
+  it('returns both the parsed body and the response headers', async () => {
+    const result = await apiGetWithHeaders('/with-cursor', responseSchema)
+    expect(result.data).toEqual({ value: 1 })
+    expect(result.headers.get('x-next-cursor')).toBe('cursor_42')
+  })
+
+  it('still validates the body against the schema', async () => {
+    await expect(apiGetWithHeaders('/bad-shape', responseSchema)).rejects.toThrow()
   })
 })

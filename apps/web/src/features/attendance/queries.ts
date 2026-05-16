@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { z } from 'zod'
 
 import { apiGet, apiPost } from '../../services/api/client'
+import { useCursorList } from '../pagination/useCursorList'
 import { useRealtime } from '../../hooks/useRealtime'
 import {
   attendanceRecordSchema,
@@ -61,12 +62,18 @@ export function useTodayAttendance(studentId: string | undefined, school: School
   })
 }
 
-/** Last 30 days of AttendanceRecord rows for a student, newest first. */
+/**
+ * Last N days of AttendanceRecord rows for a student, newest first.
+ *
+ * The parent timeline "Load earlier" UI bumps `days` in 30-day chunks instead
+ * of using a cursor — /students/:id/timeline does not support cursor pagination
+ * as of Phase 2.1.
+ */
 export function useStudentTimeline(studentId: string | undefined, days = 30) {
   return useQuery({
     queryKey: studentId
-      ? attendanceKeys.timelineByStudent(studentId)
-      : ['attendance', 'timeline', 'none'],
+      ? [...attendanceKeys.timelineByStudent(studentId), days]
+      : ['attendance', 'timeline', 'none', days],
     queryFn: () => {
       const today = dateStrInKarachi()
       const from = dateStrInKarachi(new Date(Date.now() - (days - 1) * 86400000))
@@ -91,20 +98,32 @@ export function useTodayAttendanceAll(school: School | undefined) {
   })
 }
 
-/** Today's tap events, newest first. Backing query for the admin live feed. */
+/**
+ * Today's tap events, newest-first, cursor-paginated. Backs the admin live feed.
+ *
+ * Note: useInfiniteQuery does not compose cleanly with refetchInterval for
+ * incremental pages — instead we rely on WS-driven invalidation of the
+ * ['tapEvents'] queryKey (see useRealtime) plus the existing mutation
+ * invalidation paths. Calling refetch() will reset to the first page only.
+ */
 export function useLiveTapFeed(school: School | undefined) {
-  const { refetchInterval } = useRealtime(school)
-  return useQuery({
-    queryKey: attendanceKeys.liveFeed,
-    queryFn: () => {
+  // Subscribe so WS-driven invalidation is wired up even though we don't use
+  // its polling interval here.
+  useRealtime(school)
+  return useCursorList({
+    queryKey: [...attendanceKeys.liveFeed],
+    path: (cursor) => {
       const today = dateStrInKarachi()
-      return apiGet(
-        `/tap-events?from=${today}T00:00:00.000%2B05:00&to=${today}T23:59:59.999%2B05:00`,
-        tapEventListSchema,
-      )
+      const params = new URLSearchParams({
+        from: `${today}T00:00:00.000+05:00`,
+        to: `${today}T23:59:59.999+05:00`,
+        limit: '100',
+      })
+      if (cursor) params.set('cursor', cursor)
+      return `/tap-events?${params.toString()}`
     },
-    refetchInterval,
-    refetchIntervalInBackground: false,
+    schema: tapEventListSchema,
+    staleTime: 5_000,
   })
 }
 

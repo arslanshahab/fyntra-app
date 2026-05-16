@@ -192,6 +192,8 @@
     "out": "Out",
     "atDevice": "at {{device}}",
     "removedDevice": "(removed device)",
+    "loadEarlier": "Load earlier",
+    "endOfHistory": "Beginning of history",
     "statusLabel": {
       "present": "Present",
       "late": "Late",
@@ -225,7 +227,9 @@
       "in": "In",
       "out": "Out",
       "manualEntry": "Manual entry",
-      "removedDevice": "(removed device)"
+      "removedDevice": "(removed device)",
+      "loadMore": "Load earlier",
+      "endOfList": "No earlier events"
     },
     "devices": {
       "title": "Gate devices",

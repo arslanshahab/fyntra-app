@@ -192,6 +192,8 @@
     "out": "باہر",
     "atDevice": "{{device}} پر",
     "removedDevice": "(ہٹا دی گئی ڈیوائس)",
+    "loadEarlier": "پہلے کا لوڈ کریں",
+    "endOfHistory": "تاریخ کا آغاز",
     "statusLabel": {
       "present": "حاضر",
       "late": "تاخیر",
@@ -225,7 +227,9 @@
       "in": "اندر",
       "out": "باہر",
       "manualEntry": "مینوئل اندراج",
-      "removedDevice": "(ہٹا دی گئی ڈیوائس)"
+      "removedDevice": "(ہٹا دی گئی ڈیوائس)",
+      "loadMore": "پہلے کا لوڈ کریں",
+      "endOfList": "کوئی پرانے ایونٹس نہیں"
     },
     "devices": {
       "title": "گیٹ ڈیوائسز",

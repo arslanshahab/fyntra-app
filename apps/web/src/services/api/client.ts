@@ -30,7 +30,12 @@ async function parseBody(res: Response): Promise<unknown> {
   return res.text()
 }
 
-async function request(method: string, path: string, body?: unknown): Promise<unknown> {
+interface RequestResult {
+  data: unknown
+  headers: Headers
+}
+
+async function rawRequest(method: string, path: string, body?: unknown): Promise<RequestResult> {
   const headers: Record<string, string> = {}
   const token = useAuthStore.getState().token
   if (token) headers.authorization = `Bearer ${token}`
@@ -46,7 +51,11 @@ async function request(method: string, path: string, body?: unknown): Promise<un
   if (!res.ok) {
     throw new ApiError(`${method} ${path} → ${res.status}`, res.status, parsed)
   }
-  return parsed
+  return { data: parsed, headers: res.headers }
+}
+
+async function request(method: string, path: string, body?: unknown): Promise<unknown> {
+  return (await rawRequest(method, path, body)).data
 }
 
 // Every API call must pass a Zod schema. Per README §12: "Validate every
@@ -78,4 +87,19 @@ export async function apiDelete<S extends ZodTypeAny>(
   schema: S,
 ): Promise<z.infer<S>> {
   return schema.parse(await request('DELETE', path)) as z.infer<S>
+}
+
+export interface ApiGetWithHeadersResult<T> {
+  data: T
+  headers: Headers
+}
+
+// Variant of apiGet that exposes the raw Response headers. Used by cursor-
+// paginated endpoints that return the next-page cursor in `X-Next-Cursor`.
+export async function apiGetWithHeaders<S extends ZodTypeAny>(
+  path: string,
+  schema: S,
+): Promise<ApiGetWithHeadersResult<z.infer<S>>> {
+  const { data, headers } = await rawRequest('GET', path)
+  return { data: schema.parse(data) as z.infer<S>, headers }
 }

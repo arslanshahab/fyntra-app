@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { ChevronLeft } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams } from 'react-router-dom'
@@ -100,8 +100,25 @@ export function ChildTimelinePage() {
   const navigate = useNavigate()
   const { id } = useParams<{ id: string }>()
   const me = useMeQuery()
-  const timeline = useStudentTimeline(id)
+  // Date-window pagination — /students/:id/timeline does not support cursor
+  // pagination as of Phase 2.1, so each "Load earlier" click expands the
+  // window by 30 days instead.
+  const [days, setDays] = useState(30)
+  const timeline = useStudentTimeline(id, days)
   const [openDate, setOpenDate] = useState<string | null>(null)
+
+  // When two consecutive window expansions return the same row count, the
+  // user has reached the beginning of recorded history — hide the button.
+  const prevCountRef = useRef<number | null>(null)
+  const [endOfHistory, setEndOfHistory] = useState(false)
+  useEffect(() => {
+    if (!timeline.isSuccess) return
+    const count = timeline.data?.length ?? 0
+    if (prevCountRef.current !== null && count === prevCountRef.current) {
+      setEndOfHistory(true)
+    }
+    prevCountRef.current = count
+  }, [timeline.data, timeline.isSuccess])
 
   const child = me.data?.children?.find((c) => c.id === id)
 
@@ -152,17 +169,35 @@ export function ChildTimelinePage() {
             {t('timeline.empty')}
           </p>
         ) : (
-          <ul className="space-y-2">
-            {timeline.data.map((record) => (
-              <DayRow
-                key={record.id}
-                record={record}
-                studentId={id!}
-                isOpen={openDate === record.date}
-                onToggle={() => setOpenDate((prev) => (prev === record.date ? null : record.date))}
-              />
-            ))}
-          </ul>
+          <>
+            <ul className="space-y-2">
+              {timeline.data.map((record) => (
+                <DayRow
+                  key={record.id}
+                  record={record}
+                  studentId={id!}
+                  isOpen={openDate === record.date}
+                  onToggle={() =>
+                    setOpenDate((prev) => (prev === record.date ? null : record.date))
+                  }
+                />
+              ))}
+            </ul>
+            <div className="flex items-center justify-center pt-1">
+              {endOfHistory ? (
+                <p className="text-xs text-slate-400">{t('timeline.endOfHistory')}</p>
+              ) : (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setDays((d) => d + 30)}
+                  disabled={timeline.isFetching}
+                >
+                  {timeline.isFetching ? t('common.loading') : t('timeline.loadEarlier')}
+                </Button>
+              )}
+            </div>
+          </>
         )}
       </div>
     </main>
