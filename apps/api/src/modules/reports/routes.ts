@@ -2,6 +2,7 @@ import type { FastifyPluginAsync } from 'fastify'
 import { z } from 'zod'
 import { requireAuth } from '../../middleware/require-auth.js'
 import { requireRole } from '../../middleware/require-role.js'
+import { resolvePagination, setNextCursor } from '../../lib/pagination.js'
 import { listAttendance, attendanceCsv } from './service.js'
 
 const listQuery = z.object({
@@ -16,6 +17,8 @@ const listQuery = z.object({
     .enum(['true', 'false'])
     .transform((v) => v === 'true')
     .optional(),
+  limit: z.coerce.number().int().min(1).optional(),
+  cursor: z.string().min(1).optional(),
 })
 
 const csvQuery = z.object({
@@ -25,10 +28,13 @@ const csvQuery = z.object({
 })
 
 export const reportsRoutes: FastifyPluginAsync = async (app) => {
-  app.get('/attendance', { preHandler: requireAuth, schema: { querystring: listQuery } }, async (req) => {
+  app.get('/attendance', { preHandler: requireAuth, schema: { querystring: listQuery } }, async (req, reply) => {
     const ctx = req.tenantContext!
     const q = req.query as z.infer<typeof listQuery>
-    return await listAttendance(ctx, q)
+    const { limit, cursor } = resolvePagination(q)
+    const rows = await listAttendance(ctx, { ...q, limit, cursor })
+    setNextCursor(reply, rows, limit)
+    return rows
   })
 
   app.get(

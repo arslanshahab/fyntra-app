@@ -157,6 +157,59 @@ describe('cards routes', () => {
     expect(res.statusCode).toBe(404)
   })
 
+  // --- cursor pagination ---
+
+  async function seedExtraCards(schoolA: string, n: number) {
+    const ids: string[] = []
+    for (let i = 0; i < n; i++) {
+      const id = newId()
+      ids.push(id)
+      await db.insert(cards).values({
+        id,
+        schoolId: schoolA,
+        rfidUid: `EXTRA_UID_${i}`,
+        status: 'active',
+      })
+    }
+    return ids
+  }
+
+  it('GET /cards?limit=2 returns 2 newest with X-Next-Cursor', async () => {
+    const { schoolA, adminA } = await seedTwoSchools()
+    const extras = await seedExtraCards(schoolA, 3)
+    const t = token(app, { userId: adminA, schoolId: schoolA, role: 'admin' })
+    const res = await app.inject({
+      method: 'GET',
+      url: '/cards?limit=2',
+      headers: { authorization: `Bearer ${t}` },
+    })
+    expect(res.statusCode).toBe(200)
+    const body = res.json() as Array<{ id: string }>
+    expect(body).toHaveLength(2)
+    expect(body[0]!.id).toBe(extras[2])
+    expect(body[1]!.id).toBe(extras[1])
+    expect(res.headers['x-next-cursor']).toBe(extras[1])
+  })
+
+  it('GET /cards?cursor=<id> returns next page (short page omits cursor)', async () => {
+    const { schoolA, adminA, cardA } = await seedTwoSchools()
+    const extras = await seedExtraCards(schoolA, 3)
+    const t = token(app, { userId: adminA, schoolId: schoolA, role: 'admin' })
+    // Newest-first id order in school A: extras[2], extras[1], extras[0], cardA
+    // limit=3, cursor at extras[1] → only extras[0], cardA remain → short page
+    const res = await app.inject({
+      method: 'GET',
+      url: `/cards?limit=3&cursor=${extras[1]}`,
+      headers: { authorization: `Bearer ${t}` },
+    })
+    expect(res.statusCode).toBe(200)
+    const body = res.json() as Array<{ id: string }>
+    expect(body).toHaveLength(2)
+    expect(body[0]!.id).toBe(extras[0])
+    expect(body[1]!.id).toBe(cardA)
+    expect(res.headers['x-next-cursor']).toBeUndefined()
+  })
+
   it('non-admin (parent) gets 403 on mutation', async () => {
     const { schoolA, cardA } = await seedTwoSchools()
     const parentId = newId()

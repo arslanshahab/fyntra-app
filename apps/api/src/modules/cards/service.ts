@@ -1,6 +1,6 @@
 import { NotFoundError, ValidationError } from '../../lib/errors.js'
 import type { TenantContext } from '../../types/tenant-context.js'
-import { cardsRepo } from './repository.js'
+import { cardsRepo, type ListCardsFilters } from './repository.js'
 
 type CardStatus = 'active' | 'lost' | 'replaced' | 'deactivated'
 
@@ -30,8 +30,8 @@ function toWire(
   }
 }
 
-export async function listCards(ctx: TenantContext, status?: CardStatus) {
-  const rows = await cardsRepo.list(ctx, status)
+export async function listCards(ctx: TenantContext, filters: ListCardsFilters) {
+  const rows = await cardsRepo.list(ctx, filters)
   const out = await Promise.all(
     rows.map(async (c) => {
       const audit = await cardsRepo.auditFor(ctx, c.id)

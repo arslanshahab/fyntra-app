@@ -1,4 +1,4 @@
-import { and, desc, eq } from 'drizzle-orm'
+import { and, desc, eq, lt } from 'drizzle-orm'
 import { db } from '../../db/client.js'
 import { notificationLogs, notificationSettings } from '../../db/schema/notifications.js'
 import { newId } from '../../lib/ids.js'
@@ -72,16 +72,18 @@ export const notificationsRepo = {
 
   async listLogs(
     ctx: TenantContext,
-    filters: { userId?: string; status?: NotificationStatus },
+    filters: { userId?: string; status?: NotificationStatus; limit: number; cursor?: string },
   ) {
     const conds = [eq(notificationLogs.schoolId, ctx.schoolId)]
     if (filters.userId) conds.push(eq(notificationLogs.recipientUserId, filters.userId))
     if (filters.status) conds.push(eq(notificationLogs.status, filters.status))
+    if (filters.cursor) conds.push(lt(notificationLogs.id, filters.cursor))
     return db
       .select()
       .from(notificationLogs)
       .where(and(...conds))
-      .orderBy(desc(notificationLogs.createdAt))
+      .orderBy(desc(notificationLogs.id))
+      .limit(filters.limit)
   },
 
   async findLog(ctx: TenantContext, id: string) {

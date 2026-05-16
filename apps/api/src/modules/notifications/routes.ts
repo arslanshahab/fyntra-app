@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { idSchema, notificationSettingsSchema, type NotificationSettings } from '@fyntra/schemas'
 import { requireAuth } from '../../middleware/require-auth.js'
 import { requireRole } from '../../middleware/require-role.js'
+import { resolvePagination, setNextCursor } from '../../lib/pagination.js'
 import {
   getMySettings,
   updateMySettings,
@@ -13,16 +14,26 @@ import {
 const listQuery = z.object({
   userId: idSchema.optional(),
   status: z.enum(['queued', 'sent', 'delivered', 'failed']).optional(),
+  limit: z.coerce.number().int().min(1).optional(),
+  cursor: z.string().min(1).optional(),
 })
 
 export const notificationsRoutes: FastifyPluginAsync = async (app) => {
   app.get(
     '/notifications',
     { preHandler: requireAuth, schema: { querystring: listQuery } },
-    async (req) => {
+    async (req, reply) => {
       const ctx = req.tenantContext!
       const q = req.query as z.infer<typeof listQuery>
-      return await listNotifications(ctx, q)
+      const { limit, cursor } = resolvePagination(q)
+      const rows = await listNotifications(ctx, {
+        userId: q.userId,
+        status: q.status,
+        limit,
+        cursor,
+      })
+      setNextCursor(reply, rows, limit)
+      return rows
     },
   )
 

@@ -154,4 +154,109 @@ describe('tap-events routes', () => {
     })
     expect(res.statusCode).toBe(403)
   })
+
+  // --- cursor pagination ---
+
+  async function seedTaps(schoolId: string, cardId: string, deviceId: string, studentId: string, n: number) {
+    const ids: string[] = []
+    for (let i = 0; i < n; i++) {
+      const id = newId()
+      ids.push(id)
+      await db.insert(tapEvents).values({
+        id,
+        schoolId,
+        cardId,
+        rfidUid: 'AAA',
+        deviceId,
+        studentId,
+        direction: 'in',
+        occurredAt: new Date(`2026-05-13T0${i}:00:00Z`),
+        source: 'device',
+      })
+    }
+    return ids
+  }
+
+  it('GET /tap-events without cursor returns all rows newest-first, no X-Next-Cursor', async () => {
+    const { schoolId, adminId, studentId, cardId, deviceId } = await seedOneSchool()
+    const ids = await seedTaps(schoolId, cardId, deviceId, studentId, 5)
+    const t = token(app, { userId: adminId, schoolId, role: 'admin' })
+    const res = await app.inject({
+      method: 'GET',
+      url: '/tap-events',
+      headers: { authorization: `Bearer ${t}` },
+    })
+    expect(res.statusCode).toBe(200)
+    expect(res.headers['x-next-cursor']).toBeUndefined()
+    const body = res.json() as Array<{ id: string }>
+    // ids returned newest-first by id (UUID v7 → insertion order desc)
+    expect(body.map((r) => r.id)).toEqual([...ids].reverse())
+  })
+
+  it('GET /tap-events?limit=2 returns 2 newest with X-Next-Cursor set', async () => {
+    const { schoolId, adminId, studentId, cardId, deviceId } = await seedOneSchool()
+    const ids = await seedTaps(schoolId, cardId, deviceId, studentId, 5)
+    const t = token(app, { userId: adminId, schoolId, role: 'admin' })
+    const res = await app.inject({
+      method: 'GET',
+      url: '/tap-events?limit=2',
+      headers: { authorization: `Bearer ${t}` },
+    })
+    expect(res.statusCode).toBe(200)
+    const body = res.json() as Array<{ id: string }>
+    expect(body).toHaveLength(2)
+    expect(body[0]!.id).toBe(ids[4])
+    expect(body[1]!.id).toBe(ids[3])
+    expect(res.headers['x-next-cursor']).toBe(ids[3])
+  })
+
+  it('GET /tap-events?cursor=<id> returns the next page', async () => {
+    const { schoolId, adminId, studentId, cardId, deviceId } = await seedOneSchool()
+    const ids = await seedTaps(schoolId, cardId, deviceId, studentId, 5)
+    const t = token(app, { userId: adminId, schoolId, role: 'admin' })
+    const cursor = ids[3]
+    const res = await app.inject({
+      method: 'GET',
+      url: `/tap-events?limit=2&cursor=${cursor}`,
+      headers: { authorization: `Bearer ${t}` },
+    })
+    expect(res.statusCode).toBe(200)
+    const body = res.json() as Array<{ id: string }>
+    expect(body).toHaveLength(2)
+    expect(body[0]!.id).toBe(ids[2])
+    expect(body[1]!.id).toBe(ids[1])
+    expect(res.headers['x-next-cursor']).toBe(ids[1])
+  })
+
+  it('GET /tap-events end-of-list omits X-Next-Cursor', async () => {
+    const { schoolId, adminId, studentId, cardId, deviceId } = await seedOneSchool()
+    const ids = await seedTaps(schoolId, cardId, deviceId, studentId, 5)
+    const t = token(app, { userId: adminId, schoolId, role: 'admin' })
+    // cursor at index 2 → next page returns ids[1], ids[0] (only 2 rows, but limit=5)
+    const res = await app.inject({
+      method: 'GET',
+      url: `/tap-events?limit=5&cursor=${ids[2]}`,
+      headers: { authorization: `Bearer ${t}` },
+    })
+    expect(res.statusCode).toBe(200)
+    const body = res.json() as Array<{ id: string }>
+    expect(body).toHaveLength(2)
+    expect(res.headers['x-next-cursor']).toBeUndefined()
+  })
+
+  it('GET /tap-events?limit=10000 does not error and returns all rows', async () => {
+    const { schoolId, adminId, studentId, cardId, deviceId } = await seedOneSchool()
+    await seedTaps(schoolId, cardId, deviceId, studentId, 3)
+    const t = token(app, { userId: adminId, schoolId, role: 'admin' })
+    const res = await app.inject({
+      method: 'GET',
+      url: '/tap-events?limit=10000',
+      headers: { authorization: `Bearer ${t}` },
+    })
+    expect(res.statusCode).toBe(200)
+    const body = res.json() as unknown[]
+    expect(body).toHaveLength(3)
+    // 3 < clamped 500 → no X-Next-Cursor
+    expect(res.headers['x-next-cursor']).toBeUndefined()
+  })
 })

@@ -14,6 +14,8 @@ export interface ListTapEventsFilters {
   from?: string
   to?: string
   studentId?: string
+  limit: number
+  cursor?: string
 }
 
 export async function listTapEvents(ctx: TenantContext, filters: ListTapEventsFilters) {
@@ -22,6 +24,8 @@ export async function listTapEvents(ctx: TenantContext, filters: ListTapEventsFi
     from: filters.from ? new Date(filters.from) : undefined,
     to: filters.to ? new Date(filters.to) : undefined,
     studentId: filters.studentId,
+    limit: filters.limit,
+    cursor: filters.cursor,
   })
   return rows.map((r) => ({
     id: r.id,

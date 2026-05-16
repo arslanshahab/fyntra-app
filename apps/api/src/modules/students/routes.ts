@@ -1,12 +1,15 @@
 import type { FastifyPluginAsync } from 'fastify'
 import { z } from 'zod'
 import { requireAuth } from '../../middleware/require-auth.js'
+import { resolvePagination, setNextCursor } from '../../lib/pagination.js'
 import { listStudents, getStudent, getStudentTimeline } from './service.js'
 
 const listQuery = z.object({
   classId: z.string().optional(),
   search: z.string().optional(),
   guardianId: z.string().optional(),
+  limit: z.coerce.number().int().min(1).optional(),
+  cursor: z.string().min(1).optional(),
 })
 
 const timelineQuery = z.object({
@@ -15,10 +18,19 @@ const timelineQuery = z.object({
 })
 
 export const studentsRoutes: FastifyPluginAsync = async (app) => {
-  app.get('/students', { preHandler: requireAuth, schema: { querystring: listQuery } }, async (req) => {
+  app.get('/students', { preHandler: requireAuth, schema: { querystring: listQuery } }, async (req, reply) => {
     const ctx = req.tenantContext!
     const q = req.query as z.infer<typeof listQuery>
-    return await listStudents(ctx, q)
+    const { limit, cursor } = resolvePagination(q)
+    const rows = await listStudents(ctx, {
+      classId: q.classId,
+      search: q.search,
+      guardianId: q.guardianId,
+      limit,
+      cursor,
+    })
+    setNextCursor(reply, rows, limit)
+    return rows
   })
 
   app.get('/students/:id', { preHandler: requireAuth }, async (req) => {

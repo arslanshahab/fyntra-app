@@ -1,4 +1,4 @@
-import { and, asc, eq, isNull } from 'drizzle-orm'
+import { and, asc, desc, eq, isNull, lt } from 'drizzle-orm'
 import { db } from '../../db/client.js'
 import { cards, cardAuditEntries } from '../../db/schema/cards.js'
 import { students } from '../../db/schema/students.js'
@@ -8,14 +8,23 @@ import type { TenantContext } from '../../types/tenant-context.js'
 type CardStatus = 'active' | 'lost' | 'replaced' | 'deactivated'
 type AuditAction = 'issued' | 'assigned' | 'replaced' | 'lost' | 'deactivated' | 'reactivated'
 
+export interface ListCardsFilters {
+  status?: CardStatus
+  limit: number
+  cursor?: string
+}
+
 export const cardsRepo = {
-  async list(ctx: TenantContext, status?: CardStatus) {
+  async list(ctx: TenantContext, filters: ListCardsFilters) {
     const conds = [eq(cards.schoolId, ctx.schoolId), isNull(cards.deletedAt)]
-    if (status) conds.push(eq(cards.status, status))
+    if (filters.status) conds.push(eq(cards.status, filters.status))
+    if (filters.cursor) conds.push(lt(cards.id, filters.cursor))
     return db
       .select()
       .from(cards)
       .where(and(...conds))
+      .orderBy(desc(cards.id))
+      .limit(filters.limit)
   },
 
   async findById(ctx: TenantContext, id: string) {

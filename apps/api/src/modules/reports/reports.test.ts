@@ -183,6 +183,69 @@ describe('reports routes', () => {
     expect(body.map((r) => r.studentId)).not.toContain(studentA)
   })
 
+  // --- cursor pagination ---
+
+  async function seedRecords(schoolId: string, classId: string, n: number) {
+    const ids: string[] = []
+    for (let i = 0; i < n; i++) {
+      const studentId = newId()
+      await db.insert(students).values({
+        id: studentId,
+        schoolId,
+        classId,
+        fullName: `S${i}`,
+        rollNumber: `R${i}`,
+        status: 'active',
+      })
+      const id = newId()
+      ids.push(id)
+      await db.insert(attendanceRecords).values({
+        id,
+        schoolId,
+        studentId,
+        date: '2026-05-14',
+        status: 'present',
+        isManual: false,
+      })
+    }
+    return ids
+  }
+
+  it('GET /attendance?limit=2 sets X-Next-Cursor on a full page', async () => {
+    const { schoolA, adminA, classA } = await seedTwoSchools()
+    const ids = await seedRecords(schoolA, classA, 4)
+    const t = token(app, { userId: adminA, schoolId: schoolA, role: 'admin' })
+    const res = await app.inject({
+      method: 'GET',
+      url: '/attendance?date=2026-05-14&limit=2',
+      headers: { authorization: `Bearer ${t}` },
+    })
+    expect(res.statusCode).toBe(200)
+    const body = res.json() as Array<{ id: string }>
+    expect(body).toHaveLength(2)
+    expect(body[0]!.id).toBe(ids[3])
+    expect(body[1]!.id).toBe(ids[2])
+    expect(res.headers['x-next-cursor']).toBe(ids[2])
+  })
+
+  it('GET /attendance?cursor=<id> returns next page (short page omits cursor)', async () => {
+    const { schoolA, adminA, classA } = await seedTwoSchools()
+    const ids = await seedRecords(schoolA, classA, 4)
+    const t = token(app, { userId: adminA, schoolId: schoolA, role: 'admin' })
+    // limit=3, cursor at ids[2] → only ids[1], ids[0] remain on 2026-05-14
+    const res = await app.inject({
+      method: 'GET',
+      url: `/attendance?date=2026-05-14&limit=3&cursor=${ids[2]}`,
+      headers: { authorization: `Bearer ${t}` },
+    })
+    expect(res.statusCode).toBe(200)
+    const body = res.json() as Array<{ id: string }>
+    expect(body).toHaveLength(2)
+    expect(body[0]!.id).toBe(ids[1])
+    expect(body[1]!.id).toBe(ids[0])
+    expect(res.headers['x-next-cursor']).toBeUndefined()
+  })
+
   it('GET /reports/attendance.csv returns proper headers + headers row', async () => {
     const { schoolA, adminA } = await seedTwoSchools()
     const t = token(app, { userId: adminA, schoolId: schoolA, role: 'admin' })

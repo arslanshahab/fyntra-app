@@ -1,4 +1,4 @@
-import { and, asc, eq, gte, inArray, lte, or } from 'drizzle-orm'
+import { and, desc, eq, gte, inArray, lt, lte, or } from 'drizzle-orm'
 import { db } from '../../db/client.js'
 import { attendanceRecords } from '../../db/schema/attendance.js'
 import { students } from '../../db/schema/students.js'
@@ -11,6 +11,8 @@ export interface AttendanceFilters {
   to?: string
   classId?: string
   anomalies?: boolean
+  limit?: number
+  cursor?: string
 }
 
 export const reportsRepo = {
@@ -51,11 +53,16 @@ export const reportsRepo = {
       )
     }
 
-    return db
+    if (filters.cursor) conds.push(lt(attendanceRecords.id, filters.cursor))
+
+    // Pagination caller passes a numeric limit (resolved upstream). CSV
+    // export omits the limit entirely so the full range is returned.
+    const base = db
       .select()
       .from(attendanceRecords)
       .where(and(...conds))
-      .orderBy(asc(attendanceRecords.date), asc(attendanceRecords.studentId))
+      .orderBy(desc(attendanceRecords.id))
+    return filters.limit !== undefined ? base.limit(filters.limit) : base
   },
 
   async classExists(ctx: TenantContext, classId: string) {

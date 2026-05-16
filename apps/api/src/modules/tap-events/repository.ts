@@ -1,4 +1,4 @@
-import { and, desc, eq, gte, lte } from 'drizzle-orm'
+import { and, desc, eq, gte, lt, lte } from 'drizzle-orm'
 import { db } from '../../db/client.js'
 import { tapEvents } from '../../db/schema/attendance.js'
 import { newId } from '../../lib/ids.js'
@@ -49,16 +49,19 @@ export const tapEventsRepo = {
     from?: Date
     to?: Date
     studentId?: string
+    limit: number
+    cursor?: string
   }) {
     const conds = [eq(tapEvents.schoolId, input.schoolId)]
     if (input.studentId) conds.push(eq(tapEvents.studentId, input.studentId))
     if (input.from) conds.push(gte(tapEvents.occurredAt, input.from))
     if (input.to) conds.push(lte(tapEvents.occurredAt, input.to))
+    if (input.cursor) conds.push(lt(tapEvents.id, input.cursor))
     return db
       .select()
       .from(tapEvents)
       .where(and(...conds))
-      .orderBy(desc(tapEvents.occurredAt))
-      .limit(500)
+      .orderBy(desc(tapEvents.id))
+      .limit(input.limit)
   },
 }

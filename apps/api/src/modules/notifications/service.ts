@@ -239,6 +239,8 @@ export async function updateMySettings(
 export interface ListNotificationsFilters {
   userId?: string
   status?: NotificationStatus
+  limit: number
+  cursor?: string
 }
 
 export async function listNotifications(
@@ -247,8 +249,8 @@ export async function listNotifications(
 ): Promise<WireLog[]> {
   const effective: ListNotificationsFilters =
     ctx.role === 'parent'
-      ? { userId: ctx.userId, status: filters.status }
-      : { userId: filters.userId, status: filters.status }
+      ? { userId: ctx.userId, status: filters.status, limit: filters.limit, cursor: filters.cursor }
+      : { userId: filters.userId, status: filters.status, limit: filters.limit, cursor: filters.cursor }
   const rows = await notificationsRepo.listLogs(ctx, effective)
   return rows.map(logToWire)
 }

@@ -213,6 +213,62 @@ describe('notifications routes', () => {
     expect(rows[0]?.sentAt).not.toBeNull()
   })
 
+  // --- cursor pagination ---
+
+  async function seedLogs(schoolId: string, recipient: string, n: number) {
+    const ids: string[] = []
+    for (let i = 0; i < n; i++) {
+      const id = newId()
+      ids.push(id)
+      await db.insert(notificationLogs).values({
+        id,
+        schoolId,
+        recipientUserId: recipient,
+        channel: 'in_app',
+        eventId: null,
+        status: 'sent',
+        payload: { title: `t${i}`, body: `b${i}` },
+        sentAt: new Date(),
+      })
+    }
+    return ids
+  }
+
+  it('GET /notifications?limit=2 sets X-Next-Cursor to the last id of the page', async () => {
+    const { schoolA, adminA, parentA } = await seedTwoSchools()
+    const ids = await seedLogs(schoolA, parentA, 4)
+    const t = token(app, { userId: adminA, schoolId: schoolA, role: 'admin' })
+    const res = await app.inject({
+      method: 'GET',
+      url: '/notifications?limit=2',
+      headers: { authorization: `Bearer ${t}` },
+    })
+    expect(res.statusCode).toBe(200)
+    const body = res.json() as Array<{ id: string }>
+    expect(body).toHaveLength(2)
+    expect(body[0]!.id).toBe(ids[3])
+    expect(body[1]!.id).toBe(ids[2])
+    expect(res.headers['x-next-cursor']).toBe(ids[2])
+  })
+
+  it('GET /notifications?cursor=<id> returns next page (short page omits cursor)', async () => {
+    const { schoolA, adminA, parentA } = await seedTwoSchools()
+    const ids = await seedLogs(schoolA, parentA, 4)
+    const t = token(app, { userId: adminA, schoolId: schoolA, role: 'admin' })
+    // 4 seeded, limit=3 starting after ids[2] → only ids[1], ids[0] remain → short page
+    const res = await app.inject({
+      method: 'GET',
+      url: `/notifications?limit=3&cursor=${ids[2]}`,
+      headers: { authorization: `Bearer ${t}` },
+    })
+    expect(res.statusCode).toBe(200)
+    const body = res.json() as Array<{ id: string }>
+    expect(body).toHaveLength(2)
+    expect(body[0]!.id).toBe(ids[1])
+    expect(body[1]!.id).toBe(ids[0])
+    expect(res.headers['x-next-cursor']).toBeUndefined()
+  })
+
   it('POST /notifications/:id/retry on a whatsapp log re-sends and refreshes sentAt under dry-run', async () => {
     const { schoolA, adminA, parentA } = await seedTwoSchools()
     const logId = newId()

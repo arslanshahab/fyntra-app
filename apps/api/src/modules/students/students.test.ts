@@ -8,6 +8,7 @@ import { users } from '../../db/schema/auth.js'
 import { students } from '../../db/schema/students.js'
 import { attendanceRecords } from '../../db/schema/attendance.js'
 import { newId } from '../../lib/ids.js'
+import { eq } from 'drizzle-orm'
 
 let app: FastifyInstance
 
@@ -99,6 +100,66 @@ describe('GET /students', () => {
     expect(res.statusCode).toBe(200)
     const body = res.json() as Array<{ date: string; status: string }>
     expect(body.map((r) => r.date)).toEqual(['2026-05-11', '2026-05-12'])
+  })
+
+  // --- cursor pagination ---
+
+  async function seedExtraStudents(schoolId: string, classId: string, n: number) {
+    const ids: string[] = []
+    for (let i = 0; i < n; i++) {
+      const id = newId()
+      ids.push(id)
+      await db.insert(students).values({
+        id,
+        schoolId,
+        classId,
+        fullName: `Extra${i}`,
+        rollNumber: `E${i}`,
+        status: 'active',
+      })
+    }
+    return ids
+  }
+
+  it('GET /students?limit=2 returns the 2 newest with X-Next-Cursor', async () => {
+    const { schoolA, adminA } = await seedTwoSchools()
+    // seedTwoSchools created studentA already; add a class for extras.
+    const classRows = await db.select().from(classes).where(eq(classes.schoolId, schoolA)).limit(1)
+    const classA = classRows[0]!.id
+    const extras = await seedExtraStudents(schoolA, classA, 3)
+    const t = token(app, { userId: adminA, schoolId: schoolA, role: 'admin' })
+    const res = await app.inject({
+      method: 'GET',
+      url: '/students?limit=2',
+      headers: { authorization: `Bearer ${t}` },
+    })
+    expect(res.statusCode).toBe(200)
+    const body = res.json() as Array<{ id: string }>
+    expect(body).toHaveLength(2)
+    expect(body[0]!.id).toBe(extras[2])
+    expect(body[1]!.id).toBe(extras[1])
+    expect(res.headers['x-next-cursor']).toBe(extras[1])
+  })
+
+  it('GET /students?cursor=<id> returns next page (short page omits cursor)', async () => {
+    const { schoolA, adminA, studentA } = await seedTwoSchools()
+    const classRows = await db.select().from(classes).where(eq(classes.schoolId, schoolA)).limit(1)
+    const classA = classRows[0]!.id
+    const extras = await seedExtraStudents(schoolA, classA, 3)
+    const t = token(app, { userId: adminA, schoolId: schoolA, role: 'admin' })
+    // Newest-first id order: extras[2], extras[1], extras[0], studentA
+    // limit=3, cursor at extras[1] → only extras[0], studentA remain → short page
+    const res = await app.inject({
+      method: 'GET',
+      url: `/students?limit=3&cursor=${extras[1]}`,
+      headers: { authorization: `Bearer ${t}` },
+    })
+    expect(res.statusCode).toBe(200)
+    const body = res.json() as Array<{ id: string }>
+    expect(body).toHaveLength(2)
+    expect(body[0]!.id).toBe(extras[0])
+    expect(body[1]!.id).toBe(studentA)
+    expect(res.headers['x-next-cursor']).toBeUndefined()
   })
 
   it('parent gets 404 on timeline of a student they do not guard', async () => {

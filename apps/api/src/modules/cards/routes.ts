@@ -7,6 +7,7 @@ import {
 } from '@fyntra/schemas'
 import { requireAuth } from '../../middleware/require-auth.js'
 import { requireRole } from '../../middleware/require-role.js'
+import { resolvePagination, setNextCursor } from '../../lib/pagination.js'
 import {
   listCards,
   assignCard,
@@ -16,13 +17,18 @@ import {
 
 const listQuery = z.object({
   status: z.enum(['active', 'lost', 'replaced', 'deactivated']).optional(),
+  limit: z.coerce.number().int().min(1).optional(),
+  cursor: z.string().min(1).optional(),
 })
 
 export const cardsRoutes: FastifyPluginAsync = async (app) => {
-  app.get('/cards', { preHandler: requireAuth, schema: { querystring: listQuery } }, async (req) => {
+  app.get('/cards', { preHandler: requireAuth, schema: { querystring: listQuery } }, async (req, reply) => {
     const ctx = req.tenantContext!
-    const { status } = req.query as z.infer<typeof listQuery>
-    return await listCards(ctx, status)
+    const q = req.query as z.infer<typeof listQuery>
+    const { limit, cursor } = resolvePagination(q)
+    const rows = await listCards(ctx, { status: q.status, limit, cursor })
+    setNextCursor(reply, rows, limit)
+    return rows
   })
 
   app.post(

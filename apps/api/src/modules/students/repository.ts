@@ -1,4 +1,4 @@
-import { and, asc, eq, gte, ilike, inArray, isNull, lte } from 'drizzle-orm'
+import { and, asc, desc, eq, gte, ilike, inArray, isNull, lt, lte } from 'drizzle-orm'
 import { db } from '../../db/client.js'
 import { students, studentGuardians } from '../../db/schema/students.js'
 import { attendanceRecords } from '../../db/schema/attendance.js'
@@ -26,6 +26,8 @@ export interface ListStudentsFilters {
   classId?: string
   search?: string
   guardianId?: string
+  limit: number
+  cursor?: string
 }
 
 export const studentsRepo = {
@@ -33,6 +35,7 @@ export const studentsRepo = {
     const conditions = [eq(students.schoolId, ctx.schoolId)]
     if (filters.classId) conditions.push(eq(students.classId, filters.classId))
     if (filters.search) conditions.push(ilike(students.fullName, `%${filters.search}%`))
+    if (filters.cursor) conditions.push(lt(students.id, filters.cursor))
 
     let rows
     if (filters.guardianId) {
@@ -53,12 +56,16 @@ export const studentsRepo = {
         .from(students)
         .leftJoin(cards, activeCardJoin)
         .where(and(...conditions, inArray(students.id, ids)))
+        .orderBy(desc(students.id))
+        .limit(filters.limit)
     } else {
       rows = await db
         .select(studentWithCardCols)
         .from(students)
         .leftJoin(cards, activeCardJoin)
         .where(and(...conditions))
+        .orderBy(desc(students.id))
+        .limit(filters.limit)
     }
     return rows
   },
