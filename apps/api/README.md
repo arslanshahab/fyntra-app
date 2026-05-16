@@ -98,15 +98,88 @@ For the full picture (schemas, contract, sequence diagrams), see the spec at [`d
 - **Test DB races.** `vitest.config.ts` sets `singleFork: true` and `fileParallelism: false`. The config exists for a reason — if you fork tests across files, the shared test DB will thrash.
 - **Drizzle generate crashes with an esbuild `es2023` error.** Known workaround: `node --require tsx/cjs node_modules/drizzle-kit/bin.cjs generate` — already what `pnpm -F api db:generate` runs. Don't replace it with bare `drizzle-kit generate`.
 
+## Phase 2.1 changes
+
+Phase 2.1 surfaces the three big items that Phase 1.5 left as "data exists, wire doesn't" hooks: attendance anomalies, device admin (no more `db:seed` for token issuance), and cursor pagination on the heavy list endpoints. Spec: [`docs/superpowers/specs/2026-05-16-fyntra-phase-2-backend-design.md`](../../docs/superpowers/specs/2026-05-16-fyntra-phase-2-backend-design.md).
+
+### Attendance anomaly surface
+
+`attendanceRecordSchema` gains three optional booleans — `cardAnomaly`, `leftWithoutScan`, `flaggedForReview`. The DB columns already existed in Phase 1.5; Phase 2.1 just exposes them. Falsy values are omitted from JSON so a quiet day stays a clean wire.
+
+`GET /attendance` accepts a new `anomalies=true` query that filters to rows where at least one of the three flags is `true`. Composes with `date` / `from` / `to` / `classId`.
+
+```sh
+curl "$API/attendance?date=2026-05-16&anomalies=true" -H "authorization: Bearer $TOKEN"
+```
+
+CSV export (`/reports/attendance.csv`) does **not** include anomaly columns in 2.1 — the contract is for downstream importers that pre-date the flags.
+
+### Device admin
+
+Six new endpoints, all admin-gated:
+
+| Method | Path | Body | Returns |
+| --- | --- | --- | --- |
+| `POST` | `/devices` | `{ label, direction }` | `Device` |
+| `PATCH` | `/devices/:id` | `{ label?, direction? }` | `Device` |
+| `DELETE` | `/devices/:id` | — | `{ ok: true }` (soft-delete via `deletedAt`; cascades to revoke active tokens) |
+| `GET` | `/devices/:id/tokens` | — | `DeviceToken[]` (hashed metadata; never plaintext) |
+| `POST` | `/devices/:id/tokens` | `{ label }` | `{ token, deviceToken }` — `token` is the plaintext, returned **once** |
+| `DELETE` | `/devices/:id/tokens/:tokenId` | — | `DeviceToken` with `revokedAt` set |
+
+Soft-deleting a device also revokes every active token for it, so the existing `resolveDeviceByToken` path in `src/modules/readers/service.ts` keeps rejecting taps from retired devices without touching that hot path.
+
+```sh
+curl -X POST "$API/devices" \
+  -H "authorization: Bearer $ADMIN_TOKEN" -H "content-type: application/json" \
+  -d '{"label":"North Gate","direction":"both"}'
+
+curl -X POST "$API/devices/$DEVICE_ID/tokens" \
+  -H "authorization: Bearer $ADMIN_TOKEN" -H "content-type: application/json" \
+  -d '{"label":"north dev"}'
+# → {"token":"…plaintext, shown once…","deviceToken":{…}}
+```
+
+The admin UI now mirrors this surface — `db:seed` remains the local-dev convenience, but production token rotation goes through the API.
+
+### Cursor pagination
+
+Five list endpoints accept `?limit=…&cursor=…`:
+
+- `GET /tap-events`
+- `GET /notifications`
+- `GET /attendance`
+- `GET /students`
+- `GET /cards`
+
+Rules:
+
+- Default `limit` is 100, hard max 500 (clamped silently).
+- Sort order is `id DESC` on every endpoint (UUID v7 → effectively insertion-time newest-first).
+- When `cursor` is set, the repo appends `lt(table.id, cursor)` to the where clause.
+- Response body shape is unchanged (still a JSON array). The next-page cursor goes in the `X-Next-Cursor` response header.
+- `X-Next-Cursor` is set **only** when the page is full. End-of-list omits the header.
+- Existing filters (e.g. `status` on `/cards`, `classId` on `/attendance`, `studentId` on `/tap-events`) compose with `limit` + `cursor`.
+- Backwards compatible: clients that don't send `limit` still get an array.
+
+```sh
+curl -i "$API/tap-events?limit=10" -H "authorization: Bearer $TOKEN"
+# < x-next-cursor: 01943c…
+
+curl -i "$API/tap-events?limit=10&cursor=01943c…" -H "authorization: Bearer $TOKEN"
+```
+
+CSV export still returns the full range — it does not paginate.
+
 ## Phase 2 hooks
 
-Deferred from Phase 1.5. Not in scope today; named here so future maintainers know the boundary.
+Deferred from Phase 1.5 and still deferred after Phase 2.1. Not in scope today; named here so future maintainers know the boundary.
 
+- Anomaly resolution workflow — admin "acknowledge" → row drops off the Anomaly Center. Tracked for Phase 2.1.5.
 - Push notifications (FCM / APNS). `notification_logs` rows are written as `failed` today.
 - Multi-school super-admin role. Today every user is bound to exactly one `schoolId`.
-- Card-anomaly UI surface. `attendance_records.cardAnomaly` is set by the backend but not exposed on any wire contract.
-- Device admin via API (issue / rotate device tokens). Today, only `db:seed` produces plaintext tokens.
 - SMS provider integration. Logged as failed today.
-- Urdu WhatsApp templates. Only English templates are approved for Phase 1.5.
-- Pagination on list endpoints. Everything still returns a JSON array.
+- Urdu WhatsApp templates. Only English templates are approved.
 - Reports beyond attendance — per-class stats, trend charts, etc.
+- Bulk device-token revocation, per-token `lastUsedAt` tracking.
+- Cursor pagination on `/students/:id/timeline` (parent timeline uses date-window expansion for "Load earlier" in 2.1).
