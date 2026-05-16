@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
 import { z } from 'zod'
 
 import { apiGet, apiPost } from '../../services/api/client'
@@ -8,6 +8,7 @@ import {
   attendanceRecordSchema,
   tapEventSchema,
   type School,
+  type Student,
   type TapDirection,
   type TapEvent,
 } from '@fyntra/schemas'
@@ -41,6 +42,18 @@ export function useAnomalyList(from: string, to: string) {
   })
 }
 
+// Shared query shape so single- and multi-student callers hit the same cache.
+function todayAttendanceQueryFn(studentId: string) {
+  return async () => {
+    const today = dateStrInKarachi()
+    const rows = await apiGet(
+      `/students/${studentId}/timeline?from=${today}&to=${today}`,
+      attendanceListSchema,
+    )
+    return rows[0] ?? null
+  }
+}
+
 /** Today's attendance row for a student. Polls inside the school window. */
 export function useTodayAttendance(studentId: string | undefined, school: School | undefined) {
   const { refetchInterval } = useRealtime(school)
@@ -48,17 +61,28 @@ export function useTodayAttendance(studentId: string | undefined, school: School
     queryKey: studentId
       ? attendanceKeys.todayByStudent(studentId)
       : ['attendance', 'today', 'none'],
-    queryFn: async () => {
-      const today = dateStrInKarachi()
-      const rows = await apiGet(
-        `/students/${studentId}/timeline?from=${today}&to=${today}`,
-        attendanceListSchema,
-      )
-      return rows[0] ?? null
-    },
+    queryFn: studentId ? todayAttendanceQueryFn(studentId) : async () => null,
     enabled: !!studentId,
     refetchInterval,
     refetchIntervalInBackground: false,
+  })
+}
+
+/**
+ * Fan-out variant: today's attendance for every supplied student in parallel.
+ * Shares the same cache keys as useTodayAttendance, so the cache is hot when
+ * a parent navigates from the home page into a single child's timeline.
+ */
+export function useChildrenTodayAttendance(students: Student[], school: School | undefined) {
+  const { refetchInterval } = useRealtime(school)
+  return useQueries({
+    queries: students.map((s) => ({
+      queryKey: attendanceKeys.todayByStudent(s.id),
+      queryFn: todayAttendanceQueryFn(s.id),
+      enabled: !!school,
+      refetchInterval,
+      refetchIntervalInBackground: false,
+    })),
   })
 }
 
@@ -183,16 +207,35 @@ export function useManualTapMutation() {
 }
 
 /** Tap events for a single day for a student. */
+function dayTapsQueryFn(studentId: string, date: string) {
+  return () =>
+    apiGet(
+      `/tap-events?studentId=${studentId}&from=${date}T00:00:00.000%2B05:00&to=${date}T23:59:59.999%2B05:00`,
+      tapEventListSchema,
+    )
+}
+
 export function useDayTapEvents(studentId: string | undefined, date: string | undefined) {
   return useQuery({
     queryKey:
       studentId && date ? attendanceKeys.tapsByStudentDay(studentId, date) : ['taps', 'none'],
-    queryFn: () =>
-      apiGet(
-        `/tap-events?studentId=${studentId}&from=${date}T00:00:00.000%2B05:00&to=${date}T23:59:59.999%2B05:00`,
-        tapEventListSchema,
-      ),
+    queryFn: studentId && date ? dayTapsQueryFn(studentId, date) : async () => [],
     enabled: !!studentId && !!date,
     staleTime: 60_000,
+  })
+}
+
+/**
+ * Fan-out variant: today's tap events for every supplied student. ParentHomePage
+ * uses this to look up the device label of each child's most recent tap.
+ */
+export function useChildrenTodayTaps(students: Student[]) {
+  const today = dateStrInKarachi()
+  return useQueries({
+    queries: students.map((s) => ({
+      queryKey: attendanceKeys.tapsByStudentDay(s.id, today),
+      queryFn: dayTapsQueryFn(s.id, today),
+      staleTime: 60_000,
+    })),
   })
 }

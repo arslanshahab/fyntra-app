@@ -11,7 +11,13 @@
     "save": "محفوظ کریں",
     "signOut": "سائن آؤٹ",
     "back": "واپس",
-    "skipToContent": "مرکزی مواد پر جائیں"
+    "skipToContent": "مرکزی مواد پر جائیں",
+    "freshness": {
+      "justNow": "ابھی",
+      "secondsAgo": "{{count}} سیکنڈ پہلے",
+      "minutesAgo": "{{count}} منٹ پہلے",
+      "hoursAgo": "{{count}} گھنٹے پہلے"
+    }
   },
   "language": {
     "current": "اردو",
@@ -108,6 +114,16 @@
     "loadError": "ہم سکول کے سرور تک نہیں پہنچ سکے۔ دوبارہ کوشش کے لیے نیچے کھینچیں۔",
     "viewTimeline": "30 دن کی تاریخ دیکھیں",
     "openSettings": "نوٹیفیکیشن سیٹنگز",
+    "summary": {
+      "needsAttention_one": "{{count}} بچے کو آپ کی توجہ درکار ہے",
+      "needsAttention_other": "{{count}} بچوں کو آپ کی توجہ درکار ہے"
+    },
+    "metadata": {
+      "justArrived": "ابھی پہنچے",
+      "durationMinutesOnly": "{{minutes}} منٹ سے کیمپس میں",
+      "durationHoursMinutes": "{{hours}} گھنٹے {{minutes}} منٹ سے کیمپس میں",
+      "lastSeenAtLabel": "آخری بار یہاں"
+    },
     "settings": {
       "title": "نوٹیفیکیشن سیٹنگز",
       "back": "ہوم پر واپس",
@@ -195,6 +211,10 @@
     "removedDevice": "(ہٹا دی گئی ڈیوائس)",
     "loadEarlier": "پہلے کا لوڈ کریں",
     "endOfHistory": "تاریخ کا آغاز",
+    "relativeDay": {
+      "today": "آج",
+      "yesterday": "کل"
+    },
     "statusLabel": {
       "present": "حاضر",
       "late": "تاخیر",

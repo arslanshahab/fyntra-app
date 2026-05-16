@@ -1,17 +1,21 @@
-import { ChevronRight } from 'lucide-react'
+import { ChevronRight, Clock, MapPin } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 import { Avatar } from '../atoms/Avatar'
 import { Icon } from '../atoms/Icon'
 import { cn } from '../../utils/cn'
 import { type LiveStatus, toneFor } from '../../utils/attendanceStatus'
-import { formatTimeInKarachi } from '../../utils/datetime'
+import { formatTimeInKarachi, splitDuration } from '../../utils/datetime'
 import type { Student } from '@fyntra/schemas'
 
 interface ChildCardProps {
   student: Student
   status: LiveStatus
   onOpenTimeline: () => void
+  // Optional label for the device used in the child's most recent tap. Only
+  // rendered when the status kind has an associated tap (at_school / left /
+  // left_early). Hidden otherwise.
+  lastDeviceLabel?: string
 }
 
 // Tone → accent classes. The stripe + dot answer the README §10 "one question
@@ -93,11 +97,36 @@ function copyFor(
   }
 }
 
-export function ChildCard({ student, status, onOpenTimeline }: ChildCardProps) {
+function durationLabel(
+  status: LiveStatus,
+  t: (key: string, opts?: Record<string, unknown>) => string,
+): string | null {
+  let ms: number
+  if (status.kind === 'at_school') {
+    ms = Date.now() - new Date(status.firstInAt).getTime()
+  } else if (status.kind === 'left' || status.kind === 'left_early') {
+    ms = new Date(status.lastOutAt).getTime() - new Date(status.firstInAt).getTime()
+  } else {
+    return null
+  }
+  const { hours, minutes } = splitDuration(ms)
+  if (hours === 0 && minutes === 0) return t('parent.metadata.justArrived')
+  if (hours === 0) return t('parent.metadata.durationMinutesOnly', { minutes })
+  return t('parent.metadata.durationHoursMinutes', { hours, minutes })
+}
+
+export function ChildCard({
+  student,
+  status,
+  onOpenTimeline,
+  lastDeviceLabel,
+}: ChildCardProps) {
   const { t } = useTranslation()
   const tone = toneFor(status)
   const accent = toneAccent[tone]
   const { title, subtitle } = copyFor(status, student.fullName, t)
+  const duration = durationLabel(status, t)
+  const showMetadata = duration !== null || !!lastDeviceLabel
 
   return (
     <article
@@ -133,6 +162,24 @@ export function ChildCard({ student, status, onOpenTimeline }: ChildCardProps) {
             <p className="mt-1.5 text-sm leading-relaxed text-stone-600">{subtitle}</p>
           </div>
         </div>
+
+        {showMetadata ? (
+          <div className="mt-5 space-y-1.5 border-t border-stone-100 pt-4">
+            {duration ? (
+              <p className="flex items-center gap-2 text-xs text-stone-600">
+                <Icon icon={Clock} size="sm" className="flex-shrink-0 text-stone-400" />
+                <span className="tabular-nums">{duration}</span>
+              </p>
+            ) : null}
+            {lastDeviceLabel ? (
+              <p className="flex items-center gap-2 text-xs text-stone-600">
+                <Icon icon={MapPin} size="sm" className="flex-shrink-0 text-stone-400" />
+                <span className="sr-only">{t('parent.metadata.lastSeenAtLabel')}</span>
+                <span className="truncate">{lastDeviceLabel}</span>
+              </p>
+            ) : null}
+          </div>
+        ) : null}
 
         <button
           type="button"

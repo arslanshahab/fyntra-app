@@ -23,6 +23,35 @@ export type LiveStatus =
 
 export type LiveStatusTone = 'present' | 'late' | 'notyet' | 'unverified' | 'absent'
 
+// Lower rank = more urgent. Used to sort ParentHomePage so the card a parent
+// most likely needs to act on lands at the top.
+function urgencyRank(status: LiveStatus): number {
+  if (status.kind === 'absent') return 0
+  if (status.kind === 'no_card') return 1
+  if (status.kind === 'unverified') return 2
+  if (status.kind === 'not_yet') return 3
+  if (status.kind === 'left_early') return 4
+  if (status.kind === 'at_school' && status.isLate) return 5
+  if (status.kind === 'pre_school') return 6
+  if (status.kind === 'at_school') return 7
+  return 8 // left
+}
+
+export function compareByUrgency(a: LiveStatus, b: LiveStatus): number {
+  return urgencyRank(a) - urgencyRank(b)
+}
+
+// Whether a child's status warrants the parent's active attention. Excludes
+// "late" — the child is accounted for, school just knows they're late.
+export function needsAttention(status: LiveStatus): boolean {
+  return (
+    status.kind === 'absent' ||
+    status.kind === 'no_card' ||
+    status.kind === 'unverified' ||
+    status.kind === 'not_yet'
+  )
+}
+
 export function toneFor(status: LiveStatus): LiveStatusTone {
   switch (status.kind) {
     case 'at_school':

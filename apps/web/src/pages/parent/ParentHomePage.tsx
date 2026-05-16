@@ -6,19 +6,29 @@ import { useNavigate } from 'react-router-dom'
 import { Button } from '../../components/atoms/Button'
 import { Icon } from '../../components/atoms/Icon'
 import { ChildCard } from '../../components/molecules/ChildCard'
+import { FreshnessChip } from '../../components/molecules/FreshnessChip'
 import { StatusCard } from '../../components/molecules/StatusCard'
-import { useTodayAttendance } from '../../features/attendance/queries'
+import {
+  useChildrenTodayAttendance,
+  useChildrenTodayTaps,
+} from '../../features/attendance/queries'
 import { useMeQuery } from '../../features/auth/queries'
 import { useDevicesQuery } from '../../features/devices/queries'
 import { useAuthStore } from '../../stores/auth'
-import type { Device, School, Student } from '@fyntra/schemas'
-import { deriveLiveStatus } from '../../utils/attendanceStatus'
+import type { Student } from '@fyntra/schemas'
+import {
+  compareByUrgency,
+  deriveLiveStatus,
+  needsAttention,
+  type LiveStatus,
+} from '../../utils/attendanceStatus'
 import { KARACHI_TZ } from '../../utils/datetime'
 
-interface ChildRowProps {
+interface ChildEntry {
   student: Student
-  school: School
-  devices: Device[]
+  status: LiveStatus | null
+  isLoading: boolean
+  lastDeviceLabel?: string
 }
 
 function ChildCardSkeleton() {
@@ -46,31 +56,6 @@ function ChildCardSkeleton() {
   )
 }
 
-function ChildRow({ student, school, devices }: ChildRowProps) {
-  const navigate = useNavigate()
-  const today = useTodayAttendance(student.id, school)
-
-  if (today.isLoading) {
-    return <ChildCardSkeleton />
-  }
-
-  const status = deriveLiveStatus({
-    student,
-    attendance: today.data ?? null,
-    school,
-    devices,
-    now: new Date(),
-  })
-
-  return (
-    <ChildCard
-      student={student}
-      status={status}
-      onOpenTimeline={() => navigate(`/parent/child/${student.id}/timeline`)}
-    />
-  )
-}
-
 export function ParentHomePage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
@@ -78,13 +63,73 @@ export function ParentHomePage() {
   const me = useMeQuery()
   const devicesQuery = useDevicesQuery()
 
+  const children = me.data?.children ?? []
+  const school = me.data?.school
+  const devices = devicesQuery.data ?? []
+
+  // Fan-out today's attendance for every child in one go so we can sort the
+  // list by urgency before rendering. Shares cache keys with single-student
+  // useTodayAttendance, so the timeline page is hot on navigate.
+  const attendanceQueries = useChildrenTodayAttendance(children, school)
+  // Fan-out today's taps too — we need the device of the most recent tap to
+  // render the "Last seen at" row on the card. Shared cache with the timeline
+  // page's per-day tap query.
+  const tapsQueries = useChildrenTodayTaps(children)
+
+  const devicesById = new Map(devices.map((d) => [d.id, d]))
+
+  const entries: ChildEntry[] = children.map((student, idx) => {
+    const q = attendanceQueries[idx]
+    const isLoading = !school || !q || q.isLoading
+    const status =
+      school && q && !q.isLoading
+        ? deriveLiveStatus({
+            student,
+            attendance: q.data ?? null,
+            school,
+            devices,
+            now: new Date(),
+          })
+        : null
+
+    const taps = tapsQueries[idx]?.data ?? []
+    const lastTap = taps.reduce<(typeof taps)[number] | null>((latest, tap) => {
+      if (!latest) return tap
+      return tap.occurredAt > latest.occurredAt ? tap : latest
+    }, null)
+    const lastDeviceLabel = lastTap?.deviceId
+      ? devicesById.get(lastTap.deviceId)?.label
+      : undefined
+
+    return { student, status, isLoading, lastDeviceLabel }
+  })
+
+  const sortedEntries = [...entries].sort((a, b) => {
+    if (a.status && b.status) return compareByUrgency(a.status, b.status)
+    if (!a.status && !b.status) return 0
+    return a.status ? -1 : 1 // resolved entries first
+  })
+
+  const needsAttentionCount = entries.filter(
+    (e) => e.status && needsAttention(e.status),
+  ).length
+  const showSummary = children.length > 1 && needsAttentionCount > 0
+
   const onSignOut = () => {
     clearAuth()
     navigate('/login', { replace: true })
   }
 
-  const isLoading = me.isLoading || devicesQuery.isLoading
+  const isPageLoading = me.isLoading || devicesQuery.isLoading
   const todayLabel = formatInTimeZone(new Date(), KARACHI_TZ, 'EEEE, MMM d')
+
+  // Freshness = the most recently refreshed attendance query. The polling
+  // window controls how fast this advances; outside school hours the chip
+  // legitimately drifts into "stale" / "cold" until the next page open.
+  const lastUpdatedAt = attendanceQueries.reduce<number | null>((acc, q) => {
+    if (!q.dataUpdatedAt) return acc
+    return acc === null || q.dataUpdatedAt > acc ? q.dataUpdatedAt : acc
+  }, null)
 
   return (
     <main className="min-h-dvh bg-stone-50">
@@ -120,12 +165,34 @@ export function ParentHomePage() {
       <div className="mx-auto max-w-md space-y-4 px-5 pb-10 pt-6">
         <div>
           <h1 className="font-display text-3xl font-semibold tracking-tight text-stone-900">
-            {me.data ? t('parent.greeting', { name: me.data.user.fullName }) : ' '}
+            {me.data ? t('parent.greeting', { name: me.data.user.fullName }) : ' '}
           </h1>
-          <p className="mt-1 text-sm text-stone-500">{todayLabel}</p>
+          <div className="mt-1 flex items-center gap-2 text-sm text-stone-500">
+            <span>{todayLabel}</span>
+            {lastUpdatedAt ? (
+              <>
+                <span aria-hidden="true" className="text-stone-300">
+                  ·
+                </span>
+                <FreshnessChip updatedAt={lastUpdatedAt} />
+              </>
+            ) : null}
+          </div>
         </div>
 
-        {isLoading ? (
+        {showSummary ? (
+          <div
+            role="status"
+            className="flex items-center gap-2 rounded-lg bg-status-late/10 px-3 py-2 ring-1 ring-status-late/20"
+          >
+            <Icon icon={AlertTriangle} size="sm" className="text-status-late" />
+            <p className="text-sm font-medium text-status-late">
+              {t('parent.summary.needsAttention', { count: needsAttentionCount })}
+            </p>
+          </div>
+        ) : null}
+
+        {isPageLoading ? (
           <ChildCardSkeleton />
         ) : me.isError ? (
           <StatusCard
@@ -140,17 +207,24 @@ export function ParentHomePage() {
               },
             }}
           />
-        ) : (me.data?.children ?? []).length === 0 ? (
+        ) : children.length === 0 ? (
           <StatusCard icon={Users} body={t('parent.noChildren')} />
         ) : (
-          (me.data?.children ?? []).map((child) => (
-            <ChildRow
-              key={child.id}
-              student={child}
-              school={me.data!.school}
-              devices={devicesQuery.data ?? []}
-            />
-          ))
+          sortedEntries.map((entry) =>
+            entry.isLoading || !entry.status ? (
+              <ChildCardSkeleton key={entry.student.id} />
+            ) : (
+              <ChildCard
+                key={entry.student.id}
+                student={entry.student}
+                status={entry.status}
+                lastDeviceLabel={entry.lastDeviceLabel}
+                onOpenTimeline={() =>
+                  navigate(`/parent/child/${entry.student.id}/timeline`)
+                }
+              />
+            ),
+          )
         )}
       </div>
     </main>

@@ -13,7 +13,7 @@ import { useDayTapEvents, useStudentTimeline } from '../../features/attendance/q
 import { useMeQuery } from '../../features/auth/queries'
 import { useDevicesQuery } from '../../features/devices/queries'
 import type { AttendanceRecord, TapEvent } from '@fyntra/schemas'
-import { formatTimeInKarachi, formatTimelineDate } from '../../utils/datetime'
+import { formatTimeInKarachi, formatTimelineDate, relativeDayPrefix } from '../../utils/datetime'
 
 const statusTone: Record<AttendanceRecord['status'], 'present' | 'late' | 'absent' | 'notyet'> = {
   present: 'present',
@@ -95,6 +95,7 @@ function DayRow({ record, studentId, isOpen, onToggle }: DayRowProps) {
         record.lastOutAt ? formatTimeInKarachi(record.lastOutAt) : '—'
       }`
     : null
+  const relPrefix = relativeDayPrefix(record.date)
 
   return (
     <li className="overflow-hidden rounded-2xl bg-white shadow-elev-1 ring-1 ring-stone-200">
@@ -105,7 +106,25 @@ function DayRow({ record, studentId, isOpen, onToggle }: DayRowProps) {
         className="flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left transition-colors hover:bg-stone-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-500"
       >
         <div className="min-w-0">
-          <p className="text-sm font-medium text-stone-900">{formatTimelineDate(record.date)}</p>
+          <p className="text-sm">
+            {relPrefix ? (
+              <>
+                <span className="font-semibold text-stone-900">
+                  {t(`timeline.relativeDay.${relPrefix}`)}
+                </span>
+                <span aria-hidden="true" className="mx-1.5 text-stone-300">
+                  ·
+                </span>
+                <span className="font-medium text-stone-500">
+                  {formatTimelineDate(record.date)}
+                </span>
+              </>
+            ) : (
+              <span className="font-medium text-stone-900">
+                {formatTimelineDate(record.date)}
+              </span>
+            )}
+          </p>
           {timeRange ? (
             <p className="mt-0.5 font-mono text-xs tabular-nums text-stone-500">{timeRange}</p>
           ) : null}
