@@ -22,6 +22,7 @@ export function LiveTapFeed({ school }: LiveTapFeedProps) {
   const studentsByCard = new Map(
     (students.data ?? []).filter((s) => s.cardId).map((s) => [s.cardId!, s]),
   )
+  const studentsById = new Map((students.data ?? []).map((s) => [s.id, s]))
   const devicesById = new Map((devices.data ?? []).map((d) => [d.id, d]))
   const events = [...(feed.data ?? [])]
     .sort((a, b) => (a.occurredAt < b.occurredAt ? 1 : -1))
@@ -51,8 +52,10 @@ export function LiveTapFeed({ school }: LiveTapFeedProps) {
         ) : (
           <ul className="divide-y divide-slate-100">
             {events.map((event) => {
-              const student = studentsByCard.get(event.cardId)
-              const device = devicesById.get(event.deviceId)
+              const student =
+                (event.studentId ? studentsById.get(event.studentId) : undefined) ??
+                (event.cardId ? studentsByCard.get(event.cardId) : undefined)
+              const device = event.deviceId ? devicesById.get(event.deviceId) : undefined
               const isIn = event.direction === 'in'
               return (
                 <li key={event.id} className="flex items-center gap-3 py-3 first:pt-0 last:pb-0">
@@ -73,7 +76,7 @@ export function LiveTapFeed({ school }: LiveTapFeedProps) {
                     <p className="truncate text-xs text-slate-500">
                       {isIn ? t('admin.liveFeed.in') : t('admin.liveFeed.out')}
                       {' · '}
-                      {device?.label ?? event.deviceId}
+                      {device?.label ?? (event.source === 'manual' ? t('admin.liveFeed.manualEntry') : event.deviceId)}
                     </p>
                   </div>
                   <span className="flex-shrink-0 text-xs tabular-nums text-slate-500">

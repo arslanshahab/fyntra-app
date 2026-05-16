@@ -142,7 +142,7 @@ export async function dispatch(input: DispatchInput): Promise<number> {
       const result = await sendTemplate({
         to: input.recipientPhone,
         name: input.payloads.whatsapp.templateName,
-        languageCode: 'en',
+        languageCode: 'en_US',
         variables: input.payloads.whatsapp.variables,
       })
       const title = input.payloads.inApp?.title ?? `<${input.payloads.whatsapp.templateName}>`

@@ -5,6 +5,7 @@ import { WebSocketServer, WebSocket } from 'ws';
 const HOST = '127.0.0.1';
 const PORT = 8787;
 const DEDUP_MS = 500;
+const HEARTBEAT_MS = 60_000;
 
 type DeviceDirection = 'in' | 'out' | 'both';
 
@@ -55,6 +56,34 @@ const resolveApiConfig = (): ApiConfig | null => {
 };
 
 const apiConfig: ApiConfig | null = resolveApiConfig();
+
+const postHeartbeatToApi = async (): Promise<void> => {
+  if (!apiConfig) return;
+  try {
+    const res = await fetch(`${apiConfig.baseUrl}/readers/heartbeat`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        occurredAt: new Date().toISOString(),
+        deviceToken: apiConfig.token,
+      }),
+    });
+    if (!res.ok) {
+      const body = await res.text().catch(() => '');
+      err(`POST /readers/heartbeat → ${res.status} ${body}`);
+    }
+  } catch (e) {
+    err('heartbeat post failed:', e);
+  }
+};
+
+if (apiConfig) {
+  // Delay the first beat by 3s so the api has time to come up when both
+  // services start concurrently (otherwise the first POST gets a connection
+  // refused). Then beat every 60s — server marks devices offline after 180s.
+  setTimeout(() => void postHeartbeatToApi(), 3_000).unref();
+  setInterval(() => void postHeartbeatToApi(), HEARTBEAT_MS).unref();
+}
 
 const postTapToApi = async (uid: string, now: number): Promise<void> => {
   if (!apiConfig) return;

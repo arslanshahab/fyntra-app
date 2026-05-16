@@ -6,8 +6,8 @@ import { requireRole } from '../../middleware/require-role.js'
 import { listTapEvents, recordManualOverride } from './service.js'
 
 const listQuery = z.object({
-  from: z.string().datetime().optional(),
-  to: z.string().datetime().optional(),
+  from: z.string().datetime({ offset: true }).optional(),
+  to: z.string().datetime({ offset: true }).optional(),
   studentId: z.string().optional(),
 })
 

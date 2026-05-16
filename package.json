@@ -7,6 +7,8 @@
     "node": ">=20"
   },
   "scripts": {
+    "dev": "concurrently -n api,web -c blue,green \"pnpm -F api dev\" \"pnpm -F web dev\"",
+    "dev:all": "concurrently -n api,web,bridge -c blue,green,magenta \"pnpm -F api dev\" \"pnpm -F web dev\" \"pnpm -F bridge dev\"",
     "dev:web": "pnpm -F web dev",
     "dev:api": "pnpm -F api dev",
     "dev:bridge": "pnpm -F bridge dev",
@@ -14,5 +16,8 @@
     "lint": "pnpm -r lint",
     "typecheck": "pnpm -r typecheck",
     "test": "pnpm -r test"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0"
   }
 }

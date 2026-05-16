@@ -12,6 +12,7 @@ export async function listStudents(ctx: TenantContext, filters: ListStudentsFilt
       classId: s.classId,
       schoolId: s.schoolId,
       guardianIds: await studentsRepo.guardianIds(ctx, s.id),
+      cardId: s.cardId ?? undefined,
       photoUrl: s.photoUrl ?? undefined,
       status: s.status,
     })),
@@ -30,6 +31,7 @@ export async function getStudent(ctx: TenantContext, id: string) {
     classId: s.classId,
     schoolId: s.schoolId,
     guardianIds: guardians.map((g) => g.id),
+    cardId: s.cardId ?? undefined,
     photoUrl: s.photoUrl ?? undefined,
     status: s.status,
     guardians: guardians.map((g) => ({

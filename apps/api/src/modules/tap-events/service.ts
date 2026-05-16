@@ -25,9 +25,10 @@ export async function listTapEvents(ctx: TenantContext, filters: ListTapEventsFi
   })
   return rows.map((r) => ({
     id: r.id,
-    cardId: r.cardId ?? '',
+    cardId: r.cardId ?? undefined,
     rfidUid: r.rfidUid,
-    deviceId: r.deviceId ?? '',
+    deviceId: r.deviceId ?? undefined,
+    studentId: r.studentId ?? undefined,
     direction: r.direction,
     occurredAt: r.occurredAt.toISOString(),
     source: r.source,

@@ -15,6 +15,10 @@ const envSchema = z.object({
     .union([z.literal('true'), z.literal('false')])
     .default('true')
     .transform((v) => v === 'true'),
+  DEV_OTP_BACKDOOR: z
+    .union([z.literal('true'), z.literal('false')])
+    .default('false')
+    .transform((v) => v === 'true'),
   CORS_ORIGIN: z.string().min(1),
 })
 

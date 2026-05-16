@@ -1,9 +1,26 @@
-import { and, asc, eq, gte, ilike, inArray, lte } from 'drizzle-orm'
+import { and, asc, eq, gte, ilike, inArray, isNull, lte } from 'drizzle-orm'
 import { db } from '../../db/client.js'
 import { students, studentGuardians } from '../../db/schema/students.js'
 import { attendanceRecords } from '../../db/schema/attendance.js'
 import { users } from '../../db/schema/auth.js'
+import { cards } from '../../db/schema/cards.js'
 import type { TenantContext } from '../../types/tenant-context.js'
+
+const studentWithCardCols = {
+  id: students.id,
+  schoolId: students.schoolId,
+  classId: students.classId,
+  fullName: students.fullName,
+  rollNumber: students.rollNumber,
+  photoUrl: students.photoUrl,
+  status: students.status,
+  cardId: cards.id,
+}
+const activeCardJoin = and(
+  eq(cards.studentId, students.id),
+  eq(cards.status, 'active'),
+  isNull(cards.deletedAt),
+)
 
 export interface ListStudentsFilters {
   classId?: string
@@ -32,13 +49,15 @@ export const studentsRepo = {
       const ids = studentIdsSub.map((r) => r.studentId)
       if (ids.length === 0) return []
       rows = await db
-        .select()
+        .select(studentWithCardCols)
         .from(students)
+        .leftJoin(cards, activeCardJoin)
         .where(and(...conditions, inArray(students.id, ids)))
     } else {
       rows = await db
-        .select()
+        .select(studentWithCardCols)
         .from(students)
+        .leftJoin(cards, activeCardJoin)
         .where(and(...conditions))
     }
     return rows
@@ -46,8 +65,9 @@ export const studentsRepo = {
 
   async findById(ctx: TenantContext, id: string) {
     const rows = await db
-      .select()
+      .select(studentWithCardCols)
       .from(students)
+      .leftJoin(cards, activeCardJoin)
       .where(and(eq(students.schoolId, ctx.schoolId), eq(students.id, id)))
       .limit(1)
     return rows[0]

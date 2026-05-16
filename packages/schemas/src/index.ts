@@ -110,9 +110,11 @@ export type TapDirection = z.infer<typeof tapDirectionSchema>
 export const tapSourceSchema = z.enum(['device', 'manual'])
 export const tapEventSchema = z.object({
   id: idSchema,
-  cardId: idSchema,
+  // cardId / deviceId are absent on manual overrides (source: 'manual').
+  cardId: idSchema.optional(),
   rfidUid: z.string(),
-  deviceId: idSchema,
+  deviceId: idSchema.optional(),
+  studentId: idSchema.optional(),
   direction: tapDirectionSchema,
   occurredAt: z.string(),
   source: tapSourceSchema,

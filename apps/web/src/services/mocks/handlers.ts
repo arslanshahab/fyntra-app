@@ -278,7 +278,7 @@ export const handlers = [
       const cardIdsForStudent = new Set(
         seedStore.cards.filter((c) => c.studentId === studentId).map((c) => c.id),
       )
-      result = result.filter((e) => cardIdsForStudent.has(e.cardId))
+      result = result.filter((e) => e.cardId !== undefined && cardIdsForStudent.has(e.cardId))
     }
     if (from) result = result.filter((e) => e.occurredAt >= from)
     if (to) result = result.filter((e) => e.occurredAt <= to)

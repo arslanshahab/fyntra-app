@@ -24,7 +24,7 @@
       "phoneLabel": "Phone number",
       "phonePlaceholder": "+923001234567",
       "submit": "Send code",
-      "invalidPhone": "Enter a valid Pakistani mobile number (starts with +92, 12 digits total)."
+      "invalidPhone": "Enter a valid phone number in international format (e.g. +923001234567 or +971501234567)."
     },
     "otpStep": {
       "body": "We sent a 4-digit code to {{phone}}.",
@@ -221,7 +221,8 @@
       "empty": "No taps recorded yet today.",
       "loadError": "Couldn't load tap events.",
       "in": "In",
-      "out": "Out"
+      "out": "Out",
+      "manualEntry": "Manual entry"
     },
     "devices": {
       "title": "Gate devices",

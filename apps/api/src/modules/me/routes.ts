@@ -33,6 +33,7 @@ export const meRoutes: FastifyPluginAsync = async (app) => {
         classId: c.classId,
         schoolId: c.schoolId,
         guardianIds: [],
+        cardId: c.cardId ?? undefined,
         photoUrl: c.photoUrl ?? undefined,
         status: c.status,
       })),

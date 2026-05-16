@@ -2,6 +2,7 @@ import { createHash, randomBytes, timingSafeEqual } from 'node:crypto'
 import { authRepo } from './repository.js'
 import { sendTemplate } from '../../services/whatsapp.js'
 import { UnauthorizedError, ValidationError } from '../../lib/errors.js'
+import { env } from '../../config/env.js'
 
 const OTP_TTL_MS = 5 * 60 * 1000
 const MAX_ATTEMPTS = 3
@@ -47,8 +48,39 @@ export interface VerifyOtpResult {
   }
 }
 
+function toVerifyResult(user: NonNullable<Awaited<ReturnType<typeof authRepo.findUserByPhone>>>): VerifyOtpResult {
+  return {
+    userId: user.id,
+    schoolId: user.schoolId,
+    role: user.role,
+    user: {
+      id: user.id,
+      role: user.role,
+      fullName: user.fullName,
+      phone: user.phone,
+      email: user.email ?? undefined,
+      preferredLanguage: user.preferredLanguage,
+      schoolId: user.schoolId,
+    },
+  }
+}
+
 export async function verifyOtp(phone: string, otp: string): Promise<VerifyOtpResult> {
   if (!/^\d{4}$/.test(otp)) throw new ValidationError('Invalid OTP format')
+
+  // Dev backdoor: when DEV_OTP_BACKDOOR=true, '0000' authenticates any seeded
+  // user so demos and local dev aren't blocked. Decoupled from WHATSAPP_DRY_RUN
+  // so a tester can flip dry-run off (to verify real template delivery) while
+  // still logging in via the backdoor. Defaults to false; production must
+  // never enable it. Also gated on NODE_ENV !== 'test' so the test suite
+  // exercises the real OTP flow.
+  const e = env()
+  if (e.DEV_OTP_BACKDOOR && e.NODE_ENV !== 'test' && otp === '0000') {
+    const user = await authRepo.findUserByPhone(phone)
+    if (!user) throw new UnauthorizedError('No account for this phone')
+    return toVerifyResult(user)
+  }
+
   const now = new Date()
   const row = await authRepo.findActiveOtp(phone, now)
   if (!row) throw new UnauthorizedError('OTP invalid or expired')
@@ -65,18 +97,5 @@ export async function verifyOtp(phone: string, otp: string): Promise<VerifyOtpRe
 
   const user = await authRepo.findUserByPhone(phone)
   if (!user) throw new UnauthorizedError('No account for this phone')
-  return {
-    userId: user.id,
-    schoolId: user.schoolId,
-    role: user.role,
-    user: {
-      id: user.id,
-      role: user.role,
-      fullName: user.fullName,
-      phone: user.phone,
-      email: user.email ?? undefined,
-      preferredLanguage: user.preferredLanguage,
-      schoolId: user.schoolId,
-    },
-  }
+  return toVerifyResult(user)
 }

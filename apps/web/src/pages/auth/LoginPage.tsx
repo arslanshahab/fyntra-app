@@ -12,7 +12,7 @@ import { ApiError } from '../../services/api/client'
 import { useAuthStore } from '../../stores/auth'
 
 const phoneSchema = z.object({
-  phone: z.string().regex(/^\+92\d{10}$/, 'invalid'),
+  phone: z.string().regex(/^\+\d{8,15}$/, 'invalid'),
 })
 
 const otpSchema = z.object({

@@ -1,8 +1,9 @@
-import { and, eq } from 'drizzle-orm'
+import { and, eq, isNull } from 'drizzle-orm'
 import { db } from '../../db/client.js'
 import { schools, classes } from '../../db/schema/schools.js'
 import { students, studentGuardians } from '../../db/schema/students.js'
 import { users } from '../../db/schema/auth.js'
+import { cards } from '../../db/schema/cards.js'
 import type { TenantContext } from '../../types/tenant-context.js'
 
 export const meRepo = {
@@ -28,6 +29,7 @@ export const meRepo = {
         schoolId: students.schoolId,
         photoUrl: students.photoUrl,
         status: students.status,
+        cardId: cards.id,
       })
       .from(students)
       .innerJoin(
@@ -35,6 +37,14 @@ export const meRepo = {
         and(
           eq(studentGuardians.studentId, students.id),
           eq(studentGuardians.userId, ctx.userId),
+        ),
+      )
+      .leftJoin(
+        cards,
+        and(
+          eq(cards.studentId, students.id),
+          eq(cards.status, 'active'),
+          isNull(cards.deletedAt),
         ),
       )
       .where(eq(students.schoolId, ctx.schoolId))
