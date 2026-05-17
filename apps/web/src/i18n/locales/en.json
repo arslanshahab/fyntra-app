@@ -297,6 +297,7 @@
     "nav": {
       "dashboard": "Dashboard",
       "students": "Students",
+      "classes": "Classes",
       "cards": "Cards",
       "devices": "Devices",
       "reports": "Reports",
@@ -667,6 +668,55 @@
       },
       "viewTimeline": "View timeline",
       "loadError": "Couldn't load anomalies."
+    },
+    "classes": {
+      "title": "Classes",
+      "subtitle": "Add a class and assign its class teacher.",
+      "addCta": "Add class",
+      "empty": "No classes yet. Add the first one.",
+      "loadError": "Couldn't load classes.",
+      "count": "{{count}} class",
+      "count_other": "{{count}} classes",
+      "columns": {
+        "name": "Name",
+        "teacher": "Class teacher",
+        "students": "Students",
+        "actions": "Actions"
+      },
+      "row": {
+        "edit": "Edit",
+        "delete": "Delete",
+        "unassigned": "Unassigned"
+      },
+      "form": {
+        "createTitle": "Add class",
+        "editTitle": "Edit class",
+        "nameLabel": "Class name",
+        "namePlaceholder": "e.g. Grade 3A",
+        "teacherLabel": "Class teacher",
+        "teacherPlaceholder": "Select a teacher",
+        "teacherUnavailableSuffix": "(already teaches {{className}})",
+        "noTeachersHint": "No teachers available. Add a teacher user first.",
+        "submitCreate": "Add class",
+        "submitSave": "Save changes"
+      },
+      "delete": {
+        "title": "Delete {{name}}?",
+        "bodyEmpty": "This action can't be undone.",
+        "bodyHasStudents": "This class has {{count}} student. Move or remove them first.",
+        "bodyHasStudents_other": "This class has {{count}} students. Move or remove them first.",
+        "submit": "Delete class"
+      },
+      "errors": {
+        "classNameTaken": "A class with this name already exists.",
+        "teacherAlreadyAssigned": "This teacher is already the class teacher of another class.",
+        "teacherNotEligible": "The selected user can't be a class teacher.",
+        "classHasStudents": "This class has students enrolled. Move or remove them first.",
+        "generic": "Something went wrong. Please try again."
+      },
+      "createSuccess": "Class added.",
+      "editSuccess": "Class updated.",
+      "deleteSuccess": "Class deleted."
     },
     "loadError": "Couldn't reach the school server.",
     "unknownStudent": "Unknown student"
