@@ -23,6 +23,17 @@
     "current": "English",
     "switchTo": "اردو"
   },
+  "attendanceSummary": {
+    "title": "Attendance summary",
+    "thisMonth": "This month",
+    "yearToDate": "Year to date",
+    "present": "Present",
+    "late": "Late",
+    "absent": "Absent",
+    "halfDay": "Half day",
+    "excused": "Excused",
+    "workingDays": "Working days"
+  },
   "login": {
     "phoneStep": {
       "heading": "Welcome.",
@@ -206,7 +217,9 @@
         "absent": "Absent",
         "absentHint": "No tap within the absent threshold.",
         "manual_override": "Manual override",
-        "manual_overrideHint": "A staff member recorded a tap on your child's behalf."
+        "manual_overrideHint": "A staff member recorded a tap on your child's behalf.",
+        "monthly_summary": "Monthly summary",
+        "monthly_summaryHint": "End-of-month attendance digest with your child's totals and % present."
       },
       "languageHeading": "Language",
       "languageHint": "The active language on this device. Changes take effect immediately.",

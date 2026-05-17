@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { requireAuth } from '../../middleware/require-auth.js'
 import { resolvePagination, setNextCursor } from '../../lib/pagination.js'
 import { listStudents, getStudent, getStudentTimeline } from './service.js'
+import { getStudentAttendanceSummary } from './attendance-summary.service.js'
 
 const listQuery = z.object({
   classId: z.string().optional(),
@@ -15,6 +16,11 @@ const listQuery = z.object({
 const timelineQuery = z.object({
   from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+})
+
+const summaryQuery = z.object({
+  month: z.string().regex(/^\d{4}-\d{2}$/).optional(),
+  year: z.string().regex(/^\d{4}$/).optional(),
 })
 
 export const studentsRoutes: FastifyPluginAsync = async (app) => {
@@ -47,6 +53,22 @@ export const studentsRoutes: FastifyPluginAsync = async (app) => {
       const { id } = req.params as { id: string }
       const { from, to } = req.query as z.infer<typeof timelineQuery>
       return await getStudentTimeline(ctx, id, from, to)
+    },
+  )
+
+  // Per-student attendance summary (F8). Admin / teacher-of-class / parent-of.
+  app.get(
+    '/students/:id/attendance-summary',
+    { preHandler: requireAuth, schema: { querystring: summaryQuery } },
+    async (req) => {
+      const ctx = req.tenantContext!
+      const { id } = req.params as { id: string }
+      const q = req.query as z.infer<typeof summaryQuery>
+      return await getStudentAttendanceSummary(ctx, {
+        studentId: id,
+        month: q.month,
+        year: q.year,
+      })
     },
   )
 }

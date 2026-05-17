@@ -286,6 +286,8 @@ export const notificationSettingsSchema = z.object({
     absent: z.boolean(),
     manual_override: z.boolean(),
     device_offline: z.boolean(),
+    // Monthly attendance digest (F9). Parent-only — default true.
+    monthly_summary: z.boolean(),
   }),
 })
 export type NotificationSettings = z.infer<typeof notificationSettingsSchema>
@@ -501,3 +503,34 @@ export const todaySummaryResponseSchema = z.object({
   classes: z.array(todaySummaryClassSchema),
 })
 export type TodaySummaryResponse = z.infer<typeof todaySummaryResponseSchema>
+
+// --- Per-student attendance summary (F8) ---
+//
+// GET /students/:id/attendance-summary?month=&year= returns two parallel
+// summary blocks: one for the named month and one for the year-to-date
+// range. Both use the same shape the register summaries already define
+// (working-days / present / late / absent / halfDay / excused / pct).
+export const attendanceCountsSchema = z.object({
+  workingDays: z.number().int().nonnegative(),
+  present: z.number().int().nonnegative(),
+  absent: z.number().int().nonnegative(),
+  late: z.number().int().nonnegative(),
+  halfDay: z.number().int().nonnegative(),
+  excused: z.number().int().nonnegative(),
+  attendancePct: z.number().min(0).max(100).nullable(),
+})
+export type AttendanceCounts = z.infer<typeof attendanceCountsSchema>
+
+export const studentAttendanceSummarySchema = z.object({
+  studentId: idSchema,
+  month: z.object({
+    period: monthSchema,
+    counts: attendanceCountsSchema,
+  }),
+  year: z.object({
+    from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+    to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+    counts: attendanceCountsSchema,
+  }),
+})
+export type StudentAttendanceSummary = z.infer<typeof studentAttendanceSummarySchema>

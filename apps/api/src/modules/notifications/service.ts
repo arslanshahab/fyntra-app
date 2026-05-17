@@ -15,6 +15,7 @@ export type NotificationEvent =
   | 'absent'
   | 'manual_override'
   | 'device_offline'
+  | 'monthly_summary'
 
 export interface DispatchInput {
   schoolId: string
@@ -48,6 +49,7 @@ const SETTINGS_EVENT_FIELD: Record<NotificationEvent, SettingsKey> = {
   absent: 'eventAbsent',
   manual_override: 'eventManualOverride',
   device_offline: 'eventDeviceOffline',
+  monthly_summary: 'eventMonthlySummary',
 }
 
 type NotificationStatus = 'queued' | 'sent' | 'delivered' | 'failed'
@@ -91,6 +93,7 @@ function settingsToWire(row: SettingsRow): NotificationSettings {
       absent: row.eventAbsent,
       manual_override: row.eventManualOverride,
       device_offline: row.eventDeviceOffline,
+      monthly_summary: row.eventMonthlySummary,
     },
   }
 }
@@ -106,6 +109,7 @@ function wireToDbPatch(input: NotificationSettings) {
     eventAbsent: input.events.absent,
     eventManualOverride: input.events.manual_override,
     eventDeviceOffline: input.events.device_offline,
+    eventMonthlySummary: input.events.monthly_summary,
   }
 }
 

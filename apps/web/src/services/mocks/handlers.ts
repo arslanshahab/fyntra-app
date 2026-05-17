@@ -171,6 +171,80 @@ export const handlers = [
     return HttpResponse.json(result)
   }),
 
+  http.get(`${API}/students/:id/attendance-summary`, async ({ params, request }) => {
+    await latency()
+    const student = seedStore.students.find((s) => s.id === params.id)
+    if (!student) return HttpResponse.json({ error: 'Not found' }, { status: 404 })
+
+    const url = new URL(request.url)
+    const today = formatInTimeZone(new Date(), 'Asia/Karachi', 'yyyy-MM-dd')
+    const month = url.searchParams.get('month') ?? today.slice(0, 7)
+
+    const weekdays = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'] as const
+    const workingDayCodes = new Set<string>(seedStore.school.workingDays)
+    const holidayByDate = new Map(seedStore.holidays.map((h) => [h.date, h]))
+
+    function countForRange(from: string, to: string) {
+      let workingDays = 0
+      // Enumerate dates between from and to (inclusive).
+      const [fy, fm, fd] = from.split('-').map(Number) as [number, number, number]
+      const [ty, tm, td] = to.split('-').map(Number) as [number, number, number]
+      const cur = new Date(Date.UTC(fy, fm - 1, fd))
+      const end = new Date(Date.UTC(ty, tm - 1, td))
+      while (cur.getTime() <= end.getTime()) {
+        const ymd = `${cur.getUTCFullYear()}-${String(cur.getUTCMonth() + 1).padStart(2, '0')}-${String(cur.getUTCDate()).padStart(2, '0')}`
+        const weekday = weekdays[cur.getUTCDay()]!
+        const holiday = holidayByDate.get(ymd)
+        const baseWorking = workingDayCodes.has(weekday)
+        if (baseWorking && holiday?.kind !== 'closed' && holiday?.kind !== 'exam') workingDays++
+        cur.setUTCDate(cur.getUTCDate() + 1)
+      }
+      let present = 0
+      let absent = 0
+      let late = 0
+      let halfDay = 0
+      const excused = 0
+      for (const r of seedStore.attendance) {
+        if (r.studentId !== params.id) continue
+        if (r.date < from || r.date > to) continue
+        switch (r.status) {
+          case 'present':
+          case 'left_early':
+            present++
+            break
+          case 'late':
+            late++
+            break
+          case 'half_day':
+            halfDay++
+            break
+          case 'absent':
+            absent++
+            break
+          case 'unverified':
+            break
+        }
+      }
+      const pct = workingDays > 0
+        ? Math.round(((present + late + excused + halfDay * 0.5) / workingDays) * 1000) / 10
+        : null
+      return { workingDays, present, absent, late, halfDay, excused, attendancePct: pct }
+    }
+
+    const [y, m] = month.split('-').map(Number) as [number, number]
+    const lastDay = new Date(Date.UTC(y, m, 0)).getUTCDate()
+    const monthFrom = `${y}-${String(m).padStart(2, '0')}-01`
+    const monthTo = `${y}-${String(m).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`
+    const yearFrom = `${y}-01-01`
+    const yearTo = today
+
+    return HttpResponse.json({
+      studentId: student.id,
+      month: { period: month, counts: countForRange(monthFrom, monthTo) },
+      year: { from: yearFrom, to: yearTo, counts: countForRange(yearFrom, yearTo) },
+    })
+  }),
+
   // --- Classes ------------------------------------------------------------
 
   http.get(`${API}/classes`, async () => {

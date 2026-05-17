@@ -23,6 +23,7 @@ import { holidaysRoutes } from './modules/holidays/routes.js'
 import { schoolsRoutes } from './modules/schools/routes.js'
 import { wsRoutes } from './ws/routes.js'
 import { bootstrapAbsentJobs } from './services/attendance-jobs.js'
+import { bootstrapMonthlyDigest } from './services/monthly-digest.js'
 import { startHeartbeatSweep } from './services/heartbeat-sweep.js'
 
 export async function buildApp(): Promise<FastifyInstance> {
@@ -91,6 +92,7 @@ export async function buildApp(): Promise<FastifyInstance> {
 
   if (env().NODE_ENV !== 'test') {
     await bootstrapAbsentJobs()
+    await bootstrapMonthlyDigest()
     startHeartbeatSweep()
   }
 
