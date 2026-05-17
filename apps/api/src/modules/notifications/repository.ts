@@ -61,6 +61,8 @@ export const notificationsRepo = {
       errorMessage?: string
       templateName?: string
       variables?: string[]
+      parameterNames?: string[]
+      languageCode?: string
       dryRun?: boolean
     }
     sentAt: Date | null

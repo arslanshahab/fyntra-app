@@ -22,7 +22,16 @@ export interface DispatchInput {
   event: NotificationEvent
   payloads: {
     inApp?: { title: string; body: string }
-    whatsapp?: { templateName: string; variables: string[] }
+    whatsapp?: {
+      templateName: string
+      variables: string[]
+      // parameterNames: required when the template uses named placeholders
+      // ({{student_name}}); omit for positional ({{1}}, {{2}}) templates.
+      parameterNames?: string[]
+      // languageCode: defaults to 'en_US' for backward compat with templates
+      // that pre-dated this field.
+      languageCode?: string
+    }
     sms?: { body: string }
   }
   eventId?: string | null
@@ -139,11 +148,15 @@ export async function dispatch(input: DispatchInput): Promise<number> {
         `[notifications.dispatch] whatsapp skipped for user=${input.recipientUserId} event=${input.event}: no recipient phone`,
       )
     } else {
+      const languageCode = input.payloads.whatsapp.languageCode ?? 'en_US'
       const result = await sendTemplate({
         to: input.recipientPhone,
         name: input.payloads.whatsapp.templateName,
-        languageCode: 'en_US',
+        languageCode,
         variables: input.payloads.whatsapp.variables,
+        ...(input.payloads.whatsapp.parameterNames
+          ? { parameterNames: input.payloads.whatsapp.parameterNames }
+          : {}),
       })
       const title = input.payloads.inApp?.title ?? `<${input.payloads.whatsapp.templateName}>`
       const body = input.payloads.inApp?.body ?? `<${input.payloads.whatsapp.templateName}>`
@@ -153,12 +166,18 @@ export async function dispatch(input: DispatchInput): Promise<number> {
         errorMessage?: string
         templateName: string
         variables: string[]
+        parameterNames?: string[]
+        languageCode?: string
         dryRun?: boolean
       } = {
         title,
         body,
         templateName: input.payloads.whatsapp.templateName,
         variables: input.payloads.whatsapp.variables,
+        languageCode,
+      }
+      if (input.payloads.whatsapp.parameterNames) {
+        payload.parameterNames = input.payloads.whatsapp.parameterNames
       }
       if (result.errorMessage) payload.errorMessage = result.errorMessage
       if (result.dryRun) payload.dryRun = true
@@ -292,8 +311,11 @@ export async function retryNotification(ctx: TenantContext, id: string): Promise
     const result = await sendTemplate({
       to: phone,
       name: tpl,
-      languageCode: 'en',
+      languageCode: existing.payload.languageCode ?? 'en_US',
       variables: vars,
+      ...(existing.payload.parameterNames
+        ? { parameterNames: existing.payload.parameterNames }
+        : {}),
     })
     const updated = await notificationsRepo.markLogResult(ctx, id, result.status, result.errorMessage)
     if (!updated) throw new NotFoundError('Notification not found')

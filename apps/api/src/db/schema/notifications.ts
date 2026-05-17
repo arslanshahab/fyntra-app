@@ -27,6 +27,8 @@ export const notificationLogs = pgTable(
       errorMessage?: string
       templateName?: string
       variables?: string[]
+      parameterNames?: string[]
+      languageCode?: string
       dryRun?: boolean
     }>().notNull(),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),

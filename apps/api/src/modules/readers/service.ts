@@ -127,14 +127,11 @@ export async function ingestTap(input: IngestTapInput): Promise<IngestTapResult>
     .where(eq(students.id, card.studentId))
     .limit(1)
   const studentFullName = studentRows[0]?.fullName ?? ''
-  // Retained: needed once the 'fyntra_tap_event' template is approved and the
-  // dispatch call below swaps back to passing variables.
-  void studentFullName
-  void hhmmKarachi
 
   const eventType = input.direction === 'in' ? 'tap_in' : 'tap_out'
   const title = input.direction === 'in' ? 'Arrived at school' : 'Left school'
   const body = `Tap at ${input.occurredAt.toISOString()}`
+  const timeStamp = hhmmKarachi(input.occurredAt)
   let notificationCount = 0
   for (const g of guardianRows) {
     const fired = await dispatch({
@@ -145,11 +142,10 @@ export async function ingestTap(input: IngestTapInput): Promise<IngestTapResult>
       payloads: {
         inApp: { title, body },
         whatsapp: {
-          // TEMP: hello_world is Meta's auto-approved template with NO body
-          // variables. Swap back to 'fyntra_tap_event' with [studentFullName,
-          // hhmmKarachi(input.occurredAt)] once that template is approved.
-          templateName: 'hello_world',
-          variables: [],
+          templateName: 'fyntra_tap_event',
+          languageCode: 'en',
+          variables: [studentFullName, timeStamp],
+          parameterNames: ['student_name', 'time_stamp'],
         },
       },
       eventId: null,
