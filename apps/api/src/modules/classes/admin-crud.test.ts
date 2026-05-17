@@ -5,6 +5,7 @@ import { buildApp } from '../../app.js'
 import { truncateAll } from '../../../tests/helpers/db.js'
 import { db } from '../../db/client.js'
 import { schools, classes } from '../../db/schema/schools.js'
+import { students } from '../../db/schema/students.js'
 import { users } from '../../db/schema/auth.js'
 import { newId } from '../../lib/ids.js'
 
@@ -230,5 +231,58 @@ describe('PATCH /classes/:id', () => {
     })
     expect(res.statusCode).toBe(409)
     expect(res.json()).toMatchObject({ code: 'TEACHER_ALREADY_ASSIGNED' })
+  })
+})
+
+describe('DELETE /classes/:id', () => {
+  it('admin deletes an empty class', async () => {
+    const { schoolA, adminA, teacherA1 } = await seedTwoSchools()
+    const id = newId()
+    await db.insert(classes).values({ id, schoolId: schoolA, name: 'Empty', teacherId: teacherA1 })
+    const t = token(app, { userId: adminA, schoolId: schoolA, role: 'admin' })
+    const res = await app.inject({
+      method: 'DELETE',
+      url: `/classes/${id}`,
+      headers: { authorization: `Bearer ${t}` },
+    })
+    expect(res.statusCode).toBe(200)
+    expect(res.json()).toMatchObject({ ok: true })
+    const rows = await db.select().from(classes).where(eq(classes.id, id))
+    expect(rows).toHaveLength(0)
+  })
+
+  it('refuses delete when class has students (409 CLASS_HAS_STUDENTS)', async () => {
+    const { schoolA, adminA, teacherA1 } = await seedTwoSchools()
+    const classId = newId()
+    await db.insert(classes).values({ id: classId, schoolId: schoolA, name: 'Full', teacherId: teacherA1 })
+    await db.insert(students).values([
+      { id: newId(), schoolId: schoolA, classId, fullName: 'S1', rollNumber: '001', status: 'active' },
+      { id: newId(), schoolId: schoolA, classId, fullName: 'S2', rollNumber: '002', status: 'inactive' },
+    ])
+    const t = token(app, { userId: adminA, schoolId: schoolA, role: 'admin' })
+    const res = await app.inject({
+      method: 'DELETE',
+      url: `/classes/${classId}`,
+      headers: { authorization: `Bearer ${t}` },
+    })
+    expect(res.statusCode).toBe(409)
+    const body = res.json() as { code: string; message: string }
+    expect(body.code).toBe('CLASS_HAS_STUDENTS')
+    // Class still exists.
+    const rows = await db.select().from(classes).where(eq(classes.id, classId))
+    expect(rows).toHaveLength(1)
+  })
+
+  it('cross-tenant id returns 404', async () => {
+    const { schoolA, schoolB, adminA, teacherB } = await seedTwoSchools()
+    const id = newId()
+    await db.insert(classes).values({ id, schoolId: schoolB, name: 'Foreign', teacherId: teacherB })
+    const t = token(app, { userId: adminA, schoolId: schoolA, role: 'admin' })
+    const res = await app.inject({
+      method: 'DELETE',
+      url: `/classes/${id}`,
+      headers: { authorization: `Bearer ${t}` },
+    })
+    expect(res.statusCode).toBe(404)
   })
 })

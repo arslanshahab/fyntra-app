@@ -11,6 +11,7 @@ import { requireRole } from '../../middleware/require-role.js'
 import {
   classAttendanceForDay,
   createClass,
+  deleteClass,
   listClasses,
   lockRegisterForClass,
   patchClass,
@@ -105,6 +106,16 @@ export const classesRoutes: FastifyPluginAsync = async (app) => {
       const { id } = req.params as { id: string }
       const body = req.body as z.infer<typeof patchClassRequestSchema>
       return await patchClass(ctx, id, body)
+    },
+  )
+
+  app.delete(
+    '/classes/:id',
+    { preHandler: [requireAuth, requireRole(['admin'])] },
+    async (req) => {
+      const ctx = req.tenantContext!
+      const { id } = req.params as { id: string }
+      return await deleteClass(ctx, id)
     },
   )
 }

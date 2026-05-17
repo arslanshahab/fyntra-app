@@ -403,6 +403,22 @@ export async function createClass(
   }
 }
 
+export async function deleteClass(ctx: TenantContext, id: string) {
+  if (ctx.role !== 'admin') throw new ForbiddenError()
+  const existing = await classesRepo.findById(ctx, id)
+  if (!existing) throw new NotFoundError('Class not found')
+  const studentCount = await classesRepo.countStudents(ctx, id)
+  if (studentCount > 0) {
+    throw new ConflictError(
+      `Class has ${studentCount} students`,
+      'CLASS_HAS_STUDENTS',
+    )
+  }
+  const ok = await classesRepo.delete(ctx, id)
+  if (!ok) throw new NotFoundError('Class not found')
+  return { ok: true as const }
+}
+
 export async function patchClass(
   ctx: TenantContext,
   id: string,
