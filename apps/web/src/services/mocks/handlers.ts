@@ -16,12 +16,14 @@ import type {
 } from '@fyntra/schemas'
 import {
   assignCardRequestSchema,
+  createClassRequestSchema,
   createDeviceRequestSchema,
   createDeviceTokenRequestSchema,
   createHolidayRequestSchema,
   manualTapEventRequestSchema,
   notificationSettingsSchema,
   patchCardRequestSchema,
+  patchClassRequestSchema,
   patchDeviceRequestSchema,
   patchHolidayRequestSchema,
   patchSchoolRequestSchema,
@@ -249,7 +251,119 @@ export const handlers = [
 
   http.get(`${API}/classes`, async () => {
     await latency()
-    return HttpResponse.json(seedStore.classes)
+    const list = seedStore.classes.map((c) => ({
+      ...c,
+      studentCount: seedStore.students.filter((s) => s.classId === c.id).length,
+    }))
+    return HttpResponse.json(list)
+  }),
+
+  http.post(`${API}/classes`, async ({ request }) => {
+    await latency()
+    const me = currentUser(request)
+    if (!me) return HttpResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    if (me.role !== 'admin') return HttpResponse.json({ statusCode: 403, error: 'ForbiddenError', message: 'forbidden', code: 'FORBIDDEN' }, { status: 403 })
+    const body = createClassRequestSchema.safeParse(await request.json())
+    if (!body.success) return HttpResponse.json({ error: 'Invalid body' }, { status: 400 })
+    const { name, teacherId } = body.data
+    // 1. Name uniqueness (case-insensitive) — always checked
+    if (seedStore.classes.some((c) => c.name.toLowerCase() === name.trim().toLowerCase())) {
+      return HttpResponse.json(
+        { statusCode: 409, error: 'ConflictError', message: 'name taken', code: 'CLASS_NAME_TAKEN' },
+        { status: 409 },
+      )
+    }
+    if (typeof teacherId === 'string') {
+      // 2. Teacher eligibility (does the user exist AND have role=teacher?)
+      const teacher = seedStore.users.find((u) => u.id === teacherId && u.role === 'teacher')
+      if (!teacher) {
+        return HttpResponse.json(
+          { statusCode: 400, error: 'ValidationError', message: 'invalid teacher', code: 'TEACHER_NOT_ELIGIBLE' },
+          { status: 400 },
+        )
+      }
+      // 3. Teacher availability (not assigned to another class)
+      if (seedStore.classes.some((c) => c.teacherId === teacherId)) {
+        return HttpResponse.json(
+          { statusCode: 409, error: 'ConflictError', message: 'teacher taken', code: 'TEACHER_ALREADY_ASSIGNED' },
+          { status: 409 },
+        )
+      }
+    }
+    const created = {
+      id: `class_${crypto.randomUUID()}`,
+      schoolId: me.schoolId,
+      name: name.trim(),
+      teacherId: teacherId ?? null,
+      studentCount: 0,
+    }
+    seedStore.classes.push(created)
+    return HttpResponse.json(created)
+  }),
+
+  http.patch(`${API}/classes/:id`, async ({ params, request }) => {
+    await latency()
+    const me = currentUser(request)
+    if (!me) return HttpResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    if (me.role !== 'admin') return HttpResponse.json({ statusCode: 403, error: 'ForbiddenError', message: 'forbidden', code: 'FORBIDDEN' }, { status: 403 })
+    const target = seedStore.classes.find((c) => c.id === params.id)
+    if (!target) return HttpResponse.json({ statusCode: 404, error: 'NotFoundError', message: 'Class not found', code: 'NOT_FOUND' }, { status: 404 })
+    const body = patchClassRequestSchema.safeParse(await request.json())
+    if (!body.success) return HttpResponse.json({ error: 'Invalid body' }, { status: 400 })
+    const { name, teacherId } = body.data
+
+    if (
+      name &&
+      seedStore.classes.some(
+        (c) => c.id !== target.id && c.name.toLowerCase() === name.trim().toLowerCase(),
+      )
+    ) {
+      return HttpResponse.json(
+        { statusCode: 409, error: 'ConflictError', message: 'name taken', code: 'CLASS_NAME_TAKEN' },
+        { status: 409 },
+      )
+    }
+    if (typeof teacherId === 'string') {
+      const teacher = seedStore.users.find((u) => u.id === teacherId && u.role === 'teacher')
+      if (!teacher) {
+        return HttpResponse.json(
+          { statusCode: 400, error: 'ValidationError', message: 'invalid teacher', code: 'TEACHER_NOT_ELIGIBLE' },
+          { status: 400 },
+        )
+      }
+      if (
+        seedStore.classes.some((c) => c.id !== target.id && c.teacherId === teacherId)
+      ) {
+        return HttpResponse.json(
+          { statusCode: 409, error: 'ConflictError', message: 'teacher taken', code: 'TEACHER_ALREADY_ASSIGNED' },
+          { status: 409 },
+        )
+      }
+    }
+    if (name !== undefined) target.name = name.trim()
+    if (teacherId !== undefined) target.teacherId = teacherId ?? null
+    return HttpResponse.json({
+      ...target,
+      studentCount: seedStore.students.filter((s) => s.classId === target.id).length,
+    })
+  }),
+
+  http.delete(`${API}/classes/:id`, async ({ params, request }) => {
+    await latency()
+    const me = currentUser(request)
+    if (!me) return HttpResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    if (me.role !== 'admin') return HttpResponse.json({ statusCode: 403, error: 'ForbiddenError', message: 'forbidden', code: 'FORBIDDEN' }, { status: 403 })
+    const idx = seedStore.classes.findIndex((c) => c.id === params.id)
+    if (idx < 0) return HttpResponse.json({ statusCode: 404, error: 'NotFoundError', message: 'Class not found', code: 'NOT_FOUND' }, { status: 404 })
+    const count = seedStore.students.filter((s) => s.classId === params.id).length
+    if (count > 0) {
+      return HttpResponse.json(
+        { statusCode: 409, error: 'ConflictError', message: `has ${count}`, code: 'CLASS_HAS_STUDENTS' },
+        { status: 409 },
+      )
+    }
+    seedStore.classes.splice(idx, 1)
+    return HttpResponse.json({ ok: true })
   }),
 
   http.get(`${API}/classes/:id/attendance`, async ({ request, params }) => {
@@ -980,6 +1094,24 @@ export const handlers = [
     if (!body.success) return HttpResponse.json({ error: 'Invalid body' }, { status: 400 })
     seedStore.notificationSettings.set(me.id, body.data)
     return HttpResponse.json(body.data)
+  }),
+
+  // --- Users --------------------------------------------------------------
+
+  http.get(`${API}/users`, async ({ request }) => {
+    await latency()
+    const me = currentUser(request)
+    if (!me) return HttpResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    if (me.role !== 'admin') return HttpResponse.json({ statusCode: 403, error: 'ForbiddenError', message: 'forbidden', code: 'FORBIDDEN' }, { status: 403 })
+    const url = new URL(request.url)
+    if (url.searchParams.get('role') !== 'teacher') {
+      return HttpResponse.json({ statusCode: 400, error: 'ValidationError', message: 'role must be teacher', code: 'VALIDATION_ERROR' }, { status: 400 })
+    }
+    const teachers = seedStore.users
+      .filter((u) => u.role === 'teacher')
+      .sort((a, b) => a.fullName.localeCompare(b.fullName))
+      .map((u) => ({ id: u.id, fullName: u.fullName }))
+    return HttpResponse.json(teachers)
   }),
 
   // --- Dev-only -----------------------------------------------------------

@@ -1,13 +1,21 @@
 import type {
   AttendanceRecord,
+  Class,
   ClassRegisterResponse,
+  CreateClassRequest,
   HolidayKind,
+  PatchClassRequest,
   RegisterDay,
   Student,
   StudentSummary,
   Weekday,
 } from '@fyntra/schemas'
-import { ForbiddenError, NotFoundError } from '../../lib/errors.js'
+import {
+  ConflictError,
+  ForbiddenError,
+  NotFoundError,
+  ValidationError,
+} from '../../lib/errors.js'
 import type { TenantContext } from '../../types/tenant-context.js'
 import type { attendanceRecords } from '../../db/schema/attendance.js'
 import { schoolsRepo } from '../schools/repository.js'
@@ -15,8 +23,15 @@ import { classesRepo } from './repository.js'
 
 type AttendanceRow = typeof attendanceRecords.$inferSelect
 
-export async function listClasses(ctx: TenantContext) {
-  return await classesRepo.list(ctx)
+export async function listClasses(ctx: TenantContext): Promise<Class[]> {
+  const rows = await classesRepo.list(ctx)
+  return rows.map((r) => ({
+    id: r.id,
+    name: r.name,
+    teacherId: r.teacherId,
+    schoolId: r.schoolId,
+    studentCount: r.studentCount,
+  }))
 }
 
 export async function classAttendanceForDay(
@@ -315,5 +330,136 @@ export async function registerForMonth(
     students: studentsWire,
     records: recordsWire,
     summaries,
+  }
+}
+
+// --- Admin CRUD ---------------------------------------------------------
+
+function classToWire(
+  row: { id: string; schoolId: string; name: string; teacherId: string | null },
+  studentCount: number,
+): Class {
+  return {
+    id: row.id,
+    schoolId: row.schoolId,
+    name: row.name,
+    teacherId: row.teacherId,
+    studentCount,
+  }
+}
+
+async function assertEligibleTeacher(ctx: TenantContext, teacherId: string) {
+  const teacher = await classesRepo.findTeacherById(ctx, teacherId)
+  if (!teacher || teacher.role !== 'teacher') {
+    throw new ValidationError('teacher not eligible', 'TEACHER_NOT_ELIGIBLE')
+  }
+}
+
+async function assertNameAvailable(
+  ctx: TenantContext,
+  name: string,
+  excludingId?: string,
+) {
+  const existing = await classesRepo.findByNameCaseInsensitive(ctx, name)
+  if (existing && existing.id !== excludingId) {
+    throw new ConflictError(`A class named "${name}" already exists`, 'CLASS_NAME_TAKEN')
+  }
+}
+
+async function assertTeacherAvailable(
+  ctx: TenantContext,
+  teacherId: string,
+  excludingClassId?: string,
+) {
+  const existing = await classesRepo.findByTeacher(ctx, teacherId)
+  if (existing && existing.id !== excludingClassId) {
+    throw new ConflictError(
+      `Teacher is already assigned to another class`,
+      'TEACHER_ALREADY_ASSIGNED',
+    )
+  }
+}
+
+export async function createClass(
+  ctx: TenantContext,
+  input: CreateClassRequest,
+): Promise<Class> {
+  if (ctx.role !== 'admin') throw new ForbiddenError()
+  if (input.teacherId) {
+    await assertEligibleTeacher(ctx, input.teacherId)
+  }
+  await assertNameAvailable(ctx, input.name)
+  if (input.teacherId) {
+    await assertTeacherAvailable(ctx, input.teacherId)
+  }
+  try {
+    const row = await classesRepo.create(ctx, {
+      name: input.name,
+      teacherId: input.teacherId ?? null,
+    })
+    return classToWire(row, 0)
+  } catch (err) {
+    // DB unique-constraint backstop: classes_school_teacher_unique
+    if (err instanceof Error && /classes_school_teacher_unique/.test(err.message)) {
+      throw new ConflictError(
+        'Teacher is already assigned to another class',
+        'TEACHER_ALREADY_ASSIGNED',
+      )
+    }
+    throw err
+  }
+}
+
+export async function deleteClass(ctx: TenantContext, id: string) {
+  if (ctx.role !== 'admin') throw new ForbiddenError()
+  const existing = await classesRepo.findById(ctx, id)
+  if (!existing) throw new NotFoundError('Class not found')
+  const studentCount = await classesRepo.countStudents(ctx, id)
+  if (studentCount > 0) {
+    throw new ConflictError(
+      `Class has ${studentCount} students`,
+      'CLASS_HAS_STUDENTS',
+    )
+  }
+  const ok = await classesRepo.delete(ctx, id)
+  if (!ok) throw new NotFoundError('Class not found')
+  return { ok: true as const }
+}
+
+export async function patchClass(
+  ctx: TenantContext,
+  id: string,
+  input: PatchClassRequest,
+): Promise<Class> {
+  if (ctx.role !== 'admin') throw new ForbiddenError()
+  const existing = await classesRepo.findById(ctx, id)
+  if (!existing) throw new NotFoundError('Class not found')
+
+  // Only validate when assigning a NEW teacher (not when clearing).
+  if (typeof input.teacherId === 'string') {
+    await assertEligibleTeacher(ctx, input.teacherId)
+    await assertTeacherAvailable(ctx, input.teacherId, id)
+  }
+  if (input.name !== undefined) {
+    await assertNameAvailable(ctx, input.name, id)
+  }
+
+  try {
+    const updated = await classesRepo.patch(ctx, id, {
+      name: input.name,
+      // Pass through null explicitly when caller sent it; undefined = no change.
+      teacherId: input.teacherId === undefined ? undefined : input.teacherId ?? null,
+    })
+    if (!updated) throw new NotFoundError('Class not found')
+    const studentCount = await classesRepo.countStudents(ctx, id)
+    return classToWire(updated, studentCount)
+  } catch (err) {
+    if (err instanceof Error && /classes_school_teacher_unique/.test(err.message)) {
+      throw new ConflictError(
+        'Teacher is already assigned to another class',
+        'TEACHER_ALREADY_ASSIGNED',
+      )
+    }
+    throw err
   }
 }

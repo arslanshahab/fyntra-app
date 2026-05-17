@@ -58,8 +58,9 @@ describe('classes routes', () => {
     const t = token(app, { userId: adminA, schoolId: schoolA, role: 'admin' })
     const res = await app.inject({ method: 'GET', url: '/classes', headers: { authorization: `Bearer ${t}` } })
     expect(res.statusCode).toBe(200)
-    const body = res.json() as Array<{ id: string }>
+    const body = res.json() as Array<{ id: string; studentCount: number }>
     expect(body.map((c) => c.id)).toEqual([classA])
+    expect(body[0]?.studentCount).toBe(1)
   })
 
   it('GET /classes/:id/attendance returns the day roster with records merged', async () => {

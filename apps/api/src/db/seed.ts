@@ -23,8 +23,10 @@ async function seed() {
     absentThresholdMinutes: 30,
   })
 
-  // --- Teachers (4), Admins (3), Parents (60)
-  const teacherIds = Array.from({ length: 4 }, () => newId())
+  // --- Teachers (6), Admins (3), Parents (60)
+  // Teachers 05–06 are intentionally left unassigned so the admin "Add Class"
+  // picker has eligible options out of the box.
+  const teacherIds = Array.from({ length: 6 }, () => newId())
   const adminIds = Array.from({ length: 3 }, () => newId())
   const parentIds = Array.from({ length: 60 }, () => newId())
 
@@ -54,8 +56,9 @@ async function seed() {
   }))
   await db.insert(users).values([...teacherRows, ...adminRows, ...parentRows])
 
-  // --- Classes (4)
-  const classIds = teacherIds.map((_t) => newId())
+  // --- Classes (4) — first 4 teachers get a class; teachers 5–6 stay unassigned
+  //     so the admin "Add class" picker has eligible options out of the box.
+  const classIds = Array.from({ length: 4 }, () => newId())
   await db.insert(classes).values(
     classIds.map((id, i) => ({
       id,
@@ -141,6 +144,12 @@ async function seed() {
   console.log('--- Device tokens (save these; not shown again) ---')
   console.log(`Main Gate (${deviceA}): ${plainA}`)
   console.log(`Side Gate (${deviceB}): ${plainB}`)
+  console.log('')
+  console.log('--- Class assignments ---')
+  for (let i = 0; i < 4; i++) {
+    console.log(`Grade ${i + 1} — Section A → Teacher ${String(i + 1).padStart(2, '0')}`)
+  }
+  console.log(`Unassigned teachers: Teacher 05, Teacher 06 (available for the admin Add Class flow)`)
   console.log('')
 }
 

@@ -297,6 +297,7 @@
     "nav": {
       "dashboard": "ڈیش بورڈ",
       "students": "طلباء",
+      "classes": "جماعتیں",
       "cards": "کارڈز",
       "devices": "ڈیوائسز",
       "reports": "رپورٹس",
@@ -667,6 +668,55 @@
       },
       "viewTimeline": "ٹائم لائن دیکھیں",
       "loadError": "بے ضابطگیاں لوڈ نہیں ہو سکیں۔"
+    },
+    "classes": {
+      "title": "جماعتیں",
+      "subtitle": "جماعت شامل کریں اور اس کے کلاس ٹیچر کو تفویض کریں۔",
+      "addCta": "جماعت شامل کریں",
+      "empty": "ابھی کوئی جماعت نہیں ہے۔ پہلی شامل کریں۔",
+      "loadError": "جماعتیں لوڈ نہیں ہو سکیں۔",
+      "count": "{{count}} جماعت",
+      "count_other": "{{count}} جماعتیں",
+      "columns": {
+        "name": "نام",
+        "teacher": "کلاس ٹیچر",
+        "students": "طلباء",
+        "actions": "کارروائیاں"
+      },
+      "row": {
+        "edit": "ترمیم",
+        "delete": "حذف",
+        "unassigned": "غیر مختص"
+      },
+      "form": {
+        "createTitle": "جماعت شامل کریں",
+        "editTitle": "جماعت میں ترمیم",
+        "nameLabel": "جماعت کا نام",
+        "namePlaceholder": "مثلاً جماعت 3A",
+        "teacherLabel": "کلاس ٹیچر",
+        "teacherPlaceholder": "ایک ٹیچر منتخب کریں",
+        "teacherUnavailableSuffix": "(پہلے سے {{className}} پڑھاتے ہیں)",
+        "unassignedOption": "— کوئی کلاس ٹیچر نہیں —",
+        "submitCreate": "جماعت شامل کریں",
+        "submitSave": "تبدیلیاں محفوظ کریں"
+      },
+      "delete": {
+        "title": "{{name}} حذف کریں؟",
+        "bodyEmpty": "یہ عمل واپس نہیں ہوگا۔",
+        "bodyHasStudents": "اس جماعت میں {{count}} طالبعلم ہے۔ پہلے انہیں منتقل یا ہٹا دیں۔",
+        "bodyHasStudents_other": "اس جماعت میں {{count}} طلباء ہیں۔ پہلے انہیں منتقل یا ہٹا دیں۔",
+        "submit": "جماعت حذف کریں"
+      },
+      "errors": {
+        "classNameTaken": "اس نام کی جماعت پہلے سے موجود ہے۔",
+        "teacherAlreadyAssigned": "یہ ٹیچر پہلے سے کسی اور جماعت کا کلاس ٹیچر ہے۔",
+        "teacherNotEligible": "منتخب صارف کلاس ٹیچر نہیں بن سکتا۔",
+        "classHasStudents": "اس جماعت میں طلباء داخل ہیں۔ پہلے انہیں منتقل یا ہٹا دیں۔",
+        "generic": "کچھ غلط ہوا۔ دوبارہ کوشش کریں۔"
+      },
+      "createSuccess": "جماعت شامل ہو گئی۔",
+      "editSuccess": "جماعت اپ ڈیٹ ہو گئی۔",
+      "deleteSuccess": "جماعت حذف ہو گئی۔"
     },
     "loadError": "ہم سکول کے سرور تک نہیں پہنچ سکے۔",
     "unknownStudent": "نامعلوم طالب علم"

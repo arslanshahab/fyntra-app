@@ -1,4 +1,6 @@
-import { pgTable, uuid, text, integer, timestamp, index, date } from 'drizzle-orm/pg-core'
+import { pgTable, uuid, text, integer, timestamp, index, date, uniqueIndex } from 'drizzle-orm/pg-core'
+import { sql } from 'drizzle-orm'
+import { users } from './auth.js'
 
 export const schools = pgTable('schools', {
   id: uuid('id').primaryKey(),
@@ -29,12 +31,15 @@ export const classes = pgTable(
     id: uuid('id').primaryKey(),
     schoolId: uuid('school_id').notNull().references(() => schools.id, { onDelete: 'cascade' }),
     name: text('name').notNull(),
-    teacherId: uuid('teacher_id').notNull(),
+    teacherId: uuid('teacher_id').references(() => users.id, { onDelete: 'restrict' }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => ({
     bySchool: index('classes_school_idx').on(t.schoolId, t.id),
+    byTeacherUnique: uniqueIndex('classes_school_teacher_unique')
+      .on(t.schoolId, t.teacherId)
+      .where(sql`${t.teacherId} IS NOT NULL`),
   }),
 )
 

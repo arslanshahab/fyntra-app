@@ -1,14 +1,20 @@
 import type { FastifyPluginAsync } from 'fastify'
 import { z } from 'zod'
 import {
+  createClassRequestSchema,
+  patchClassRequestSchema,
   registerLockRequestSchema,
   registerUnlockRequestSchema,
 } from '@fyntra/schemas'
 import { requireAuth } from '../../middleware/require-auth.js'
+import { requireRole } from '../../middleware/require-role.js'
 import {
   classAttendanceForDay,
+  createClass,
+  deleteClass,
   listClasses,
   lockRegisterForClass,
+  patchClass,
   registerForMonth,
   unlockRegisterForClass,
 } from './service.js'
@@ -73,6 +79,43 @@ export const classesRoutes: FastifyPluginAsync = async (app) => {
       const { id } = req.params as { id: string }
       const { month } = req.query as z.infer<typeof registerQuery>
       return await registerForMonth(ctx, id, month)
+    },
+  )
+
+  app.post(
+    '/classes',
+    {
+      preHandler: [requireAuth, requireRole(['admin'])],
+      schema: { body: createClassRequestSchema },
+    },
+    async (req) => {
+      const ctx = req.tenantContext!
+      const body = req.body as z.infer<typeof createClassRequestSchema>
+      return await createClass(ctx, body)
+    },
+  )
+
+  app.patch(
+    '/classes/:id',
+    {
+      preHandler: [requireAuth, requireRole(['admin'])],
+      schema: { body: patchClassRequestSchema },
+    },
+    async (req) => {
+      const ctx = req.tenantContext!
+      const { id } = req.params as { id: string }
+      const body = req.body as z.infer<typeof patchClassRequestSchema>
+      return await patchClass(ctx, id, body)
+    },
+  )
+
+  app.delete(
+    '/classes/:id',
+    { preHandler: [requireAuth, requireRole(['admin'])] },
+    async (req) => {
+      const ctx = req.tenantContext!
+      const { id } = req.params as { id: string }
+      return await deleteClass(ctx, id)
     },
   )
 }
