@@ -1,4 +1,4 @@
-import { and, asc, eq, gte, inArray, isNull, lte } from 'drizzle-orm'
+import { and, asc, count, eq, gte, inArray, isNull, lte, sql } from 'drizzle-orm'
 import { db } from '../../db/client.js'
 import { classes } from '../../db/schema/schools.js'
 import { students } from '../../db/schema/students.js'
@@ -10,9 +10,20 @@ import type { TenantContext } from '../../types/tenant-context.js'
 export const classesRepo = {
   async list(ctx: TenantContext) {
     return db
-      .select()
+      .select({
+        id: classes.id,
+        schoolId: classes.schoolId,
+        name: classes.name,
+        teacherId: classes.teacherId,
+        createdAt: classes.createdAt,
+        updatedAt: classes.updatedAt,
+        studentCount: sql<number>`COALESCE(COUNT(${students.id}), 0)::int`.as('student_count'),
+      })
       .from(classes)
+      .leftJoin(students, eq(students.classId, classes.id))
       .where(eq(classes.schoolId, ctx.schoolId))
+      .groupBy(classes.id)
+      .orderBy(asc(classes.name))
   },
 
   async findById(ctx: TenantContext, id: string) {

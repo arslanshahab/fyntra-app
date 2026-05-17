@@ -1,5 +1,6 @@
 import type {
   AttendanceRecord,
+  Class,
   ClassRegisterResponse,
   HolidayKind,
   RegisterDay,
@@ -15,8 +16,15 @@ import { classesRepo } from './repository.js'
 
 type AttendanceRow = typeof attendanceRecords.$inferSelect
 
-export async function listClasses(ctx: TenantContext) {
-  return await classesRepo.list(ctx)
+export async function listClasses(ctx: TenantContext): Promise<Class[]> {
+  const rows = await classesRepo.list(ctx)
+  return rows.map((r) => ({
+    id: r.id,
+    name: r.name,
+    teacherId: r.teacherId,
+    schoolId: r.schoolId,
+    studentCount: r.studentCount,
+  }))
 }
 
 export async function classAttendanceForDay(
