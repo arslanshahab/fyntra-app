@@ -1,7 +1,8 @@
-import { and, asc, count, eq, gte, inArray, isNull, lte, sql } from 'drizzle-orm'
+import { and, asc, count, eq, gte, ilike, inArray, isNull, lte, sql } from 'drizzle-orm'
 import { db } from '../../db/client.js'
 import { classes } from '../../db/schema/schools.js'
 import { students } from '../../db/schema/students.js'
+import { users } from '../../db/schema/auth.js'
 import { attendanceRecords, tapEvents } from '../../db/schema/attendance.js'
 import { schoolHolidays } from '../../db/schema/holidays.js'
 import { newId } from '../../lib/ids.js'
@@ -262,5 +263,90 @@ export const classesRepo = {
       keys.add(`${r.studentId}|${ymd}`)
     }
     return keys
+  },
+
+  // --- Admin CRUD helpers ------------------------------------------------
+
+  async create(
+    ctx: TenantContext,
+    input: { name: string; teacherId: string },
+  ) {
+    const id = newId()
+    const rows = await db
+      .insert(classes)
+      .values({
+        id,
+        schoolId: ctx.schoolId,
+        name: input.name,
+        teacherId: input.teacherId,
+      })
+      .returning()
+    return rows[0]!
+  },
+
+  async patch(
+    ctx: TenantContext,
+    id: string,
+    input: { name?: string; teacherId?: string },
+  ) {
+    const patch: Partial<Pick<typeof classes.$inferSelect, 'name' | 'teacherId' | 'updatedAt'>> = {
+      updatedAt: new Date(),
+    }
+    if (input.name !== undefined) patch.name = input.name
+    if (input.teacherId !== undefined) patch.teacherId = input.teacherId
+    const rows = await db
+      .update(classes)
+      .set(patch)
+      .where(and(eq(classes.schoolId, ctx.schoolId), eq(classes.id, id)))
+      .returning()
+    return rows[0]
+  },
+
+  async delete(ctx: TenantContext, id: string): Promise<boolean> {
+    const rows = await db
+      .delete(classes)
+      .where(and(eq(classes.schoolId, ctx.schoolId), eq(classes.id, id)))
+      .returning({ id: classes.id })
+    return rows.length > 0
+  },
+
+  async countStudents(ctx: TenantContext, classId: string): Promise<number> {
+    const rows = await db
+      .select({ n: count() })
+      .from(students)
+      .where(
+        and(
+          eq(students.schoolId, ctx.schoolId),
+          eq(students.classId, classId),
+        ),
+      )
+    return rows[0]?.n ?? 0
+  },
+
+  async findByTeacher(ctx: TenantContext, teacherId: string) {
+    const rows = await db
+      .select()
+      .from(classes)
+      .where(and(eq(classes.schoolId, ctx.schoolId), eq(classes.teacherId, teacherId)))
+      .limit(1)
+    return rows[0]
+  },
+
+  async findByNameCaseInsensitive(ctx: TenantContext, name: string) {
+    const rows = await db
+      .select()
+      .from(classes)
+      .where(and(eq(classes.schoolId, ctx.schoolId), ilike(classes.name, name)))
+      .limit(1)
+    return rows[0]
+  },
+
+  async findTeacherById(ctx: TenantContext, userId: string) {
+    const rows = await db
+      .select({ id: users.id, role: users.role })
+      .from(users)
+      .where(and(eq(users.schoolId, ctx.schoolId), eq(users.id, userId)))
+      .limit(1)
+    return rows[0]
   },
 }
