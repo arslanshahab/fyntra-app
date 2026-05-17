@@ -9,6 +9,7 @@ import { cards, cardAuditEntries } from '../../src/db/schema/cards.js'
 import { devices, deviceTokens } from '../../src/db/schema/devices.js'
 import { tapEvents, attendanceRecords } from '../../src/db/schema/attendance.js'
 import { notificationLogs, notificationSettings } from '../../src/db/schema/notifications.js'
+import { schoolHolidays } from '../../src/db/schema/holidays.js'
 
 export async function truncateAll() {
   // children first, then parents
@@ -23,6 +24,7 @@ export async function truncateAll() {
   await db.delete(studentGuardians)
   await db.delete(students)
   await db.delete(otpCodes)
+  await db.delete(schoolHolidays)
   await db.delete(users)
   await db.delete(classes)
   await db.delete(schools)

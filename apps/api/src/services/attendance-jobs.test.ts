@@ -8,6 +8,7 @@ import { cards } from '../db/schema/cards.js'
 import { devices } from '../db/schema/devices.js'
 import { attendanceRecords } from '../db/schema/attendance.js'
 import { notificationLogs, notificationSettings } from '../db/schema/notifications.js'
+import { schoolHolidays } from '../db/schema/holidays.js'
 import { newId } from '../lib/ids.js'
 import { runAbsentJobForSchool } from './attendance-jobs.js'
 import { eq } from 'drizzle-orm'
@@ -77,6 +78,41 @@ describe('runAbsentJobForSchool', () => {
       .from(attendanceRecords)
       .where(eq(attendanceRecords.studentId, studentId))
     expect(recs[0]?.status).toBe('unverified')
+  })
+
+  it('skips entirely on a `closed` holiday (no records, no notifications)', async () => {
+    const { schoolId, parentId } = await seed({ deviceStatus: 'online' })
+    await db.insert(schoolHolidays).values({
+      id: newId(), schoolId, date: '2026-05-13', label: 'Independence Day', kind: 'closed',
+    })
+    const res = await runAbsentJobForSchool(schoolId, '2026-05-13')
+    expect(res.markedAbsent).toBe(0)
+    expect(res.markedUnverified).toBe(0)
+    const recs = await db.select().from(attendanceRecords).where(eq(attendanceRecords.schoolId, schoolId))
+    expect(recs).toHaveLength(0)
+    const logs = await db.select().from(notificationLogs).where(eq(notificationLogs.recipientUserId, parentId))
+    expect(logs).toHaveLength(0)
+  })
+
+  it('skips entirely on an `exam` holiday (no records, no notifications)', async () => {
+    const { schoolId } = await seed({ deviceStatus: 'online' })
+    await db.insert(schoolHolidays).values({
+      id: newId(), schoolId, date: '2026-05-13', label: 'Maths paper', kind: 'exam',
+    })
+    const res = await runAbsentJobForSchool(schoolId, '2026-05-13')
+    expect(res.markedAbsent).toBe(0)
+    expect(res.markedUnverified).toBe(0)
+  })
+
+  it('still marks absent on a `half_day` holiday (cron is NOT paused)', async () => {
+    const { schoolId, studentId } = await seed({ deviceStatus: 'online' })
+    await db.insert(schoolHolidays).values({
+      id: newId(), schoolId, date: '2026-05-13', label: 'Half-day Friday', kind: 'half_day', effectiveEndTime: '12:00',
+    })
+    const res = await runAbsentJobForSchool(schoolId, '2026-05-13')
+    expect(res.markedAbsent).toBe(1)
+    const recs = await db.select().from(attendanceRecords).where(eq(attendanceRecords.studentId, studentId))
+    expect(recs[0]?.status).toBe('absent')
   })
 
   it('does not stomp a present record from a real tap', async () => {

@@ -12,6 +12,7 @@ import { newId } from '../lib/ids.js'
 import { broker, channels } from './realtime.js'
 import { karachiDayShort, ymdInKarachi } from '../lib/time.js'
 import { dispatch } from '../modules/notifications/service.js'
+import { findCronPausingHolidayForSchool } from '../modules/holidays/service.js'
 
 export interface AbsentJobResult {
   markedAbsent: number
@@ -19,6 +20,12 @@ export interface AbsentJobResult {
 }
 
 export async function runAbsentJobForSchool(schoolId: string, ymd: string): Promise<AbsentJobResult> {
+  // School calendar — skip entirely if this date is a `closed` or `exam`
+  // holiday. `half_day` does NOT pause the cron; kids who miss a short day
+  // are still absent.
+  const pausingHoliday = await findCronPausingHolidayForSchool(schoolId, ymd)
+  if (pausingHoliday) return { markedAbsent: 0, markedUnverified: 0 }
+
   // Are entry devices online?
   const entryDevices = await db
     .select()

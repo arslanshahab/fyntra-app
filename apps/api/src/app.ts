@@ -18,6 +18,7 @@ import { readerRoutes } from './modules/readers/routes.js'
 import { tapEventsRoutes } from './modules/tap-events/routes.js'
 import { reportsRoutes } from './modules/reports/routes.js'
 import { notificationsRoutes } from './modules/notifications/routes.js'
+import { holidaysRoutes } from './modules/holidays/routes.js'
 import { wsRoutes } from './ws/routes.js'
 import { bootstrapAbsentJobs } from './services/attendance-jobs.js'
 import { startHeartbeatSweep } from './services/heartbeat-sweep.js'
@@ -81,6 +82,7 @@ export async function buildApp(): Promise<FastifyInstance> {
   await app.register(tapEventsRoutes)
   await app.register(reportsRoutes)
   await app.register(notificationsRoutes)
+  await app.register(holidaysRoutes)
   await app.register(wsRoutes)
 
   if (env().NODE_ENV !== 'test') {

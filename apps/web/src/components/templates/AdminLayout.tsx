@@ -1,6 +1,7 @@
 import {
   AlertTriangle,
   Bell,
+  CalendarDays,
   CreditCard,
   FileSpreadsheet,
   Home,
@@ -49,6 +50,7 @@ const NAV_GROUPS: NavGroup[] = [
   {
     labelKey: 'admin.nav.section.operations',
     items: [
+      { to: '/admin/calendar', labelKey: 'admin.nav.calendar', icon: CalendarDays },
       { to: '/admin/reports', labelKey: 'admin.nav.reports', icon: FileSpreadsheet },
       { to: '/admin/notifications', labelKey: 'admin.nav.notifications', icon: Bell },
       { to: '/admin/anomalies', labelKey: 'admin.nav.anomalies', icon: AlertTriangle },
