@@ -18,7 +18,14 @@ type ParentChannel = keyof NotificationSettings['channels']
 type ParentEvent = Exclude<keyof NotificationSettings['events'], 'device_offline'>
 
 const PARENT_CHANNELS: ParentChannel[] = ['whatsapp', 'sms', 'in_app']
-const PARENT_EVENTS: ParentEvent[] = ['tap_in', 'tap_out', 'late', 'absent', 'manual_override']
+const PARENT_EVENTS: ParentEvent[] = [
+  'tap_in',
+  'tap_out',
+  'late',
+  'absent',
+  'manual_override',
+  'monthly_summary',
+]
 
 export function ParentSettingsPage() {
   const { t, i18n } = useTranslation()

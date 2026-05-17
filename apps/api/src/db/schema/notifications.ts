@@ -52,6 +52,10 @@ export const notificationSettings = pgTable(
     eventAbsent: boolean('event_absent').notNull(),
     eventManualOverride: boolean('event_manual_override').notNull(),
     eventDeviceOffline: boolean('event_device_offline').notNull(),
+    // F9: end-of-month attendance digest. Default true so existing parents
+    // (created before this column) start receiving the digest unless they
+    // opt out. NOT NULL with a server default to keep the migration safe.
+    eventMonthlySummary: boolean('event_monthly_summary').notNull().default(true),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },

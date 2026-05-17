@@ -5,10 +5,14 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { Avatar } from '../../components/atoms/Avatar'
 import { Badge } from '../../components/atoms/Badge'
 import { Icon } from '../../components/atoms/Icon'
+import { AttendanceSummaryCard } from '../../components/molecules/AttendanceSummaryCard'
 import { StatusCard } from '../../components/molecules/StatusCard'
 import { useStudentTimeline } from '../../features/attendance/queries'
 import { useClassesQuery } from '../../features/classes/queries'
-import { useStudentDetailQuery } from '../../features/students/queries'
+import {
+  useStudentAttendanceSummary,
+  useStudentDetailQuery,
+} from '../../features/students/queries'
 import type { AttendanceRecord } from '@fyntra/schemas'
 import { formatTimeInKarachi, formatTimelineDate } from '../../utils/datetime'
 
@@ -28,6 +32,7 @@ export function AdminStudentDetailPage() {
   const student = useStudentDetailQuery(id)
   const classes = useClassesQuery()
   const timeline = useStudentTimeline(id)
+  const summary = useStudentAttendanceSummary(id)
 
   const className = student.data
     ? (classes.data?.find((c) => c.id === student.data!.classId)?.name ?? student.data.classId)
@@ -130,6 +135,8 @@ export function AdminStudentDetailPage() {
               </ul>
             )}
           </section>
+
+          {summary.data ? <AttendanceSummaryCard summary={summary.data} /> : null}
 
           <section className="rounded-2xl bg-white p-5 shadow-elev-1 ring-1 ring-stone-200">
             <h2 className="font-display text-base font-semibold tracking-tight text-stone-900">

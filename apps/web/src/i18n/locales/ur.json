@@ -23,6 +23,17 @@
     "current": "اردو",
     "switchTo": "English"
   },
+  "attendanceSummary": {
+    "title": "حاضری خلاصہ",
+    "thisMonth": "اس مہینے",
+    "yearToDate": "سال تا حال",
+    "present": "حاضر",
+    "late": "تاخیر",
+    "absent": "غیر حاضر",
+    "halfDay": "آدھا دن",
+    "excused": "معذور",
+    "workingDays": "کام کے دن"
+  },
   "login": {
     "phoneStep": {
       "heading": "خوش آمدید۔",
@@ -206,7 +217,9 @@
         "absent": "غیر حاضر",
         "absentHint": "ابسنٹ تھریشولڈ کے اندر کوئی ٹیپ نہیں۔",
         "manual_override": "مینوئل اوور رائیڈ",
-        "manual_overrideHint": "سکول کے عملے نے آپ کے بچے کی طرف سے ٹیپ ریکارڈ کیا۔"
+        "manual_overrideHint": "سکول کے عملے نے آپ کے بچے کی طرف سے ٹیپ ریکارڈ کیا۔",
+        "monthly_summary": "ماہانہ خلاصہ",
+        "monthly_summaryHint": "مہینے کے آخر پر آپ کے بچے کی کل حاضری اور فیصد۔"
       },
       "languageHeading": "زبان",
       "languageHint": "اس ڈیوائس پر فعال زبان۔ تبدیلی فوراً لاگو ہو جائے گی۔",

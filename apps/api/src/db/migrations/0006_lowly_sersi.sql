@@ -1,0 +1,1 @@
+ALTER TABLE "notification_settings" ADD COLUMN "event_monthly_summary" boolean DEFAULT true NOT NULL;

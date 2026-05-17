@@ -2,7 +2,11 @@ import { useQuery } from '@tanstack/react-query'
 import { z } from 'zod'
 
 import { apiGet } from '../../services/api/client'
-import { studentDetailSchema, studentSchema } from '@fyntra/schemas'
+import {
+  studentAttendanceSummarySchema,
+  studentDetailSchema,
+  studentSchema,
+} from '@fyntra/schemas'
 
 const studentListSchema = z.array(studentSchema)
 
@@ -33,6 +37,19 @@ export function useStudentDetailQuery(id: string | undefined) {
   return useQuery({
     queryKey: id ? studentKeys.detail(id) : ['students', 'detail', 'none'],
     queryFn: () => apiGet(`/students/${id}`, studentDetailSchema),
+    enabled: !!id,
+    staleTime: 60_000,
+  })
+}
+
+// Per-student attendance summary (F8). Returns current-month + year-to-date
+// counts. The month query is omitted by default so the server picks the
+// current Karachi month.
+export function useStudentAttendanceSummary(id: string | undefined, opts?: { month?: string }) {
+  const q = opts?.month ? `?month=${opts.month}` : ''
+  return useQuery({
+    queryKey: id ? ['students', 'summary', id, opts?.month ?? 'current'] : ['students', 'summary', 'none'],
+    queryFn: () => apiGet(`/students/${id}/attendance-summary${q}`, studentAttendanceSummarySchema),
     enabled: !!id,
     staleTime: 60_000,
   })

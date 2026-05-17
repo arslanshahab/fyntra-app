@@ -84,6 +84,7 @@ describe('notifications routes', () => {
         absent: true,
         manual_override: true,
         device_offline: true,
+        monthly_summary: true,
       },
     }
     // Auto-create row first

@@ -150,6 +150,7 @@ const DEFAULT_SETTINGS: NotificationSettings = {
     absent: true,
     manual_override: false,
     device_offline: false,
+    monthly_summary: true,
   },
 }
 

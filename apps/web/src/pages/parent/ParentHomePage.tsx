@@ -5,9 +5,11 @@ import { useNavigate } from 'react-router-dom'
 
 import { Button } from '../../components/atoms/Button'
 import { Icon } from '../../components/atoms/Icon'
+import { AttendanceSummaryCard } from '../../components/molecules/AttendanceSummaryCard'
 import { ChildCard } from '../../components/molecules/ChildCard'
 import { FreshnessChip } from '../../components/molecules/FreshnessChip'
 import { StatusCard } from '../../components/molecules/StatusCard'
+import { useStudentAttendanceSummary } from '../../features/students/queries'
 import {
   useChildrenTodayAttendance,
   useChildrenTodayTaps,
@@ -214,19 +216,34 @@ export function ParentHomePage() {
             entry.isLoading || !entry.status ? (
               <ChildCardSkeleton key={entry.student.id} />
             ) : (
-              <ChildCard
-                key={entry.student.id}
-                student={entry.student}
-                status={entry.status}
-                lastDeviceLabel={entry.lastDeviceLabel}
-                onOpenTimeline={() =>
-                  navigate(`/parent/child/${entry.student.id}/timeline`)
-                }
-              />
+              <div key={entry.student.id} className="space-y-2">
+                <ChildCard
+                  student={entry.student}
+                  status={entry.status}
+                  lastDeviceLabel={entry.lastDeviceLabel}
+                  onOpenTimeline={() =>
+                    navigate(`/parent/child/${entry.student.id}/timeline`)
+                  }
+                />
+                <ChildMonthSummary studentId={entry.student.id} />
+              </div>
             ),
           )
         )}
       </div>
     </main>
+  )
+}
+
+// Compact "this month" row under each ChildCard. Pulls its own summary so
+// the home page doesn't have to fan out queries up-front; React Query
+// dedupes the cache across mounts within the staleTime window.
+function ChildMonthSummary({ studentId }: { studentId: string }) {
+  const summary = useStudentAttendanceSummary(studentId)
+  if (!summary.data) return null
+  return (
+    <div className="px-1">
+      <AttendanceSummaryCard summary={summary.data} variant="inline" />
+    </div>
   )
 }
