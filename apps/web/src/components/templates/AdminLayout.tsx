@@ -2,6 +2,7 @@ import {
   AlertTriangle,
   Bell,
   CalendarDays,
+  CalendarRange,
   CreditCard,
   FileSpreadsheet,
   Home,
@@ -42,6 +43,7 @@ const NAV_GROUPS: NavGroup[] = [
     items: [
       { to: '/admin/students', labelKey: 'admin.nav.students', icon: Users },
       { to: '/admin/cards', labelKey: 'admin.nav.cards', icon: CreditCard },
+      { to: '/admin/register', labelKey: 'admin.nav.register', icon: CalendarRange },
     ],
   },
   {

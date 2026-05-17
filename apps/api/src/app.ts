@@ -18,6 +18,7 @@ import { readerRoutes } from './modules/readers/routes.js'
 import { tapEventsRoutes } from './modules/tap-events/routes.js'
 import { reportsRoutes } from './modules/reports/routes.js'
 import { notificationsRoutes } from './modules/notifications/routes.js'
+import { attendanceRoutes } from './modules/attendance/routes.js'
 import { holidaysRoutes } from './modules/holidays/routes.js'
 import { schoolsRoutes } from './modules/schools/routes.js'
 import { wsRoutes } from './ws/routes.js'
@@ -85,6 +86,7 @@ export async function buildApp(): Promise<FastifyInstance> {
   await app.register(notificationsRoutes)
   await app.register(holidaysRoutes)
   await app.register(schoolsRoutes)
+  await app.register(attendanceRoutes)
   await app.register(wsRoutes)
 
   if (env().NODE_ENV !== 'test') {

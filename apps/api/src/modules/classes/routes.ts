@@ -9,11 +9,16 @@ import {
   classAttendanceForDay,
   listClasses,
   lockRegisterForClass,
+  registerForMonth,
   unlockRegisterForClass,
 } from './service.js'
 
 const attendanceQuery = z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'date must be YYYY-MM-DD'),
+})
+
+const registerQuery = z.object({
+  month: z.string().regex(/^\d{4}-\d{2}$/, 'month must be YYYY-MM'),
 })
 
 export const classesRoutes: FastifyPluginAsync = async (app) => {
@@ -56,6 +61,18 @@ export const classesRoutes: FastifyPluginAsync = async (app) => {
       const { id } = req.params as { id: string }
       const { date } = req.body as z.infer<typeof registerUnlockRequestSchema>
       return await unlockRegisterForClass(ctx, id, date)
+    },
+  )
+
+  // Monthly register payload (F5). Teacher-of-class or admin (service gate).
+  app.get(
+    '/classes/:id/register',
+    { preHandler: requireAuth, schema: { querystring: registerQuery } },
+    async (req) => {
+      const ctx = req.tenantContext!
+      const { id } = req.params as { id: string }
+      const { month } = req.query as z.infer<typeof registerQuery>
+      return await registerForMonth(ctx, id, month)
     },
   )
 }

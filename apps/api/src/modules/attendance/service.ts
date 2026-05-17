@@ -28,13 +28,23 @@ export async function recomputeAttendanceForDay(
   const startUtc = dateAtKarachiTime(ymd, school.startTime)
   const endUtc = dateAtKarachiTime(ymd, school.endTime)
 
-  let status: 'present' | 'late' | 'left_early' = 'present'
+  let status: 'present' | 'late' | 'left_early' | 'half_day' = 'present'
   if (firstInAt) {
     const lateAtUtc = new Date(startUtc.getTime() + school.lateThresholdMinutes * 60 * 1000)
     if (firstInAt.getTime() > lateAtUtc.getTime()) status = 'late'
   }
   if (status !== 'late' && lastOutAt && lastOutAt.getTime() < endUtc.getTime()) {
     status = 'left_early'
+    // Half-day downgrade — if the school has a half-day cutoff and the
+    // tap-out lands strictly before it, this is a half-day, not left_early.
+    // Order matters: late always wins (kid was late AND left half-way is
+    // still "late"), per spec §8.1 Q2.
+    if (school.halfDayCutoffTime && lastOutAt) {
+      const cutoffUtc = dateAtKarachiTime(ymd, school.halfDayCutoffTime)
+      if (lastOutAt.getTime() < cutoffUtc.getTime()) {
+        status = 'half_day'
+      }
+    }
   }
 
   const isManual = taps.some((t) => t.source === 'manual')

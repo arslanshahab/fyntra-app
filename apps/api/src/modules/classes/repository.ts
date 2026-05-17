@@ -1,8 +1,9 @@
-import { and, eq, inArray, isNull } from 'drizzle-orm'
+import { and, asc, eq, gte, inArray, isNull, lte } from 'drizzle-orm'
 import { db } from '../../db/client.js'
 import { classes } from '../../db/schema/schools.js'
 import { students } from '../../db/schema/students.js'
-import { attendanceRecords } from '../../db/schema/attendance.js'
+import { attendanceRecords, tapEvents } from '../../db/schema/attendance.js'
+import { schoolHolidays } from '../../db/schema/holidays.js'
 import { newId } from '../../lib/ids.js'
 import type { TenantContext } from '../../types/tenant-context.js'
 
@@ -153,5 +154,102 @@ export const classesRepo = {
           eq(attendanceRecords.date, ymd),
         ),
       )
+  },
+
+  // --- Monthly register helpers ------------------------------------------
+
+  // Active students in the class with the full student row — needed for the
+  // monthly register response shape.
+  async activeStudentRows(ctx: TenantContext, classId: string) {
+    return db
+      .select()
+      .from(students)
+      .where(
+        and(
+          eq(students.schoolId, ctx.schoolId),
+          eq(students.classId, classId),
+          eq(students.status, 'active'),
+        ),
+      )
+      .orderBy(asc(students.rollNumber))
+  },
+
+  // Attendance records for (students, date range). Used by the monthly
+  // register to build the grid + per-student summaries.
+  async recordsForStudentsInRange(
+    ctx: TenantContext,
+    studentIds: string[],
+    fromYmd: string,
+    toYmd: string,
+  ) {
+    if (studentIds.length === 0) return []
+    return db
+      .select()
+      .from(attendanceRecords)
+      .where(
+        and(
+          eq(attendanceRecords.schoolId, ctx.schoolId),
+          inArray(attendanceRecords.studentId, studentIds),
+          gte(attendanceRecords.date, fromYmd),
+          lte(attendanceRecords.date, toYmd),
+        ),
+      )
+  },
+
+  // Holidays in [from, to] for the caller's school.
+  async holidaysForRange(ctx: TenantContext, fromYmd: string, toYmd: string) {
+    return db
+      .select()
+      .from(schoolHolidays)
+      .where(
+        and(
+          eq(schoolHolidays.schoolId, ctx.schoolId),
+          gte(schoolHolidays.date, fromYmd),
+          lte(schoolHolidays.date, toYmd),
+        ),
+      )
+      .orderBy(asc(schoolHolidays.date))
+  },
+
+  // For each (studentId, occurredAt-day) returns a `Set` of "studentId|ymd"
+  // keys where a manual tap-event carried a sick/leave reason kind. The
+  // monthly-summary uses this to distinguish "excused absent" from plain
+  // absent. We range-filter in JS to avoid drizzle date-vs-timestamp casting
+  // tangles for this prototype.
+  async excusedKeysInRange(
+    ctx: TenantContext,
+    studentIds: string[],
+    fromYmd: string,
+    toYmd: string,
+  ): Promise<Set<string>> {
+    if (studentIds.length === 0) return new Set()
+    const rows = await db
+      .select({
+        studentId: tapEvents.studentId,
+        occurredAt: tapEvents.occurredAt,
+        kind: tapEvents.manualReasonKind,
+      })
+      .from(tapEvents)
+      .where(
+        and(
+          eq(tapEvents.schoolId, ctx.schoolId),
+          eq(tapEvents.source, 'manual'),
+          inArray(tapEvents.studentId, studentIds),
+        ),
+      )
+    const fromMs = new Date(`${fromYmd}T00:00:00+05:00`).getTime()
+    const toMs = new Date(`${toYmd}T23:59:59+05:00`).getTime()
+    const keys = new Set<string>()
+    for (const r of rows) {
+      if (!r.studentId || !r.kind) continue
+      if (r.kind !== 'sick' && r.kind !== 'leave') continue
+      const ts = r.occurredAt.getTime()
+      if (ts < fromMs || ts > toMs) continue
+      // Karachi calendar date for the tap.
+      const local = new Date(r.occurredAt.getTime() + 5 * 60 * 60 * 1000)
+      const ymd = `${local.getUTCFullYear()}-${String(local.getUTCMonth() + 1).padStart(2, '0')}-${String(local.getUTCDate()).padStart(2, '0')}`
+      keys.add(`${r.studentId}|${ymd}`)
+    }
+    return keys
   },
 }

@@ -57,7 +57,33 @@
     "noClass": "You're not currently assigned to a class. Please contact your school.",
     "nav": {
       "today": "Today",
-      "history": "History"
+      "history": "History",
+      "register": "Register"
+    },
+    "register": {
+      "pageTitle": "Monthly register",
+      "prevMonth": "Previous month",
+      "nextMonth": "Next month",
+      "empty": "No active students in this class.",
+      "errors": {
+        "load": "Couldn't load the register."
+      },
+      "headers": {
+        "student": "Student"
+      },
+      "cell": {
+        "present": "Present",
+        "late": "Late",
+        "absent": "Absent",
+        "halfDay": "Half day",
+        "excused": "Excused (sick/leave)",
+        "noRecord": "No record",
+        "unverified": "Unverified"
+      },
+      "totals": {
+        "label": "Daily totals (P / A / L)"
+      },
+      "legend": "P present · L late · A absent · HD half-day · E excused · H closed · X exam"
     },
     "today": {
       "subtitle": "Today's class roster",
@@ -265,6 +291,7 @@
       "anomalies": "Anomalies",
       "calendar": "Calendar",
       "policy": "Policy",
+      "register": "Register",
       "section": {
         "overview": "Overview",
         "people": "People",
@@ -365,6 +392,18 @@
       "allClear": "All clear",
       "needsReview_one": "{{count}} anomaly needs review",
       "needsReview_other": "{{count}} anomalies need review"
+    },
+    "register": {
+      "pageTitle": "Class register",
+      "subtitle": "Pick a class to view its monthly attendance grid.",
+      "classPicker": "Class",
+      "noClasses": "No classes set up yet."
+    },
+    "todayRegister": {
+      "title": "Today's register",
+      "lockedOf": "{{locked}} of {{total}} locked",
+      "locked": "Locked",
+      "pending": "Pending"
     },
     "stats": {
       "present": "Present",

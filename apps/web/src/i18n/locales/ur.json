@@ -57,7 +57,33 @@
     "noClass": "آپ کو ابھی کسی کلاس کے لیے تفویض نہیں کیا گیا۔ براہ کرم سکول سے رابطہ کریں۔",
     "nav": {
       "today": "آج",
-      "history": "تاریخ"
+      "history": "تاریخ",
+      "register": "رجسٹر"
+    },
+    "register": {
+      "pageTitle": "ماہانہ رجسٹر",
+      "prevMonth": "پچھلا مہینہ",
+      "nextMonth": "اگلا مہینہ",
+      "empty": "اس کلاس میں کوئی طلباء نہیں۔",
+      "errors": {
+        "load": "رجسٹر لوڈ نہیں ہو سکا۔"
+      },
+      "headers": {
+        "student": "طالب علم"
+      },
+      "cell": {
+        "present": "حاضر",
+        "late": "تاخیر",
+        "absent": "غیر حاضر",
+        "halfDay": "آدھا دن",
+        "excused": "معذور (بیمار/چھٹی)",
+        "noRecord": "ریکارڈ نہیں",
+        "unverified": "غیر مصدقہ"
+      },
+      "totals": {
+        "label": "روزانہ کل (حاضر / غیر حاضر / تاخیر)"
+      },
+      "legend": "P حاضر · L تاخیر · A غیر حاضر · HD آدھا دن · E معذور · H بند · X امتحان"
     },
     "today": {
       "subtitle": "آج کی کلاس کی فہرست",
@@ -265,6 +291,7 @@
       "anomalies": "بے ضابطگیاں",
       "calendar": "کیلنڈر",
       "policy": "پالیسی",
+      "register": "رجسٹر",
       "section": {
         "overview": "جائزہ",
         "people": "لوگ",
@@ -365,6 +392,18 @@
       "allClear": "سب ٹھیک ہے",
       "needsReview_one": "{{count}} بے ضابطگی کا جائزہ ضروری",
       "needsReview_other": "{{count}} بے ضابطگیوں کا جائزہ ضروری"
+    },
+    "register": {
+      "pageTitle": "کلاس رجسٹر",
+      "subtitle": "ماہانہ حاضری گرڈ دیکھنے کے لیے کلاس منتخب کریں۔",
+      "classPicker": "کلاس",
+      "noClasses": "ابھی کوئی کلاس سیٹ نہیں ہوئی۔"
+    },
+    "todayRegister": {
+      "title": "آج کا رجسٹر",
+      "lockedOf": "{{total}} میں سے {{locked}} بند",
+      "locked": "بند",
+      "pending": "زیرِ غور"
     },
     "stats": {
       "present": "حاضر",
