@@ -239,11 +239,58 @@
       "reports": "Reports",
       "notifications": "Notifications",
       "anomalies": "Anomalies",
+      "calendar": "Calendar",
       "section": {
         "overview": "Overview",
         "people": "People",
         "infrastructure": "Infrastructure",
         "operations": "Operations"
+      }
+    },
+    "calendar": {
+      "pageTitle": "School calendar",
+      "subtitle": "Mark holidays, exam days, and half-day Fridays.",
+      "newButton": "Add holiday",
+      "prevYear": "Previous year",
+      "nextYear": "Next year",
+      "dateHeader": "Date",
+      "labelHeader": "Name",
+      "kindHeader": "Type",
+      "actionsHeader": "Actions",
+      "editAction": "Edit",
+      "deleteAction": "Delete",
+      "empty": "No holidays recorded for {{year}}.",
+      "createSuccess": "Holiday added.",
+      "editSuccess": "Holiday updated.",
+      "deleteSuccess": "Holiday removed.",
+      "kind": {
+        "closed": "Closed",
+        "exam": "Exam day",
+        "half_day": "Half day"
+      },
+      "form": {
+        "createTitle": "Add a holiday",
+        "editTitle": "Edit holiday",
+        "dateLabel": "Date",
+        "labelLabel": "Name",
+        "labelPlaceholder": "Independence Day",
+        "kindLabel": "Type",
+        "endTimeLabel": "Effective end time",
+        "endTimeHelp": "When the half-day actually ends, in Karachi time (e.g. 12:00).",
+        "createSubmit": "Add",
+        "saveSubmit": "Save"
+      },
+      "delete": {
+        "title": "Delete this holiday?",
+        "confirmBody": "“{{label}}” on {{date}} will be removed. Attendance for that day will be recalculated.",
+        "submit": "Delete"
+      },
+      "errors": {
+        "load": "Couldn't load the calendar.",
+        "generic": "Something went wrong.",
+        "conflict": "A holiday already exists on that date.",
+        "invalid": "Please complete every field correctly.",
+        "endTimeRequired": "Half days need an effective end time."
       }
     },
     "anomalyHeadline": {

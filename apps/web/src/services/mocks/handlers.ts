@@ -10,6 +10,7 @@ import type {
   CardAuditEntry,
   Device,
   DeviceToken,
+  Holiday,
   TapEvent,
   User,
 } from '@fyntra/schemas'
@@ -17,10 +18,12 @@ import {
   assignCardRequestSchema,
   createDeviceRequestSchema,
   createDeviceTokenRequestSchema,
+  createHolidayRequestSchema,
   manualTapEventRequestSchema,
   notificationSettingsSchema,
   patchCardRequestSchema,
   patchDeviceRequestSchema,
+  patchHolidayRequestSchema,
   replaceCardRequestSchema,
   requestOtpRequestSchema,
   simulateTapRequestSchema,
@@ -346,6 +349,64 @@ export const handlers = [
     if (!token) return HttpResponse.json({ error: 'Not found' }, { status: 404 })
     token.revokedAt = new Date().toISOString()
     return HttpResponse.json(token)
+  }),
+
+  // --- Holidays -----------------------------------------------------------
+
+  http.get(`${API}/holidays`, async ({ request }) => {
+    await latency()
+    const url = new URL(request.url)
+    const from = url.searchParams.get('from') ?? undefined
+    const to = url.searchParams.get('to') ?? undefined
+    const rows = seedStore.holidays
+      .filter((h) => (!from || h.date >= from) && (!to || h.date <= to))
+      .sort((a, b) => a.date.localeCompare(b.date))
+    return HttpResponse.json(rows)
+  }),
+
+  http.post(`${API}/holidays`, async ({ request }) => {
+    await latency()
+    const body = createHolidayRequestSchema.safeParse(await request.json())
+    if (!body.success) return HttpResponse.json({ error: 'Invalid body' }, { status: 400 })
+    if (seedStore.holidays.some((h) => h.date === body.data.date)) {
+      return HttpResponse.json({ error: 'Already exists' }, { status: 409 })
+    }
+    const adminUser = seedStore.users.find((u) => u.role === 'admin')
+    const holiday: Holiday = {
+      id: `hol_${Date.now().toString(36)}_${Math.floor(Math.random() * 1_000_000).toString(36)}`,
+      schoolId: seedStore.school.id,
+      date: body.data.date,
+      label: body.data.label,
+      kind: body.data.kind,
+      effectiveEndTime: body.data.effectiveEndTime,
+      createdBy: adminUser?.id,
+      createdAt: new Date().toISOString(),
+    }
+    seedStore.holidays.push(holiday)
+    return HttpResponse.json(holiday)
+  }),
+
+  http.patch(`${API}/holidays/:id`, async ({ params, request }) => {
+    await latency()
+    const body = patchHolidayRequestSchema.safeParse(await request.json())
+    if (!body.success) return HttpResponse.json({ error: 'Invalid body' }, { status: 400 })
+    const h = seedStore.holidays.find((x) => x.id === params.id)
+    if (!h) return HttpResponse.json({ error: 'Not found' }, { status: 404 })
+    if (body.data.date !== undefined) h.date = body.data.date
+    if (body.data.label !== undefined) h.label = body.data.label
+    if (body.data.kind !== undefined) h.kind = body.data.kind
+    if (body.data.effectiveEndTime !== undefined) h.effectiveEndTime = body.data.effectiveEndTime
+    // Clear effectiveEndTime when kind moved away from half_day, matching the api.
+    if (h.kind !== 'half_day') h.effectiveEndTime = undefined
+    return HttpResponse.json(h)
+  }),
+
+  http.delete(`${API}/holidays/:id`, async ({ params }) => {
+    await latency()
+    const idx = seedStore.holidays.findIndex((h) => h.id === params.id)
+    if (idx === -1) return HttpResponse.json({ error: 'Not found' }, { status: 404 })
+    seedStore.holidays.splice(idx, 1)
+    return HttpResponse.json({ ok: true })
   }),
 
   // --- Tap events ---------------------------------------------------------

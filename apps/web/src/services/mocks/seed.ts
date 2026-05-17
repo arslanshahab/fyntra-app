@@ -9,6 +9,7 @@ import type {
   Class,
   Device,
   DeviceToken,
+  Holiday,
   NotificationLog,
   NotificationSettings,
   School,
@@ -129,6 +130,9 @@ export interface SeedStore {
   notifications: NotificationLog[]
   // PATCH /notifications/settings target — keyed by user.
   notificationSettings: Map<string, NotificationSettings>
+  // School calendar exceptions (holidays, exam days, half-day Fridays).
+  // Starts empty in seed; admins populate via the Calendar page.
+  holidays: Holiday[]
 }
 
 export interface BuildSeedOptions {
@@ -422,6 +426,7 @@ export function buildSeed(options: BuildSeedOptions = {}): SeedStore {
     tapEvents,
     notifications,
     notificationSettings,
+    holidays: [],
   }
 }
 

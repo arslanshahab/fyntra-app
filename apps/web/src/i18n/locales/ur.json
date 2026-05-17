@@ -239,11 +239,58 @@
       "reports": "رپورٹس",
       "notifications": "نوٹیفیکیشنز",
       "anomalies": "بے ضابطگیاں",
+      "calendar": "کیلنڈر",
       "section": {
         "overview": "جائزہ",
         "people": "لوگ",
         "infrastructure": "انفراسٹرکچر",
         "operations": "آپریشنز"
+      }
+    },
+    "calendar": {
+      "pageTitle": "اسکول کیلنڈر",
+      "subtitle": "چھٹیاں، امتحان کے دن اور آدھے دن نوٹ کریں۔",
+      "newButton": "چھٹی شامل کریں",
+      "prevYear": "پچھلا سال",
+      "nextYear": "اگلا سال",
+      "dateHeader": "تاریخ",
+      "labelHeader": "نام",
+      "kindHeader": "قسم",
+      "actionsHeader": "ایکشن",
+      "editAction": "ترمیم",
+      "deleteAction": "حذف کریں",
+      "empty": "{{year}} کے لیے کوئی چھٹی درج نہیں ہے۔",
+      "createSuccess": "چھٹی شامل ہو گئی۔",
+      "editSuccess": "چھٹی اپ ڈیٹ ہو گئی۔",
+      "deleteSuccess": "چھٹی حذف ہو گئی۔",
+      "kind": {
+        "closed": "بند",
+        "exam": "امتحان کا دن",
+        "half_day": "آدھا دن"
+      },
+      "form": {
+        "createTitle": "چھٹی شامل کریں",
+        "editTitle": "چھٹی میں ترمیم",
+        "dateLabel": "تاریخ",
+        "labelLabel": "نام",
+        "labelPlaceholder": "یومِ آزادی",
+        "kindLabel": "قسم",
+        "endTimeLabel": "اختتام کا وقت",
+        "endTimeHelp": "کراچی کے وقت کے مطابق آدھے دن کا اختتام (مثلاً 12:00)۔",
+        "createSubmit": "شامل کریں",
+        "saveSubmit": "محفوظ کریں"
+      },
+      "delete": {
+        "title": "یہ چھٹی حذف کریں؟",
+        "confirmBody": "{{date}} کو “{{label}}” کو ہٹا دیا جائے گا۔ اس دن کی حاضری دوبارہ شمار ہو گی۔",
+        "submit": "حذف کریں"
+      },
+      "errors": {
+        "load": "کیلنڈر لوڈ نہیں ہو سکا۔",
+        "generic": "کچھ غلط ہو گیا۔",
+        "conflict": "اس تاریخ کے لیے پہلے سے ایک چھٹی موجود ہے۔",
+        "invalid": "براہ کرم تمام خانے درست بھریں۔",
+        "endTimeRequired": "آدھے دن کے لیے اختتام کا وقت لازمی ہے۔"
       }
     },
     "anomalyHeadline": {

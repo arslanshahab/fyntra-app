@@ -252,3 +252,78 @@ export const meResponseSchema = z.object({
 export type MeResponse = z.infer<typeof meResponseSchema>
 
 export const okResponseSchema = z.object({ ok: z.literal(true) })
+
+// --- School calendar (holidays) ---
+//
+// A dated exception to the regular school calendar. See
+// docs/superpowers/specs/2026-05-17-fyntra-attendance-management.md §3.1
+// for the full data model and §8.1 for half-day semantics.
+//
+//   - 'closed'   — school is shut. Absent cron short-circuits; register shows H.
+//   - 'exam'     — attendance not recorded. Same cron behaviour as closed; register shows E.
+//   - 'half_day' — school ends earlier than normal. `effectiveEndTime` is required
+//                  (HH:MM, Karachi). Absent cron still runs; recompute treats the
+//                  shortened end as the day's end. Register column shows HD.
+export const holidayKindSchema = z.enum(['closed', 'exam', 'half_day'])
+export type HolidayKind = z.infer<typeof holidayKindSchema>
+
+// "HH:MM" 24-hour clock in Karachi local time.
+const timeOfDaySchema = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Expected HH:MM 24-hour time')
+const dateOnlySchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Expected YYYY-MM-DD')
+
+export const holidaySchema = z.object({
+  id: idSchema,
+  schoolId: idSchema,
+  date: dateOnlySchema,
+  label: z.string().min(1).max(120),
+  kind: holidayKindSchema,
+  effectiveEndTime: timeOfDaySchema.optional(),
+  createdBy: idSchema.optional(),
+  createdAt: z.string(),
+})
+export type Holiday = z.infer<typeof holidaySchema>
+
+// Half-day kind requires effectiveEndTime; the other kinds reject it. This
+// is enforced both on POST and PATCH so we never end up with a half_day row
+// missing the early-end time (which the recompute logic relies on).
+function requireEndTimeForHalfDay<T extends { kind?: HolidayKind; effectiveEndTime?: string }>(
+  value: T,
+  ctx: z.RefinementCtx,
+): void {
+  if (value.kind === 'half_day' && !value.effectiveEndTime) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'effectiveEndTime is required when kind is half_day',
+      path: ['effectiveEndTime'],
+    })
+  }
+  if (value.kind && value.kind !== 'half_day' && value.effectiveEndTime) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'effectiveEndTime is only allowed when kind is half_day',
+      path: ['effectiveEndTime'],
+    })
+  }
+}
+
+export const createHolidayRequestSchema = z
+  .object({
+    date: dateOnlySchema,
+    label: z.string().min(1).max(120),
+    kind: holidayKindSchema,
+    effectiveEndTime: timeOfDaySchema.optional(),
+  })
+  .superRefine(requireEndTimeForHalfDay)
+export type CreateHolidayRequest = z.infer<typeof createHolidayRequestSchema>
+
+export const patchHolidayRequestSchema = z
+  .object({
+    date: dateOnlySchema.optional(),
+    label: z.string().min(1).max(120).optional(),
+    kind: holidayKindSchema.optional(),
+    // PATCH cannot null-out effectiveEndTime — to remove it, change kind
+    // away from half_day. Keeps the half-day invariant a single rule.
+    effectiveEndTime: timeOfDaySchema.optional(),
+  })
+  .superRefine(requireEndTimeForHalfDay)
+export type PatchHolidayRequest = z.infer<typeof patchHolidayRequestSchema>
