@@ -57,6 +57,13 @@
       "when": 1779045499690,
       "tag": "0007_melodic_red_wolf",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1779050605285,
+      "tag": "0008_living_vulture",
+      "breakpoints": true
     }
   ]
 }
