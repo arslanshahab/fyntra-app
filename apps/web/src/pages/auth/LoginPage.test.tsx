@@ -49,7 +49,7 @@ describe('LoginPage', () => {
     renderLogin()
     await user.type(screen.getByLabelText(/phone number/i), '0300')
     await user.click(screen.getByRole('button', { name: /send code/i }))
-    expect(await screen.findByText(/valid pakistani mobile number/i)).toBeInTheDocument()
+    expect(await screen.findByText(/valid mobile number/i)).toBeInTheDocument()
   })
 
   it('advances to the OTP step after a successful request', async () => {
@@ -86,7 +86,7 @@ describe('LoginPage', () => {
     // always returns ok, so we get to the OTP step with an unknown phone,
     // then verify fails with 401.
     renderLogin()
-    await user.type(screen.getByLabelText(/phone number/i), '+929999999999')
+    await user.type(screen.getByLabelText(/phone number/i), '+923009999999')
     await user.click(screen.getByRole('button', { name: /send code/i }))
 
     const otpField = await screen.findByLabelText(/one-time code/i)

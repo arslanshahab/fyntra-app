@@ -200,9 +200,17 @@ export type NotificationSettings = z.infer<typeof notificationSettingsSchema>
 
 // --- Request schemas (POST/PATCH bodies) ---
 
-export const requestOtpRequestSchema = z.object({ phone: z.string() })
+// E.164 phone numbers restricted to the three markets Fyntra supports today.
+//   PK (+92):  mobile prefix `3`, then 9 digits.   e.g. +923001234567
+//   UAE (+971): mobile prefix `5`, then 8 digits.  e.g. +971501234567
+//   US (+1):    NANP area code starting 2-9, then 9 digits. e.g. +12025551234
+// Update both this regex and the matching i18n copy when adding a new market.
+export const PHONE_REGEX = /^(?:\+923\d{9}|\+9715\d{8}|\+1[2-9]\d{9})$/
+export const phoneFieldSchema = z.string().regex(PHONE_REGEX)
+
+export const requestOtpRequestSchema = z.object({ phone: phoneFieldSchema })
 export const verifyOtpRequestSchema = z.object({
-  phone: z.string(),
+  phone: phoneFieldSchema,
   otp: z.string().regex(/^\d{4}$/),
 })
 export const assignCardRequestSchema = z.object({ cardId: idSchema, studentId: idSchema })

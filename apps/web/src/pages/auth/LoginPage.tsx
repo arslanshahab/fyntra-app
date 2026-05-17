@@ -11,9 +11,10 @@ import { Input } from '../../components/atoms/Input'
 import { useRequestOtpMutation, useVerifyOtpMutation } from '../../features/auth/mutations'
 import { ApiError } from '../../services/api/client'
 import { useAuthStore } from '../../stores/auth'
+import { PHONE_REGEX } from '@fyntra/schemas'
 
 const phoneSchema = z.object({
-  phone: z.string().regex(/^\+\d{8,15}$/, 'invalid'),
+  phone: z.string().regex(PHONE_REGEX, 'invalid'),
 })
 
 const otpSchema = z.object({

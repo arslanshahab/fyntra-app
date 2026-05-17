@@ -1,4 +1,5 @@
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto'
+import { PHONE_REGEX } from '@fyntra/schemas'
 import { authRepo } from './repository.js'
 import { sendTemplate } from '../../services/whatsapp.js'
 import { UnauthorizedError, ValidationError } from '../../lib/errors.js'
@@ -17,7 +18,7 @@ function hashOtp(code: string, salt: string): string {
 }
 
 export async function requestOtp(phone: string): Promise<{ ok: true }> {
-  if (!/^\+\d{8,15}$/.test(phone)) throw new ValidationError('Invalid phone format')
+  if (!PHONE_REGEX.test(phone)) throw new ValidationError('Invalid phone format')
   const code = generateOtp()
   const salt = randomBytes(16).toString('hex')
   const codeHash = hashOtp(code, salt)
