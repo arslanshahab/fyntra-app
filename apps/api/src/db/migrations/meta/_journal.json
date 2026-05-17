@@ -29,6 +29,13 @@
       "when": 1779042000001,
       "tag": "0003_little_next_avengers",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1779100000000,
+      "tag": "0004_icy_goblin_queen",
+      "breakpoints": true
     }
   ]
 }

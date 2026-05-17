@@ -70,6 +70,10 @@ export const attendanceRecords = pgTable(
     leftWithoutScan: boolean('left_without_scan').notNull().default(false),
     flaggedForReview: boolean('flagged_for_review').notNull().default(false),
     cardAnomaly: boolean('card_anomaly').notNull().default(false),
+    // Register sign-off (F4): once a class teacher locks the day, recompute
+    // short-circuits and non-admin manual overrides are rejected.
+    lockedAt: timestamp('locked_at', { withTimezone: true }),
+    lockedBy: uuid('locked_by').references(() => users.id, { onDelete: 'set null' }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },

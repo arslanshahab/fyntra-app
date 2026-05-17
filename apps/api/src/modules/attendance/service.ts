@@ -8,6 +8,15 @@ export async function recomputeAttendanceForDay(
 ) {
   const school = await attendanceRepo.school(schoolId)
   if (!school) return null
+
+  // If the day is locked (register signed off), the recorded attendance is
+  // authoritative — don't let late-arriving taps stomp the locked status.
+  // Admin overrides bypass this via the manual-override path (which writes
+  // the tap event but the recompute call from that flow still short-
+  // circuits here for non-locked students).
+  const existing = await attendanceRepo.findRecord(schoolId, studentId, ymd)
+  if (existing?.lockedAt) return existing
+
   const taps = await attendanceRepo.tapsForDay(schoolId, studentId, ymd)
   if (taps.length === 0) return null
 

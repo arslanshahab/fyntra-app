@@ -1,17 +1,20 @@
 import { useMemo, useState } from 'react'
-import { LogIn, LogOut, UserX, Users } from 'lucide-react'
+import { Lock, LogIn, LogOut, UserX, Users } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { formatDistanceToNow } from 'date-fns'
 
 import { Avatar } from '../../components/atoms/Avatar'
 import { Badge } from '../../components/atoms/Badge'
 import { Button } from '../../components/atoms/Button'
+import { Icon } from '../../components/atoms/Icon'
 import { Modal } from '../../components/molecules/Modal'
 import { StatusCard } from '../../components/molecules/StatusCard'
 import { useClassAttendanceToday, useManualTapMutation } from '../../features/attendance/queries'
 import { useMeQuery } from '../../features/auth/queries'
+import { useLockRegister } from '../../features/register/queries'
 import { useStudentsQuery } from '../../features/students/queries'
 import type { AttendanceRecord, Student, TapDirection, TapEventReasonKind } from '@fyntra/schemas'
-import { formatTimeInKarachi } from '../../utils/datetime'
+import { dateStrInKarachi, formatTimeInKarachi } from '../../utils/datetime'
 
 const statusTone: Record<AttendanceRecord['status'], 'present' | 'late' | 'absent' | 'notyet'> = {
   present: 'present',
@@ -111,9 +114,11 @@ export function TeacherTodayPage() {
   const attendance = useClassAttendanceToday(klass?.id, me.data?.school)
   const manualTap = useManualTapMutation()
 
+  const lockRegister = useLockRegister(klass?.id)
   const [override, setOverride] = useState<OverrideState | null>(null)
   const [banner, setBanner] = useState<{ kind: 'success' | 'error'; text: string } | null>(null)
   const [filter, setFilter] = useState<RosterFilter>('all')
+  const [showLockConfirm, setShowLockConfirm] = useState(false)
 
   const attendanceByStudent = useMemo(
     () => new Map((attendance.data ?? []).map((a) => [a.studentId, a])),
@@ -157,6 +162,32 @@ export function TeacherTodayPage() {
       return a.status === filter
     })
   }, [sortedRoster, attendanceByStudent, filter])
+
+  // Day-lock state derived from the attendance rows: every record for a
+  // class on a locked day carries the same lockedAt/lockedBy. We pick the
+  // first one we see — they're all identical post-lock. Inexpensive, so
+  // we let React Compiler handle memoization rather than spelling out
+  // useMemo.
+  const firstLocked = (attendance.data ?? []).find((a) => a.lockedAt)
+  const lockInfo = firstLocked
+    ? { lockedAt: firstLocked.lockedAt!, lockedBy: firstLocked.lockedBy }
+    : null
+  const isLocked = lockInfo !== null
+
+  const submitLock = () => {
+    if (!klass) return
+    setBanner(null)
+    lockRegister.mutate(
+      { date: dateStrInKarachi() },
+      {
+        onSuccess: () => {
+          setBanner({ kind: 'success', text: t('teacher.today.lock.success') })
+          setShowLockConfirm(false)
+        },
+        onError: () => setBanner({ kind: 'error', text: t('teacher.today.lock.error') }),
+      },
+    )
+  }
 
   const submitOverride = () => {
     if (!override || !override.reason.trim()) return
@@ -224,12 +255,34 @@ export function TeacherTodayPage() {
           </h1>
           <p className="mt-0.5 text-sm text-stone-500">{t('teacher.today.subtitle')}</p>
         </div>
-        {students.data ? (
-          <span className="font-mono text-sm tabular-nums text-stone-500">
-            {t('teacher.today.studentCount', { count: students.data.length })}
-          </span>
-        ) : null}
+        <div className="flex items-center gap-3">
+          {students.data ? (
+            <span className="font-mono text-sm tabular-nums text-stone-500">
+              {t('teacher.today.studentCount', { count: students.data.length })}
+            </span>
+          ) : null}
+          {!isLocked && sortedRoster.length > 0 ? (
+            <Button size="sm" onClick={() => setShowLockConfirm(true)}>
+              <Icon icon={Lock} size="sm" />
+              {t('teacher.today.lock.button')}
+            </Button>
+          ) : null}
+        </div>
       </header>
+
+      {isLocked && lockInfo ? (
+        <div
+          role="status"
+          className="flex items-start gap-3 rounded-lg bg-stone-100 px-3 py-2.5 text-sm text-stone-700 ring-1 ring-stone-200"
+        >
+          <Icon icon={Lock} size="sm" className="mt-0.5 text-stone-500" />
+          <p className="flex-1">
+            {t('teacher.today.lock.banner', {
+              when: formatDistanceToNow(new Date(lockInfo.lockedAt), { addSuffix: true }),
+            })}
+          </p>
+        </div>
+      ) : null}
 
       {banner ? (
         <div
@@ -359,20 +412,24 @@ export function TeacherTodayPage() {
                           </td>
                           <td className="px-4 py-3">
                             <div className="flex justify-end">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() =>
-                                  setOverride({
-                                    student,
-                                    direction: a?.firstInAt ? 'out' : 'in',
-                                    reasonKind: a?.firstInAt ? 'early_pickup' : 'forgot_card',
-                                    reason: '',
-                                  })
-                                }
-                              >
-                                {t('teacher.today.override')}
-                              </Button>
+                              {isLocked ? (
+                                <Icon icon={Lock} size="sm" className="text-stone-400" />
+                              ) : (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() =>
+                                    setOverride({
+                                      student,
+                                      direction: a?.firstInAt ? 'out' : 'in',
+                                      reasonKind: a?.firstInAt ? 'early_pickup' : 'forgot_card',
+                                      reason: '',
+                                    })
+                                  }
+                                >
+                                  {t('teacher.today.override')}
+                                </Button>
+                              )}
                             </div>
                           </td>
                         </tr>
@@ -434,21 +491,23 @@ export function TeacherTodayPage() {
                       </span>
                     </span>
                   </div>
-                  <Button
-                    variant="secondary"
-                    size="md"
-                    className="mt-4 w-full"
-                    onClick={() =>
-                      setOverride({
-                        student,
-                        direction: a?.firstInAt ? 'out' : 'in',
-                        reasonKind: a?.firstInAt ? 'early_pickup' : 'forgot_card',
-                        reason: '',
-                      })
-                    }
-                  >
-                    {t('teacher.today.override')}
-                  </Button>
+                  {isLocked ? null : (
+                    <Button
+                      variant="secondary"
+                      size="md"
+                      className="mt-4 w-full"
+                      onClick={() =>
+                        setOverride({
+                          student,
+                          direction: a?.firstInAt ? 'out' : 'in',
+                          reasonKind: a?.firstInAt ? 'early_pickup' : 'forgot_card',
+                          reason: '',
+                        })
+                      }
+                    >
+                      {t('teacher.today.override')}
+                    </Button>
+                  )}
                 </article>
               )
             })
@@ -535,6 +594,24 @@ export function TeacherTodayPage() {
               </Button>
             </div>
           </Modal>
+      ) : null}
+
+      {showLockConfirm ? (
+        <Modal label={t('teacher.today.lock.confirmTitle')}>
+          <h2 className="font-display text-lg font-semibold tracking-tight text-stone-900">
+            {t('teacher.today.lock.confirmTitle')}
+          </h2>
+          <p className="mt-2 text-sm text-stone-600">{t('teacher.today.lock.confirmBody')}</p>
+          <p className="mt-2 text-sm text-stone-500">{t('teacher.today.lock.confirmConsequences')}</p>
+          <div className="mt-6 flex justify-end gap-2">
+            <Button variant="ghost" onClick={() => setShowLockConfirm(false)}>
+              {t('common.cancel')}
+            </Button>
+            <Button onClick={submitLock} isLoading={lockRegister.isPending} disabled={lockRegister.isPending}>
+              {t('teacher.today.lock.submit')}
+            </Button>
+          </div>
+        </Modal>
       ) : null}
     </div>
   )
