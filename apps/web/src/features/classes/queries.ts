@@ -7,6 +7,7 @@ import {
   okResponseSchema,
   type Class,
 } from '@fyntra/schemas'
+import { userKeys } from '../users/queries'
 
 const classListSchema = z.array(classSchema)
 
@@ -35,7 +36,7 @@ export function useCreateClass() {
       void client.invalidateQueries({ queryKey: classKeys.list })
       // The teacher picker depends on the classes list to know who's
       // already assigned, so invalidate it too.
-      void client.invalidateQueries({ queryKey: ['users', 'teachers'] })
+      void client.invalidateQueries({ queryKey: userKeys.teachers })
     },
   })
 }
@@ -51,7 +52,7 @@ export function usePatchClass() {
     mutationFn: ({ id, patch }) => apiPatch(`/classes/${id}`, patch, classSchema),
     onSuccess: () => {
       void client.invalidateQueries({ queryKey: classKeys.list })
-      void client.invalidateQueries({ queryKey: ['users', 'teachers'] })
+      void client.invalidateQueries({ queryKey: userKeys.teachers })
     },
   })
 }
@@ -62,7 +63,7 @@ export function useDeleteClass() {
     mutationFn: (id) => apiDelete(`/classes/${id}`, okResponseSchema),
     onSuccess: () => {
       void client.invalidateQueries({ queryKey: classKeys.list })
-      void client.invalidateQueries({ queryKey: ['users', 'teachers'] })
+      void client.invalidateQueries({ queryKey: userKeys.teachers })
     },
   })
 }
