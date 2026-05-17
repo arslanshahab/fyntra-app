@@ -30,7 +30,7 @@ describe('userSchema', () => {
         id: 'u_1',
         role: 'principal',
         fullName: 'X',
-        phone: '+92',
+        phone: '+923001234567',
         preferredLanguage: 'en',
         schoolId: 'sch_1',
       }),
@@ -43,7 +43,7 @@ describe('userSchema', () => {
         id: 'u_1',
         role: 'parent',
         fullName: 'X',
-        phone: '+92',
+        phone: '+923001234567',
         preferredLanguage: 'fr',
         schoolId: 'sch_1',
       }),
@@ -141,9 +141,9 @@ describe('notificationSettingsSchema', () => {
 
 describe('verifyOtpRequestSchema', () => {
   it('requires a 4-digit OTP', () => {
-    expect(() => verifyOtpRequestSchema.parse({ phone: '+92', otp: '12345' })).toThrow()
-    expect(() => verifyOtpRequestSchema.parse({ phone: '+92', otp: '12a4' })).toThrow()
-    expect(verifyOtpRequestSchema.parse({ phone: '+92', otp: '1234' }).otp).toBe('1234')
+    expect(() => verifyOtpRequestSchema.parse({ phone: '+923001234567', otp: '12345' })).toThrow()
+    expect(() => verifyOtpRequestSchema.parse({ phone: '+923001234567', otp: '12a4' })).toThrow()
+    expect(verifyOtpRequestSchema.parse({ phone: '+923001234567', otp: '1234' }).otp).toBe('1234')
   })
 })
 

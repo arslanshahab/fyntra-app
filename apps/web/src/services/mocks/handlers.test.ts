@@ -45,7 +45,7 @@ describe('auth handlers', () => {
     const res = await fetch(`${BASE}/auth/verify-otp`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ phone: '+999000', otp: '1234' }),
+      body: JSON.stringify({ phone: '+923009999999', otp: '1234' }),
     })
     expect(res.status).toBe(401)
   })

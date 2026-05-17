@@ -30,7 +30,7 @@
       "phoneLabel": "Phone number",
       "phonePlaceholder": "+923001234567",
       "submit": "Send code",
-      "invalidPhone": "Enter a valid phone number in international format (e.g. +923001234567 or +971501234567)."
+      "invalidPhone": "Enter a valid mobile number from Pakistan (+92), UAE (+971), or US (+1). Example: +923001234567."
     },
     "otpStep": {
       "heading": "Check your messages.",

@@ -5,12 +5,11 @@ this pass. Logged here so they're captured but don't block momentum.
 
 ## Pre-existing test failures (not introduced by this pass)
 
-- **`apps/web/src/pages/auth/LoginPage.test.tsx`** — the "invalid phone" test
-  asserts on the substring `/valid pakistani mobile number/i`, but the active
-  English locale string is the more generic "Enter a valid phone number in
-  international format (e.g. +923001234567 or +971501234567)." The test was
-  red on `main` before slice 1 started; left alone here. Fix: either tighten
-  the locale copy back to "Pakistani mobile number" or relax the test regex.
+- **`apps/api/src/modules/readers/service.test.ts`** — "ingests a tap, creates
+  record, writes in_app + whatsapp logs" expects the dispatched WhatsApp
+  template name to be `fyntra_tap_event` but the dispatcher emits
+  `hello_world`. Pre-dates this branch; suspect a template-name change that
+  outpaced the test. 90/91 API tests pass otherwise.
 
 ## Visual / behavioural quirks
 
