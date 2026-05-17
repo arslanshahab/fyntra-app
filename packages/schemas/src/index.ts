@@ -106,7 +106,7 @@ export type StudentDetail = z.infer<typeof studentDetailSchema>
 export const classSchema = z.object({
   id: idSchema,
   name: z.string(),
-  teacherId: idSchema,
+  teacherId: idSchema.nullable(),
   schoolId: idSchema,
   studentCount: z.number().int().nonnegative().optional(),
 })
@@ -114,14 +114,14 @@ export type Class = z.infer<typeof classSchema>
 
 export const createClassRequestSchema = z.object({
   name: z.string().trim().min(1).max(60),
-  teacherId: idSchema,
+  teacherId: idSchema.nullable().optional(),
 })
 export type CreateClassRequest = z.infer<typeof createClassRequestSchema>
 
 export const patchClassRequestSchema = z
   .object({
     name: z.string().trim().min(1).max(60).optional(),
-    teacherId: idSchema.optional(),
+    teacherId: idSchema.nullable().optional(),
   })
   .refine((v) => v.name !== undefined || v.teacherId !== undefined, {
     message: 'at least one field is required',
