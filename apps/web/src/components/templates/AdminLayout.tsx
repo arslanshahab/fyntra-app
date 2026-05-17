@@ -7,6 +7,7 @@ import {
   Home,
   type LucideIcon,
   Radio,
+  Sliders,
   Users,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
@@ -51,6 +52,7 @@ const NAV_GROUPS: NavGroup[] = [
     labelKey: 'admin.nav.section.operations',
     items: [
       { to: '/admin/calendar', labelKey: 'admin.nav.calendar', icon: CalendarDays },
+      { to: '/admin/policy', labelKey: 'admin.nav.policy', icon: Sliders },
       { to: '/admin/reports', labelKey: 'admin.nav.reports', icon: FileSpreadsheet },
       { to: '/admin/notifications', labelKey: 'admin.nav.notifications', icon: Bell },
       { to: '/admin/anomalies', labelKey: 'admin.nav.anomalies', icon: AlertTriangle },

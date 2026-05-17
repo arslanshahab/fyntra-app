@@ -168,6 +168,7 @@ export function buildSeed(options: BuildSeedOptions = {}): SeedStore {
     endTime: '13:30',
     lateThresholdMinutes: 15,
     absentThresholdMinutes: 30,
+    workingDays: ['mon', 'tue', 'wed', 'thu', 'fri'],
   }
 
   // Teachers + classes (one teacher per class).

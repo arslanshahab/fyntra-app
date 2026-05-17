@@ -156,6 +156,7 @@ const sampleSchool = {
   endTime: '13:30',
   lateThresholdMinutes: 15,
   absentThresholdMinutes: 30,
+  workingDays: ['mon', 'tue', 'wed', 'thu', 'fri'] as const,
 }
 
 describe('meResponseSchema', () => {

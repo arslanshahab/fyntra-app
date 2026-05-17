@@ -95,6 +95,7 @@ describe('tap-events routes', () => {
         studentId,
         direction: 'in',
         occurredAt: new Date('2026-05-13T02:48:00Z').toISOString(),
+        reasonKind: 'forgot_card',
         reason: 'Forgot card at home',
       },
     })
@@ -107,6 +108,7 @@ describe('tap-events routes', () => {
     expect(taps).toHaveLength(1)
     expect(taps[0]?.source).toBe('manual')
     expect(taps[0]?.manualReason).toBe('Forgot card at home')
+    expect(taps[0]?.manualReasonKind).toBe('forgot_card')
     expect(taps[0]?.manualOverrideBy).toBe(teacherId)
     expect(taps[0]?.deviceId).toBeNull()
 
@@ -132,7 +134,43 @@ describe('tap-events routes', () => {
         studentId,
         direction: 'in',
         occurredAt: new Date('2026-05-13T02:48:00Z').toISOString(),
+        reasonKind: 'forgot_card',
         reason: '',
+      },
+    })
+    expect(res.statusCode).toBe(400)
+  })
+
+  it('POST /tap-events/manual without reasonKind is rejected by Zod', async () => {
+    const { schoolId, teacherId, studentId } = await seedOneSchool()
+    const t = token(app, { userId: teacherId, schoolId, role: 'teacher' })
+    const res = await app.inject({
+      method: 'POST',
+      url: '/tap-events/manual',
+      headers: { authorization: `Bearer ${t}` },
+      payload: {
+        studentId,
+        direction: 'in',
+        occurredAt: new Date('2026-05-13T02:48:00Z').toISOString(),
+        reason: 'Forgot card',
+      },
+    })
+    expect(res.statusCode).toBe(400)
+  })
+
+  it('POST /tap-events/manual with bogus reasonKind value is rejected by Zod', async () => {
+    const { schoolId, teacherId, studentId } = await seedOneSchool()
+    const t = token(app, { userId: teacherId, schoolId, role: 'teacher' })
+    const res = await app.inject({
+      method: 'POST',
+      url: '/tap-events/manual',
+      headers: { authorization: `Bearer ${t}` },
+      payload: {
+        studentId,
+        direction: 'in',
+        occurredAt: new Date('2026-05-13T02:48:00Z').toISOString(),
+        reasonKind: 'made_up_value',
+        reason: 'Forgot card',
       },
     })
     expect(res.statusCode).toBe(400)
@@ -149,6 +187,7 @@ describe('tap-events routes', () => {
         studentId,
         direction: 'in',
         occurredAt: new Date('2026-05-13T02:48:00Z').toISOString(),
+        reasonKind: 'other',
         reason: 'irrelevant',
       },
     })

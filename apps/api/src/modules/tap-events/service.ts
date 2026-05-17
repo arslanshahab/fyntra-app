@@ -1,4 +1,5 @@
 import { and, eq } from 'drizzle-orm'
+import type { TapEventReasonKind } from '@fyntra/schemas'
 import { db } from '../../db/client.js'
 import { users } from '../../db/schema/auth.js'
 import { students, studentGuardians } from '../../db/schema/students.js'
@@ -38,6 +39,7 @@ export async function listTapEvents(ctx: TenantContext, filters: ListTapEventsFi
     source: r.source,
     manualOverrideBy: r.manualOverrideBy ?? undefined,
     manualReason: r.manualReason ?? undefined,
+    manualReasonKind: r.manualReasonKind ?? undefined,
   }))
 }
 
@@ -46,6 +48,7 @@ export interface ManualOverrideInput {
   direction: 'in' | 'out'
   occurredAt: string
   reason: string
+  reasonKind: TapEventReasonKind
 }
 
 export async function recordManualOverride(ctx: TenantContext, input: ManualOverrideInput) {
@@ -72,6 +75,7 @@ export async function recordManualOverride(ctx: TenantContext, input: ManualOver
     source: 'manual',
     manualOverrideBy: ctx.userId,
     manualReason: input.reason,
+    manualReasonKind: input.reasonKind,
   })
 
   // Recompute attendance for the affected day

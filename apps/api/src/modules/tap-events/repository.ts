@@ -39,6 +39,16 @@ export const tapEventsRepo = {
     deduplicated?: boolean
     manualOverrideBy?: string
     manualReason?: string
+    manualReasonKind?:
+      | 'forgot_card'
+      | 'out_of_band_tap'
+      | 'sick'
+      | 'leave'
+      | 'half_day'
+      | 'early_pickup'
+      | 'late_arrival'
+      | 'in_school_not_in_class'
+      | 'other'
   }) {
     const id = newId()
     await db.insert(tapEvents).values({ id, ...input, deduplicated: input.deduplicated ?? false })

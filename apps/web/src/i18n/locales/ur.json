@@ -70,9 +70,22 @@
       "overrideDialogTitle": "مینوئل اوور رائیڈ — {{name}}",
       "overrideDialogBody": "یہ ایک مینوئل ٹیپ ایونٹ بنائے گا جو آپ کے نام پر ریکارڈ ہوگا۔ طالب علم کا اسٹیٹس فوراً اپڈیٹ ہو جائے گا۔",
       "directionLabel": "سمت",
-      "reasonLabel": "وجہ",
+      "reasonKindLabel": "وجہ",
+      "reasonKindHelp": "قریب ترین آپشن منتخب کریں۔ اس دن کا رجسٹر کوڈ اسی سے بنتا ہے۔",
+      "reasonLabel": "نوٹس",
       "reasonPlaceholder": "مثلاً کارڈ گھر بھول گئے",
       "reasonHelp": "لازمی۔ آڈٹ کے لیے ٹیپ کے ساتھ ریکارڈ ہوگی۔",
+      "reasonKind": {
+        "forgot_card": "کارڈ بھول گئے",
+        "out_of_band_tap": "بغیر ٹیپ کے",
+        "sick": "بیمار",
+        "leave": "منظور شدہ چھٹی",
+        "half_day": "آدھا دن",
+        "early_pickup": "جلدی واپسی",
+        "late_arrival": "دیر سے آمد",
+        "in_school_not_in_class": "اسکول میں، کلاس میں نہیں",
+        "other": "دیگر"
+      },
       "submitOverride": "ٹیپ ریکارڈ کریں",
       "manualBadge": "مینوئل",
       "table": {
@@ -240,6 +253,7 @@
       "notifications": "نوٹیفیکیشنز",
       "anomalies": "بے ضابطگیاں",
       "calendar": "کیلنڈر",
+      "policy": "پالیسی",
       "section": {
         "overview": "جائزہ",
         "people": "لوگ",
@@ -291,6 +305,49 @@
         "conflict": "اس تاریخ کے لیے پہلے سے ایک چھٹی موجود ہے۔",
         "invalid": "براہ کرم تمام خانے درست بھریں۔",
         "endTimeRequired": "آدھے دن کے لیے اختتام کا وقت لازمی ہے۔"
+      }
+    },
+    "policy": {
+      "pageTitle": "حاضری پالیسی",
+      "subtitle": "روزانہ شیڈول، کام کے دن اور تعلیمی سال۔",
+      "saveButton": "پالیسی محفوظ کریں",
+      "saveSuccess": "پالیسی اپ ڈیٹ ہو گئی۔",
+      "section": {
+        "dailyWindow": "روزانہ وقت",
+        "calendar": "کیلنڈر"
+      },
+      "weekday": {
+        "mon": "پیر",
+        "tue": "منگل",
+        "wed": "بدھ",
+        "thu": "جمعرات",
+        "fri": "جمعہ",
+        "sat": "ہفتہ",
+        "sun": "اتوار"
+      },
+      "fields": {
+        "startTime": "اسکول شروع",
+        "endTime": "اسکول ختم",
+        "lateThresholdMinutes": "تاخیر کی حد (منٹ)",
+        "lateThresholdHelp": "شروع کے بعد اتنے منٹ گزرنے پر ٹیپ تاخیر شمار ہوگی۔",
+        "absentThresholdMinutes": "غیر حاضری کی حد (منٹ)",
+        "absentThresholdHelp": "شروع کے بعد اتنے منٹ تک ٹیپ نہ ہو تو طالب علم غیر حاضر اور والدین کو الرٹ۔",
+        "workingDays": "کام کے دن",
+        "halfDayCutoffTime": "آدھے دن کی حد",
+        "halfDayCutoffHelp": "اختیاری۔ اگر مقرر ہو تو عام دن اس وقت سے پہلے ٹیپ آؤٹ کرنے والے طلباء آدھا دن شمار ہوں گے۔ خالی چھوڑیں تو بند۔",
+        "academicYearStart": "تعلیمی سال کا آغاز",
+        "academicYearEnd": "تعلیمی سال کا اختتام"
+      },
+      "errors": {
+        "load": "پالیسی لوڈ نہیں ہو سکی۔",
+        "generic": "پالیسی محفوظ نہیں ہو سکی۔ دوبارہ کریں۔",
+        "serverValidation": "سرور نے کچھ ویلیوز رد کر دیں۔",
+        "timeInvalid": "{{field}} درست وقت ہونا چاہیے۔",
+        "dateInvalid": "تاریخ YYYY-MM-DD کی شکل میں ہو۔",
+        "numberInvalid": "حد ایک مکمل عدد ہونی چاہیے۔",
+        "startAfterEnd": "اسکول کا آغاز اختتام سے پہلے ہونا چاہیے۔",
+        "academicStartAfterEnd": "تعلیمی سال کا آغاز اختتام سے پہلے یا اسی دن ہو۔",
+        "workingDaysEmpty": "کم از کم ایک دن منتخب کریں۔"
       }
     },
     "anomalyHeadline": {
