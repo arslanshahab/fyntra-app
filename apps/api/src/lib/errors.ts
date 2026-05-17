@@ -38,15 +38,15 @@ export class ForbiddenError extends AppError {
 }
 
 export class ConflictError extends AppError {
-  constructor(message = 'Conflict') {
-    super(message, { statusCode: 409, code: 'CONFLICT' })
+  constructor(message = 'Conflict', code = 'CONFLICT') {
+    super(message, { statusCode: 409, code })
     this.name = 'ConflictError'
   }
 }
 
 export class ValidationError extends AppError {
-  constructor(message = 'Validation failed') {
-    super(message, { statusCode: 400, code: 'VALIDATION_ERROR' })
+  constructor(message = 'Validation failed', code = 'VALIDATION_ERROR') {
+    super(message, { statusCode: 400, code })
     this.name = 'ValidationError'
   }
 }

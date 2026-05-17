@@ -2,13 +2,20 @@ import type {
   AttendanceRecord,
   Class,
   ClassRegisterResponse,
+  CreateClassRequest,
   HolidayKind,
+  PatchClassRequest,
   RegisterDay,
   Student,
   StudentSummary,
   Weekday,
 } from '@fyntra/schemas'
-import { ForbiddenError, NotFoundError } from '../../lib/errors.js'
+import {
+  ConflictError,
+  ForbiddenError,
+  NotFoundError,
+  ValidationError,
+} from '../../lib/errors.js'
 import type { TenantContext } from '../../types/tenant-context.js'
 import type { attendanceRecords } from '../../db/schema/attendance.js'
 import { schoolsRepo } from '../schools/repository.js'
@@ -325,3 +332,76 @@ export async function registerForMonth(
     summaries,
   }
 }
+
+// --- Admin CRUD ---------------------------------------------------------
+
+function classToWire(
+  row: { id: string; schoolId: string; name: string; teacherId: string },
+  studentCount: number,
+): Class {
+  return {
+    id: row.id,
+    schoolId: row.schoolId,
+    name: row.name,
+    teacherId: row.teacherId,
+    studentCount,
+  }
+}
+
+async function assertEligibleTeacher(ctx: TenantContext, teacherId: string) {
+  const teacher = await classesRepo.findTeacherById(ctx, teacherId)
+  if (!teacher || teacher.role !== 'teacher') {
+    throw new ValidationError('teacher not eligible', 'TEACHER_NOT_ELIGIBLE')
+  }
+}
+
+async function assertNameAvailable(
+  ctx: TenantContext,
+  name: string,
+  excludingId?: string,
+) {
+  const existing = await classesRepo.findByNameCaseInsensitive(ctx, name)
+  if (existing && existing.id !== excludingId) {
+    throw new ConflictError(`A class named "${name}" already exists`, 'CLASS_NAME_TAKEN')
+  }
+}
+
+async function assertTeacherAvailable(
+  ctx: TenantContext,
+  teacherId: string,
+  excludingClassId?: string,
+) {
+  const existing = await classesRepo.findByTeacher(ctx, teacherId)
+  if (existing && existing.id !== excludingClassId) {
+    throw new ConflictError(
+      `Teacher is already assigned to another class`,
+      'TEACHER_ALREADY_ASSIGNED',
+    )
+  }
+}
+
+export async function createClass(
+  ctx: TenantContext,
+  input: CreateClassRequest,
+): Promise<Class> {
+  if (ctx.role !== 'admin') throw new ForbiddenError()
+  await assertEligibleTeacher(ctx, input.teacherId)
+  await assertNameAvailable(ctx, input.name)
+  await assertTeacherAvailable(ctx, input.teacherId)
+  try {
+    const row = await classesRepo.create(ctx, input)
+    return classToWire(row, 0)
+  } catch (err) {
+    // DB unique-constraint backstop: classes_school_teacher_unique
+    if (err instanceof Error && /classes_school_teacher_unique/.test(err.message)) {
+      throw new ConflictError(
+        'Teacher is already assigned to another class',
+        'TEACHER_ALREADY_ASSIGNED',
+      )
+    }
+    throw err
+  }
+}
+
+// Suppress unused-import lint error for PatchClassRequest (used in Task 6).
+type _PatchClassRequest = PatchClassRequest
