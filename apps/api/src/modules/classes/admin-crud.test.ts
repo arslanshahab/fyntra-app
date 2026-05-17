@@ -133,3 +133,102 @@ describe('POST /classes', () => {
     expect(res.json()).toMatchObject({ code: 'TEACHER_ALREADY_ASSIGNED' })
   })
 })
+
+describe('PATCH /classes/:id', () => {
+  it('admin renames a class', async () => {
+    const { schoolA, adminA, teacherA1 } = await seedTwoSchools()
+    const id = newId()
+    await db.insert(classes).values({ id, schoolId: schoolA, name: 'Old', teacherId: teacherA1 })
+    const t = token(app, { userId: adminA, schoolId: schoolA, role: 'admin' })
+    const res = await app.inject({
+      method: 'PATCH',
+      url: `/classes/${id}`,
+      headers: { authorization: `Bearer ${t}` },
+      payload: { name: 'New' },
+    })
+    expect(res.statusCode).toBe(200)
+    const body = res.json() as { name: string; teacherId: string }
+    expect(body.name).toBe('New')
+    expect(body.teacherId).toBe(teacherA1)
+  })
+
+  it('admin reassigns the teacher', async () => {
+    const { schoolA, adminA, teacherA1, teacherA2 } = await seedTwoSchools()
+    const id = newId()
+    await db.insert(classes).values({ id, schoolId: schoolA, name: 'Grade 3A', teacherId: teacherA1 })
+    const t = token(app, { userId: adminA, schoolId: schoolA, role: 'admin' })
+    const res = await app.inject({
+      method: 'PATCH',
+      url: `/classes/${id}`,
+      headers: { authorization: `Bearer ${t}` },
+      payload: { teacherId: teacherA2 },
+    })
+    expect(res.statusCode).toBe(200)
+    const body = res.json() as { teacherId: string }
+    expect(body.teacherId).toBe(teacherA2)
+  })
+
+  it('renames + reassigns in one call', async () => {
+    const { schoolA, adminA, teacherA1, teacherA2 } = await seedTwoSchools()
+    const id = newId()
+    await db.insert(classes).values({ id, schoolId: schoolA, name: 'Old', teacherId: teacherA1 })
+    const t = token(app, { userId: adminA, schoolId: schoolA, role: 'admin' })
+    const res = await app.inject({
+      method: 'PATCH',
+      url: `/classes/${id}`,
+      headers: { authorization: `Bearer ${t}` },
+      payload: { name: 'New', teacherId: teacherA2 },
+    })
+    expect(res.statusCode).toBe(200)
+    const body = res.json() as { name: string; teacherId: string }
+    expect(body.name).toBe('New')
+    expect(body.teacherId).toBe(teacherA2)
+  })
+
+  it('rejects empty body (400)', async () => {
+    const { schoolA, adminA, teacherA1 } = await seedTwoSchools()
+    const id = newId()
+    await db.insert(classes).values({ id, schoolId: schoolA, name: 'Grade 3A', teacherId: teacherA1 })
+    const t = token(app, { userId: adminA, schoolId: schoolA, role: 'admin' })
+    const res = await app.inject({
+      method: 'PATCH',
+      url: `/classes/${id}`,
+      headers: { authorization: `Bearer ${t}` },
+      payload: {},
+    })
+    expect(res.statusCode).toBe(400)
+  })
+
+  it('cross-tenant id returns 404', async () => {
+    const { schoolA, schoolB, adminA, teacherB } = await seedTwoSchools()
+    const id = newId()
+    await db.insert(classes).values({ id, schoolId: schoolB, name: 'Foreign', teacherId: teacherB })
+    const t = token(app, { userId: adminA, schoolId: schoolA, role: 'admin' })
+    const res = await app.inject({
+      method: 'PATCH',
+      url: `/classes/${id}`,
+      headers: { authorization: `Bearer ${t}` },
+      payload: { name: 'Stolen' },
+    })
+    expect(res.statusCode).toBe(404)
+  })
+
+  it('duplicate teacher assignment returns 409 TEACHER_ALREADY_ASSIGNED', async () => {
+    const { schoolA, adminA, teacherA1, teacherA2 } = await seedTwoSchools()
+    const id1 = newId()
+    const id2 = newId()
+    await db.insert(classes).values([
+      { id: id1, schoolId: schoolA, name: 'C1', teacherId: teacherA1 },
+      { id: id2, schoolId: schoolA, name: 'C2', teacherId: teacherA2 },
+    ])
+    const t = token(app, { userId: adminA, schoolId: schoolA, role: 'admin' })
+    const res = await app.inject({
+      method: 'PATCH',
+      url: `/classes/${id2}`,
+      headers: { authorization: `Bearer ${t}` },
+      payload: { teacherId: teacherA1 },
+    })
+    expect(res.statusCode).toBe(409)
+    expect(res.json()).toMatchObject({ code: 'TEACHER_ALREADY_ASSIGNED' })
+  })
+})

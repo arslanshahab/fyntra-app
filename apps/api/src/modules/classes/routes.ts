@@ -2,6 +2,7 @@ import type { FastifyPluginAsync } from 'fastify'
 import { z } from 'zod'
 import {
   createClassRequestSchema,
+  patchClassRequestSchema,
   registerLockRequestSchema,
   registerUnlockRequestSchema,
 } from '@fyntra/schemas'
@@ -12,6 +13,7 @@ import {
   createClass,
   listClasses,
   lockRegisterForClass,
+  patchClass,
   registerForMonth,
   unlockRegisterForClass,
 } from './service.js'
@@ -89,6 +91,20 @@ export const classesRoutes: FastifyPluginAsync = async (app) => {
       const ctx = req.tenantContext!
       const body = req.body as z.infer<typeof createClassRequestSchema>
       return await createClass(ctx, body)
+    },
+  )
+
+  app.patch(
+    '/classes/:id',
+    {
+      preHandler: [requireAuth, requireRole(['admin'])],
+      schema: { body: patchClassRequestSchema },
+    },
+    async (req) => {
+      const ctx = req.tenantContext!
+      const { id } = req.params as { id: string }
+      const body = req.body as z.infer<typeof patchClassRequestSchema>
+      return await patchClass(ctx, id, body)
     },
   )
 }

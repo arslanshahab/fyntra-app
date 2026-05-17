@@ -403,5 +403,35 @@ export async function createClass(
   }
 }
 
-// Suppress unused-import lint error for PatchClassRequest (used in Task 6).
-type _PatchClassRequest = PatchClassRequest
+export async function patchClass(
+  ctx: TenantContext,
+  id: string,
+  input: PatchClassRequest,
+): Promise<Class> {
+  if (ctx.role !== 'admin') throw new ForbiddenError()
+  const existing = await classesRepo.findById(ctx, id)
+  if (!existing) throw new NotFoundError('Class not found')
+
+  if (input.teacherId !== undefined) {
+    await assertEligibleTeacher(ctx, input.teacherId)
+    await assertTeacherAvailable(ctx, input.teacherId, id)
+  }
+  if (input.name !== undefined) {
+    await assertNameAvailable(ctx, input.name, id)
+  }
+
+  try {
+    const updated = await classesRepo.patch(ctx, id, input)
+    if (!updated) throw new NotFoundError('Class not found')
+    const studentCount = await classesRepo.countStudents(ctx, id)
+    return classToWire(updated, studentCount)
+  } catch (err) {
+    if (err instanceof Error && /classes_school_teacher_unique/.test(err.message)) {
+      throw new ConflictError(
+        'Teacher is already assigned to another class',
+        'TEACHER_ALREADY_ASSIGNED',
+      )
+    }
+    throw err
+  }
+}
