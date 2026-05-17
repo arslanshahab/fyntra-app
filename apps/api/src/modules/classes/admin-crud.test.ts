@@ -133,6 +133,25 @@ describe('POST /classes', () => {
     expect(res.statusCode).toBe(409)
     expect(res.json()).toMatchObject({ code: 'TEACHER_ALREADY_ASSIGNED' })
   })
+
+  it('treats % and _ in names as literal characters (no wildcard collision)', async () => {
+    const { schoolA, adminA, teacherA1, teacherA2 } = await seedTwoSchools()
+    // Seed a class whose name contains a literal '%' — this could be
+    // misinterpreted as a wildcard if the uniqueness query used a naive
+    // ILIKE on the input.
+    await db.insert(classes).values({ id: newId(), schoolId: schoolA, name: 'Grade %', teacherId: teacherA1 })
+    const t = token(app, { userId: adminA, schoolId: schoolA, role: 'admin' })
+    // Creating a class with a *different* name should succeed — the
+    // existing 'Grade %' must not match 'Grade 3A' via wildcard.
+    const res = await app.inject({
+      method: 'POST',
+      url: '/classes',
+      headers: { authorization: `Bearer ${t}` },
+      payload: { name: 'Grade 3A', teacherId: teacherA2 },
+    })
+    expect(res.statusCode).toBe(200)
+    expect((res.json() as { name: string }).name).toBe('Grade 3A')
+  })
 })
 
 describe('PATCH /classes/:id', () => {

@@ -1,4 +1,4 @@
-import { and, asc, count, eq, gte, ilike, inArray, isNull, lte, sql } from 'drizzle-orm'
+import { and, asc, count, eq, gte, inArray, isNull, lte, sql } from 'drizzle-orm'
 import { db } from '../../db/client.js'
 import { classes } from '../../db/schema/schools.js'
 import { students } from '../../db/schema/students.js'
@@ -336,7 +336,12 @@ export const classesRepo = {
     const rows = await db
       .select()
       .from(classes)
-      .where(and(eq(classes.schoolId, ctx.schoolId), ilike(classes.name, name)))
+      .where(
+        and(
+          eq(classes.schoolId, ctx.schoolId),
+          sql`lower(${classes.name}) = lower(${name})`,
+        ),
+      )
       .limit(1)
     return rows[0]
   },
