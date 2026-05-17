@@ -1,4 +1,4 @@
-import { Calendar, History, type LucideIcon } from 'lucide-react'
+import { Calendar, CalendarRange, type LucideIcon } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 
@@ -16,7 +16,7 @@ interface NavItem {
 
 const NAV: NavItem[] = [
   { to: '/teacher', labelKey: 'teacher.nav.today', icon: Calendar, end: true },
-  { to: '/teacher/history', labelKey: 'teacher.nav.history', icon: History },
+  { to: '/teacher/register', labelKey: 'teacher.nav.register', icon: CalendarRange },
 ]
 
 export function TeacherLayout() {

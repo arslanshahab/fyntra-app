@@ -13,6 +13,11 @@ export const attendanceStatusEnum = pgEnum('attendance_status', [
   'late',
   'left_early',
   'unverified',
+  // Student-level "half day" status, emitted by recompute when tap-out
+  // lands before School.halfDayCutoffTime on a regular school day.
+  // Distinct from `left_early` (which still applies when no cutoff is set
+  // or the tap-out lands between cutoff and endTime).
+  'half_day',
 ])
 
 // Structured reason for a manual tap override. The freeform `manual_reason`

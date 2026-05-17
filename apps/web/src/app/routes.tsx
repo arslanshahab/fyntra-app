@@ -56,6 +56,11 @@ const AdminCalendarPage = lazy(() =>
 const AdminPolicyPage = lazy(() =>
   import('../pages/admin/AdminPolicyPage').then((m) => ({ default: m.AdminPolicyPage })),
 )
+const AdminClassRegisterPage = lazy(() =>
+  import('../pages/admin/AdminClassRegisterPage').then((m) => ({
+    default: m.AdminClassRegisterPage,
+  })),
+)
 
 const ParentHomePage = lazy(() =>
   import('../pages/parent/ParentHomePage').then((m) => ({ default: m.ParentHomePage })),
@@ -72,6 +77,9 @@ const TeacherTodayPage = lazy(() =>
 )
 const TeacherHistoryPage = lazy(() =>
   import('../pages/teacher/TeacherHistoryPage').then((m) => ({ default: m.TeacherHistoryPage })),
+)
+const TeacherRegisterPage = lazy(() =>
+  import('../pages/teacher/TeacherRegisterPage').then((m) => ({ default: m.TeacherRegisterPage })),
 )
 
 // Dev-only: design system reference page. The lazy import lives inside the
@@ -136,6 +144,7 @@ export function AppRoutes() {
           <Route path="anomalies" element={<AdminAnomalyCenter />} />
           <Route path="calendar" element={<AdminCalendarPage />} />
           <Route path="policy" element={<AdminPolicyPage />} />
+          <Route path="register" element={<AdminClassRegisterPage />} />
         </Route>
         <Route
           path="/teacher"
@@ -146,6 +155,7 @@ export function AppRoutes() {
           }
         >
           <Route index element={<TeacherTodayPage />} />
+          <Route path="register" element={<TeacherRegisterPage />} />
           <Route path="history" element={<TeacherHistoryPage />} />
         </Route>
       </Route>

@@ -262,6 +262,173 @@ export const handlers = [
     return HttpResponse.json({ ok: true })
   }),
 
+  // --- Monthly register (F5) ---------------------------------------------
+
+  http.get(`${API}/classes/:id/register`, async ({ params, request }) => {
+    await latency()
+    const url = new URL(request.url)
+    const month = url.searchParams.get('month') ?? ''
+    if (!/^\d{4}-\d{2}$/.test(month)) {
+      return HttpResponse.json({ error: 'Invalid month' }, { status: 400 })
+    }
+    const klass = seedStore.classes.find((c) => c.id === params.id)
+    if (!klass) return HttpResponse.json({ error: 'Not found' }, { status: 404 })
+
+    const [y, m] = month.split('-').map(Number) as [number, number]
+    const lastDay = new Date(Date.UTC(y, m, 0)).getUTCDate()
+    const dayYmds: string[] = []
+    for (let d = 1; d <= lastDay; d++) {
+      dayYmds.push(`${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`)
+    }
+    const fromYmd = dayYmds[0]!
+    const toYmd = dayYmds[dayYmds.length - 1]!
+
+    const classStudents = seedStore.students
+      .filter((s) => s.classId === params.id && s.status === 'active')
+      .sort((a, b) => a.rollNumber.localeCompare(b.rollNumber))
+    const studentIds = new Set(classStudents.map((s) => s.id))
+
+    const records = seedStore.attendance.filter(
+      (a) => studentIds.has(a.studentId) && a.date >= fromYmd && a.date <= toYmd,
+    )
+
+    const monthHolidays = seedStore.holidays.filter((h) => h.date >= fromYmd && h.date <= toYmd)
+    const holidayByDate = new Map(monthHolidays.map((h) => [h.date, h]))
+
+    const weekdays = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'] as const
+    const workingDayCodes = new Set<string>(seedStore.school.workingDays)
+
+    const days = dayYmds.map((ymd) => {
+      const [yy, mm, dd] = ymd.split('-').map(Number) as [number, number, number]
+      const js = new Date(Date.UTC(yy, mm - 1, dd)).getUTCDay()
+      const weekday = weekdays[js]!
+      const holiday = holidayByDate.get(ymd)
+      const baseWorking = workingDayCodes.has(weekday)
+      const isWorkingDay = baseWorking && !(holiday?.kind === 'closed' || holiday?.kind === 'exam')
+      return {
+        date: ymd,
+        weekday,
+        isWorkingDay,
+        ...(holiday ? { holiday: { label: holiday.label, kind: holiday.kind } } : {}),
+      }
+    })
+    const workingDayCount = days.filter((d) => d.isWorkingDay).length
+
+    const summaries = classStudents.map((s) => {
+      let present = 0
+      let absent = 0
+      let late = 0
+      let halfDay = 0
+      const excused = 0 // mock doesn't track reasonKind on the records
+      for (const r of records) {
+        if (r.studentId !== s.id) continue
+        switch (r.status) {
+          case 'present':
+          case 'left_early':
+            present++
+            break
+          case 'late':
+            late++
+            break
+          case 'half_day':
+            halfDay++
+            break
+          case 'absent':
+            absent++
+            break
+          case 'unverified':
+            break
+        }
+      }
+      const pct =
+        workingDayCount > 0
+          ? Math.round(((present + late + excused + halfDay * 0.5) / workingDayCount) * 1000) / 10
+          : null
+      return {
+        studentId: s.id,
+        workingDays: workingDayCount,
+        present,
+        absent,
+        late,
+        halfDay,
+        excused,
+        attendancePct: pct,
+      }
+    })
+
+    return HttpResponse.json({
+      class: klass,
+      month,
+      days,
+      students: classStudents,
+      records,
+      summaries,
+    })
+  }),
+
+  // --- Today summary (F7) ------------------------------------------------
+
+  http.get(`${API}/attendance/today-summary`, async ({ request }) => {
+    await latency()
+    const me = currentUser(request)
+    if (!me) return HttpResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    if (me.role !== 'admin') return HttpResponse.json({ error: 'Forbidden' }, { status: 403 })
+
+    const today = formatInTimeZone(new Date(), 'Asia/Karachi', 'yyyy-MM-dd')
+    const classes_ = seedStore.classes.map((c) => {
+      const studentIds = new Set(
+        seedStore.students.filter((s) => s.classId === c.id && s.status === 'active').map((s) => s.id),
+      )
+      const records = seedStore.attendance.filter(
+        (a) => studentIds.has(a.studentId) && a.date === today,
+      )
+      const totals = { present: 0, absent: 0, late: 0, halfDay: 0, excused: 0, noRecord: 0 }
+      let locked = false
+      let lockedAt: string | undefined
+      let lockedBy: string | undefined
+      const recordByStudent = new Map(records.map((r) => [r.studentId, r]))
+      for (const sid of studentIds) {
+        const r = recordByStudent.get(sid)
+        if (!r) {
+          totals.noRecord++
+          continue
+        }
+        if (r.lockedAt) {
+          locked = true
+          lockedAt = r.lockedAt
+          lockedBy = r.lockedBy
+        }
+        switch (r.status) {
+          case 'present':
+          case 'left_early':
+            totals.present++
+            break
+          case 'late':
+            totals.late++
+            break
+          case 'half_day':
+            totals.halfDay++
+            break
+          case 'absent':
+            totals.absent++
+            break
+          case 'unverified':
+            totals.noRecord++
+            break
+        }
+      }
+      return {
+        classId: c.id,
+        className: c.name,
+        locked,
+        ...(lockedAt ? { lockedAt } : {}),
+        ...(lockedBy ? { lockedBy } : {}),
+        totals,
+      }
+    })
+    return HttpResponse.json({ date: today, classes: classes_ })
+  }),
+
   // --- Cards --------------------------------------------------------------
 
   http.get(`${API}/cards`, async ({ request }) => {

@@ -213,7 +213,17 @@ export const tapEventSchema = z.object({
 })
 export type TapEvent = z.infer<typeof tapEventSchema>
 
-export const attendanceStatusSchema = z.enum(['present', 'absent', 'late', 'left_early', 'unverified'])
+export const attendanceStatusSchema = z.enum([
+  'present',
+  'absent',
+  'late',
+  'left_early',
+  'unverified',
+  // Set by recompute when tap-out is before School.halfDayCutoffTime on a
+  // regular school day. Render code: HD.
+  'half_day',
+])
+export type AttendanceStatus = z.infer<typeof attendanceStatusSchema>
 export const attendanceRecordSchema = z.object({
   id: idSchema,
   studentId: idSchema,
@@ -414,3 +424,80 @@ export const patchHolidayRequestSchema = z
   })
   .superRefine(requireEndTimeForHalfDay)
 export type PatchHolidayRequest = z.infer<typeof patchHolidayRequestSchema>
+
+// --- Monthly register (F5) ---
+//
+// GET /classes/:id/register?month=YYYY-MM composed payload. The server
+// joins holidays + school policy + active roster + attendance to save the
+// client four parallel fetches and a cross-join. Cell rendering still
+// happens client-side, but every piece of data the renderer needs is in
+// this response.
+export const monthSchema = z.string().regex(/^\d{4}-\d{2}$/)
+
+export const registerDaySchema = z.object({
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  weekday: weekdaySchema,
+  isWorkingDay: z.boolean(),
+  // Holiday metadata when the date is a school_holiday. The kind drives
+  // the column header letter (H / E / HD) and whether the day counts
+  // toward the working-days denominator.
+  holiday: z
+    .object({
+      label: z.string(),
+      kind: holidayKindSchema,
+    })
+    .optional(),
+})
+export type RegisterDay = z.infer<typeof registerDaySchema>
+
+export const studentSummarySchema = z.object({
+  studentId: idSchema,
+  workingDays: z.number().int().nonnegative(),
+  present: z.number().int().nonnegative(),
+  absent: z.number().int().nonnegative(),
+  late: z.number().int().nonnegative(),
+  halfDay: z.number().int().nonnegative(),
+  excused: z.number().int().nonnegative(),
+  // Percentage rendered as a 0–100 number with one decimal. Caller can
+  // round or format. `null` when workingDays is 0 (denominator avoidance).
+  attendancePct: z.number().min(0).max(100).nullable(),
+})
+export type StudentSummary = z.infer<typeof studentSummarySchema>
+
+export const classRegisterResponseSchema = z.object({
+  class: classSchema,
+  month: monthSchema,
+  days: z.array(registerDaySchema),
+  students: z.array(studentSchema),
+  records: z.array(attendanceRecordSchema),
+  summaries: z.array(studentSummarySchema),
+})
+export type ClassRegisterResponse = z.infer<typeof classRegisterResponseSchema>
+
+// --- Today summary (F7) ---
+//
+// GET /attendance/today-summary returns per-class status for the day so
+// the admin dashboard can show which class teachers still need to sign
+// off the day's register.
+export const todaySummaryClassSchema = z.object({
+  classId: idSchema,
+  className: z.string(),
+  locked: z.boolean(),
+  lockedAt: z.string().optional(),
+  lockedBy: idSchema.optional(),
+  totals: z.object({
+    present: z.number().int().nonnegative(),
+    absent: z.number().int().nonnegative(),
+    late: z.number().int().nonnegative(),
+    halfDay: z.number().int().nonnegative(),
+    excused: z.number().int().nonnegative(),
+    noRecord: z.number().int().nonnegative(),
+  }),
+})
+export type TodaySummaryClass = z.infer<typeof todaySummaryClassSchema>
+
+export const todaySummaryResponseSchema = z.object({
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  classes: z.array(todaySummaryClassSchema),
+})
+export type TodaySummaryResponse = z.infer<typeof todaySummaryResponseSchema>

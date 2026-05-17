@@ -51,7 +51,7 @@ export const attendanceRepo = {
     date: string
     firstInAt: Date | null
     lastOutAt: Date | null
-    status: 'present' | 'absent' | 'late' | 'left_early' | 'unverified'
+    status: 'present' | 'absent' | 'late' | 'left_early' | 'unverified' | 'half_day'
     isManual: boolean
   }) {
     const existing = await this.findRecord(input.schoolId, input.studentId, input.date)
