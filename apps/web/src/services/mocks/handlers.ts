@@ -24,6 +24,7 @@ import {
   patchCardRequestSchema,
   patchDeviceRequestSchema,
   patchHolidayRequestSchema,
+  patchSchoolRequestSchema,
   replaceCardRequestSchema,
   requestOtpRequestSchema,
   simulateTapRequestSchema,
@@ -409,6 +410,30 @@ export const handlers = [
     return HttpResponse.json({ ok: true })
   }),
 
+  // --- School policy ------------------------------------------------------
+
+  http.patch(`${API}/schools/me`, async ({ request }) => {
+    await latency()
+    const body = patchSchoolRequestSchema.safeParse(await request.json())
+    if (!body.success) return HttpResponse.json({ error: 'Invalid body' }, { status: 400 })
+    const s = seedStore.school
+    if (body.data.startTime !== undefined) s.startTime = body.data.startTime
+    if (body.data.endTime !== undefined) s.endTime = body.data.endTime
+    if (body.data.lateThresholdMinutes !== undefined) s.lateThresholdMinutes = body.data.lateThresholdMinutes
+    if (body.data.absentThresholdMinutes !== undefined) s.absentThresholdMinutes = body.data.absentThresholdMinutes
+    if (body.data.workingDays !== undefined) s.workingDays = body.data.workingDays
+    if (body.data.halfDayCutoffTime !== undefined) {
+      s.halfDayCutoffTime = body.data.halfDayCutoffTime ?? undefined
+    }
+    if (body.data.academicYearStart !== undefined) {
+      s.academicYearStart = body.data.academicYearStart ?? undefined
+    }
+    if (body.data.academicYearEnd !== undefined) {
+      s.academicYearEnd = body.data.academicYearEnd ?? undefined
+    }
+    return HttpResponse.json(s)
+  }),
+
   // --- Tap events ---------------------------------------------------------
 
   http.get(`${API}/tap-events`, async ({ request }) => {
@@ -468,6 +493,7 @@ export const handlers = [
       source: 'manual',
       manualOverrideBy: me.id,
       manualReason: body.data.reason,
+      manualReasonKind: body.data.reasonKind,
     }
     seedStore.tapEvents.push(event)
 

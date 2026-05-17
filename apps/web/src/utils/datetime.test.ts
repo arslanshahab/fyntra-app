@@ -20,6 +20,7 @@ const school: School = {
   endTime: '13:30',
   lateThresholdMinutes: 15,
   absentThresholdMinutes: 30,
+  workingDays: ['mon', 'tue', 'wed', 'thu', 'fri'],
 }
 
 describe('dateStrInKarachi', () => {

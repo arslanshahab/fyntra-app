@@ -1,4 +1,4 @@
-import { pgTable, uuid, text, integer, timestamp, index } from 'drizzle-orm/pg-core'
+import { pgTable, uuid, text, integer, timestamp, index, date } from 'drizzle-orm/pg-core'
 
 export const schools = pgTable('schools', {
   id: uuid('id').primaryKey(),
@@ -9,6 +9,16 @@ export const schools = pgTable('schools', {
   endTime: text('end_time').notNull(),
   lateThresholdMinutes: integer('late_threshold_minutes').notNull(),
   absentThresholdMinutes: integer('absent_threshold_minutes').notNull(),
+  // Attendance-policy knobs added in PR 2. workingDays is stored as a
+  // text[] of 3-letter day codes (mon, tue, ...). halfDayCutoffTime is
+  // "HH:MM" Karachi local; null = feature off (a kid leaving early on a
+  // normal day stays `left_early`, not `half_day`). academicYear* dates
+  // bound the per-student summary's "year-to-date" math; null falls back
+  // to calendar year.
+  workingDays: text('working_days').array().notNull().default(['mon', 'tue', 'wed', 'thu', 'fri']),
+  halfDayCutoffTime: text('half_day_cutoff_time'),
+  academicYearStart: date('academic_year_start'),
+  academicYearEnd: date('academic_year_end'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 })

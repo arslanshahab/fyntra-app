@@ -70,9 +70,22 @@
       "overrideDialogTitle": "Manual override — {{name}}",
       "overrideDialogBody": "This creates a manual tap event attributed to you. The student's status updates immediately.",
       "directionLabel": "Direction",
-      "reasonLabel": "Reason",
+      "reasonKindLabel": "Reason",
+      "reasonKindHelp": "Pick the closest match. Adds the register code for this day.",
+      "reasonLabel": "Notes",
       "reasonPlaceholder": "e.g. Card forgotten at home",
       "reasonHelp": "Required. Recorded against this tap for audit.",
+      "reasonKind": {
+        "forgot_card": "Forgot card",
+        "out_of_band_tap": "Out-of-band tap",
+        "sick": "Sick",
+        "leave": "Approved leave",
+        "half_day": "Half day",
+        "early_pickup": "Early pickup",
+        "late_arrival": "Late arrival",
+        "in_school_not_in_class": "On campus, not in class",
+        "other": "Other"
+      },
       "submitOverride": "Record tap",
       "manualBadge": "Manual",
       "table": {
@@ -240,6 +253,7 @@
       "notifications": "Notifications",
       "anomalies": "Anomalies",
       "calendar": "Calendar",
+      "policy": "Policy",
       "section": {
         "overview": "Overview",
         "people": "People",
@@ -291,6 +305,49 @@
         "conflict": "A holiday already exists on that date.",
         "invalid": "Please complete every field correctly.",
         "endTimeRequired": "Half days need an effective end time."
+      }
+    },
+    "policy": {
+      "pageTitle": "Attendance policy",
+      "subtitle": "Daily schedule, working days, and academic year.",
+      "saveButton": "Save policy",
+      "saveSuccess": "Policy updated.",
+      "section": {
+        "dailyWindow": "Daily window",
+        "calendar": "Calendar"
+      },
+      "weekday": {
+        "mon": "Mon",
+        "tue": "Tue",
+        "wed": "Wed",
+        "thu": "Thu",
+        "fri": "Fri",
+        "sat": "Sat",
+        "sun": "Sun"
+      },
+      "fields": {
+        "startTime": "School start",
+        "endTime": "School end",
+        "lateThresholdMinutes": "Late threshold (minutes)",
+        "lateThresholdHelp": "After start + this many minutes, tap-ins are marked late.",
+        "absentThresholdMinutes": "Absent threshold (minutes)",
+        "absentThresholdHelp": "After start + this many minutes with no tap-in, the student is marked absent (parent alerted).",
+        "workingDays": "Working days",
+        "halfDayCutoffTime": "Half-day cutoff",
+        "halfDayCutoffHelp": "Optional. If set, students who tap out before this time on a regular day are marked half-day instead of left-early. Leave blank to disable.",
+        "academicYearStart": "Academic year start",
+        "academicYearEnd": "Academic year end"
+      },
+      "errors": {
+        "load": "Couldn't load the policy.",
+        "generic": "Couldn't save the policy. Please try again.",
+        "serverValidation": "Some values were rejected by the server.",
+        "timeInvalid": "{{field}} must be a valid time.",
+        "dateInvalid": "Dates must be YYYY-MM-DD.",
+        "numberInvalid": "Thresholds must be whole numbers.",
+        "startAfterEnd": "School start must be before school end.",
+        "academicStartAfterEnd": "Academic year start must be on or before academic year end.",
+        "workingDaysEmpty": "Pick at least one working day."
       }
     },
     "anomalyHeadline": {

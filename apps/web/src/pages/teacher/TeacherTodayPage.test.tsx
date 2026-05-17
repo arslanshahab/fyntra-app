@@ -59,7 +59,23 @@ describe('TeacherTodayPage', () => {
     const overrides = await screen.findAllByRole('button', { name: /override/i })
     await user.click(overrides[0]!)
     expect(await screen.findByRole('dialog', { name: /manual override/i })).toBeInTheDocument()
-    expect(screen.getByLabelText(/reason/i)).toBeRequired()
+    // Notes textarea is the required free-text field; the reason-kind
+    // dropdown picks the structured value (defaults to a sensible kind).
+    expect(screen.getByLabelText(/notes/i)).toBeRequired()
+    expect(screen.getByLabelText(/^Reason/)).toBeInTheDocument()
+  })
+
+  it('reason-kind dropdown lists every kind and accepts a selection', async () => {
+    const user = userEvent.setup()
+    renderPage()
+    const overrides = await screen.findAllByRole('button', { name: /override/i })
+    await user.click(overrides[0]!)
+    const dialog = await screen.findByRole('dialog', { name: /manual override/i })
+    const dropdown = dialog.querySelector('select') as HTMLSelectElement
+    expect(dropdown).not.toBeNull()
+    expect(dropdown.options.length).toBeGreaterThanOrEqual(9)
+    await user.selectOptions(dropdown, 'sick')
+    expect(dropdown.value).toBe('sick')
   })
 
   it('submits the override and surfaces a success banner', async () => {
@@ -67,7 +83,7 @@ describe('TeacherTodayPage', () => {
     renderPage()
     const overrides = await screen.findAllByRole('button', { name: /override/i })
     await user.click(overrides[0]!)
-    await user.type(screen.getByLabelText(/reason/i), 'Card forgotten at home')
+    await user.type(screen.getByLabelText(/notes/i), 'Card forgotten at home')
     await user.click(screen.getByRole('button', { name: /record tap/i }))
     await waitFor(() => {
       expect(screen.getByText(/manual tap recorded/i)).toBeInTheDocument()

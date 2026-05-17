@@ -20,6 +20,15 @@ export const userSchema = z.object({
 })
 export type User = z.infer<typeof userSchema>
 
+// 3-letter weekday codes used by School.workingDays. Order matters in the
+// admin UI's weekday picker; keep this stable.
+export const weekdaySchema = z.enum(['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'])
+export type Weekday = z.infer<typeof weekdaySchema>
+
+// "HH:MM" 24-hour Karachi-local time. Shared by School.halfDayCutoffTime and
+// Holiday.effectiveEndTime.
+const timeOfDayRegex = /^([01]\d|2[0-3]):[0-5]\d$/
+
 export const schoolSchema = z.object({
   id: idSchema,
   name: z.string(),
@@ -29,8 +38,49 @@ export const schoolSchema = z.object({
   endTime: z.string(),
   lateThresholdMinutes: z.number().int().nonnegative(),
   absentThresholdMinutes: z.number().int().nonnegative(),
+  // Attendance-policy knobs added in PR 2. Always present on the wire —
+  // the DB columns are NOT NULL (workingDays) or NULLABLE (the rest).
+  workingDays: z.array(weekdaySchema),
+  halfDayCutoffTime: z.string().regex(timeOfDayRegex).optional(),
+  academicYearStart: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  academicYearEnd: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
 })
 export type School = z.infer<typeof schoolSchema>
+
+// PATCH /schools/me body — admin updates any subset of the policy knobs in
+// one shot. All fields optional. `halfDayCutoffTime` accepts null to clear
+// the value; `academicYearStart`/`End` likewise. The other fields cannot be
+// cleared (NOT NULL columns).
+export const patchSchoolRequestSchema = z
+  .object({
+    startTime: z.string().regex(timeOfDayRegex).optional(),
+    endTime: z.string().regex(timeOfDayRegex).optional(),
+    lateThresholdMinutes: z.number().int().nonnegative().max(180).optional(),
+    absentThresholdMinutes: z.number().int().nonnegative().max(360).optional(),
+    workingDays: z.array(weekdaySchema).min(1).max(7).optional(),
+    halfDayCutoffTime: z.string().regex(timeOfDayRegex).nullable().optional(),
+    academicYearStart: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),
+    academicYearEnd: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),
+  })
+  .superRefine((value, ctx) => {
+    // Academic year window — start must precede end when both set.
+    if (value.academicYearStart && value.academicYearEnd && value.academicYearStart > value.academicYearEnd) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'academicYearStart must be on or before academicYearEnd',
+        path: ['academicYearEnd'],
+      })
+    }
+    // Daily window — startTime must precede endTime when both set.
+    if (value.startTime && value.endTime && value.startTime >= value.endTime) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'startTime must be before endTime',
+        path: ['endTime'],
+      })
+    }
+  })
+export type PatchSchoolRequest = z.infer<typeof patchSchoolRequestSchema>
 
 export const studentStatusSchema = z.enum(['active', 'inactive'])
 export const studentSchema = z.object({
@@ -129,6 +179,24 @@ export const createDeviceTokenRequestSchema = z.object({
 export const tapDirectionSchema = z.enum(['in', 'out'])
 export type TapDirection = z.infer<typeof tapDirectionSchema>
 export const tapSourceSchema = z.enum(['device', 'manual'])
+
+// Structured reason for a manual override. PR 2's monthly register (PR 4)
+// reads this to emit register codes; the freeform `manualReason` stays for
+// notes. Optional on `tapEventSchema` because rows seeded before the column
+// existed have a NULL reason kind.
+export const tapEventReasonKindSchema = z.enum([
+  'forgot_card',
+  'out_of_band_tap',
+  'sick',
+  'leave',
+  'half_day',
+  'early_pickup',
+  'late_arrival',
+  'in_school_not_in_class',
+  'other',
+])
+export type TapEventReasonKind = z.infer<typeof tapEventReasonKindSchema>
+
 export const tapEventSchema = z.object({
   id: idSchema,
   // cardId / deviceId are absent on manual overrides (source: 'manual').
@@ -141,6 +209,7 @@ export const tapEventSchema = z.object({
   source: tapSourceSchema,
   manualOverrideBy: idSchema.optional(),
   manualReason: z.string().optional(),
+  manualReasonKind: tapEventReasonKindSchema.optional(),
 })
 export type TapEvent = z.infer<typeof tapEventSchema>
 
@@ -219,11 +288,16 @@ export const replaceCardRequestSchema = z.object({
   newRfidUid: z.string(),
 })
 export const patchCardRequestSchema = z.object({ status: cardStatusSchema })
+// Teachers and admins submit this when they need to correct the record —
+// "kid forgot their card", "left early for a dentist", "out-of-band tap by
+// the office staff". `reasonKind` is the structured value the register
+// renders; `reason` stays as freeform notes for context.
 export const manualTapEventRequestSchema = z.object({
   studentId: idSchema,
   direction: tapDirectionSchema,
   occurredAt: z.string(),
-  reason: z.string().min(1),
+  reasonKind: tapEventReasonKindSchema,
+  reason: z.string().min(1).max(500),
 })
 export const simulateTapRequestSchema = z.object({
   rfidUid: z.string(),

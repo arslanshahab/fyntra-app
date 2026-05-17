@@ -5,6 +5,10 @@ export interface SendTemplateInput {
   name: string
   languageCode: string
   variables: string[]
+  // When the template uses named placeholders ({{student_name}}), pass a
+  // parallel array of parameter names. Meta rejects named templates if
+  // each parameter object is missing `parameter_name`.
+  parameterNames?: string[]
 }
 
 export interface SendResult {
@@ -32,7 +36,12 @@ export async function sendTemplate(input: SendTemplateInput): Promise<SendResult
           ? [
               {
                 type: 'body',
-                parameters: input.variables.map((text) => ({ type: 'text', text })),
+                parameters: input.variables.map((text, i) => {
+                  const named = input.parameterNames?.[i]
+                  return named
+                    ? { type: 'text', parameter_name: named, text }
+                    : { type: 'text', text }
+                }),
               },
             ]
           : [],

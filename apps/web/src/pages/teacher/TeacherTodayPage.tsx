@@ -10,7 +10,7 @@ import { StatusCard } from '../../components/molecules/StatusCard'
 import { useClassAttendanceToday, useManualTapMutation } from '../../features/attendance/queries'
 import { useMeQuery } from '../../features/auth/queries'
 import { useStudentsQuery } from '../../features/students/queries'
-import type { AttendanceRecord, Student, TapDirection } from '@fyntra/schemas'
+import type { AttendanceRecord, Student, TapDirection, TapEventReasonKind } from '@fyntra/schemas'
 import { formatTimeInKarachi } from '../../utils/datetime'
 
 const statusTone: Record<AttendanceRecord['status'], 'present' | 'late' | 'absent' | 'notyet'> = {
@@ -21,9 +21,25 @@ const statusTone: Record<AttendanceRecord['status'], 'present' | 'late' | 'absen
   unverified: 'notyet',
 }
 
+// Default reasonKind tracks the direction the teacher is correcting:
+// - `in` (no tap-in yet): probably forgot the card → forgot_card.
+// - `out` (forgot to tap out): probably an early pickup → early_pickup.
+const REASON_KINDS: TapEventReasonKind[] = [
+  'forgot_card',
+  'out_of_band_tap',
+  'sick',
+  'leave',
+  'half_day',
+  'early_pickup',
+  'late_arrival',
+  'in_school_not_in_class',
+  'other',
+]
+
 interface OverrideState {
   student: Student
   direction: TapDirection
+  reasonKind: TapEventReasonKind
   reason: string
 }
 
@@ -150,6 +166,7 @@ export function TeacherTodayPage() {
         studentId: override.student.id,
         direction: override.direction,
         occurredAt: new Date().toISOString(),
+        reasonKind: override.reasonKind,
         reason: override.reason.trim(),
       },
       {
@@ -349,6 +366,7 @@ export function TeacherTodayPage() {
                                   setOverride({
                                     student,
                                     direction: a?.firstInAt ? 'out' : 'in',
+                                    reasonKind: a?.firstInAt ? 'early_pickup' : 'forgot_card',
                                     reason: '',
                                   })
                                 }
@@ -424,6 +442,7 @@ export function TeacherTodayPage() {
                       setOverride({
                         student,
                         direction: a?.firstInAt ? 'out' : 'in',
+                        reasonKind: a?.firstInAt ? 'early_pickup' : 'forgot_card',
                         reason: '',
                       })
                     }
@@ -471,6 +490,24 @@ export function TeacherTodayPage() {
             </div>
 
             <label className="mt-5 block text-sm font-medium text-stone-700">
+              {t('teacher.today.reasonKindLabel')}
+              <select
+                value={override.reasonKind}
+                onChange={(e) => setOverride({ ...override, reasonKind: e.target.value as TapEventReasonKind })}
+                className="mt-1.5 block w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+              >
+                {REASON_KINDS.map((k) => (
+                  <option key={k} value={k}>
+                    {t(`teacher.today.reasonKind.${k}`)}
+                  </option>
+                ))}
+              </select>
+              <span className="mt-1.5 block text-xs text-stone-500">
+                {t('teacher.today.reasonKindHelp')}
+              </span>
+            </label>
+
+            <label className="mt-4 block text-sm font-medium text-stone-700">
               {t('teacher.today.reasonLabel')}
               <textarea
                 value={override.reason}

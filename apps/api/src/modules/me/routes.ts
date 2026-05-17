@@ -25,6 +25,10 @@ export const meRoutes: FastifyPluginAsync = async (app) => {
         endTime: result.school.endTime,
         lateThresholdMinutes: result.school.lateThresholdMinutes,
         absentThresholdMinutes: result.school.absentThresholdMinutes,
+        workingDays: result.school.workingDays,
+        halfDayCutoffTime: result.school.halfDayCutoffTime ?? undefined,
+        academicYearStart: result.school.academicYearStart ?? undefined,
+        academicYearEnd: result.school.academicYearEnd ?? undefined,
       },
       children: result.children?.map((c) => ({
         id: c.id,

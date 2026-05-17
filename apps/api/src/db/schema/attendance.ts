@@ -15,6 +15,22 @@ export const attendanceStatusEnum = pgEnum('attendance_status', [
   'unverified',
 ])
 
+// Structured reason for a manual tap override. The freeform `manual_reason`
+// column stays for nuance ("kid was at the nurse"), but this enum is what
+// the monthly register reads to produce register codes (P/L/A/HD/E).
+// Nullable because existing rows pre-date this column.
+export const tapEventReasonKindEnum = pgEnum('tap_event_reason_kind', [
+  'forgot_card',
+  'out_of_band_tap',
+  'sick',
+  'leave',
+  'half_day',
+  'early_pickup',
+  'late_arrival',
+  'in_school_not_in_class',
+  'other',
+])
+
 export const tapEvents = pgTable(
   'tap_events',
   {
@@ -29,6 +45,7 @@ export const tapEvents = pgTable(
     source: tapSourceEnum('source').notNull(),
     manualOverrideBy: uuid('manual_override_by').references(() => users.id, { onDelete: 'set null' }),
     manualReason: text('manual_reason'),
+    manualReasonKind: tapEventReasonKindEnum('manual_reason_kind'),
     deduplicated: boolean('deduplicated').notNull().default(false),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },

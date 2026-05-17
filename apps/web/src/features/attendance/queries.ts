@@ -11,6 +11,7 @@ import {
   type Student,
   type TapDirection,
   type TapEvent,
+  type TapEventReasonKind,
 } from '@fyntra/schemas'
 import { dateStrInKarachi } from '../../utils/datetime'
 
@@ -190,6 +191,7 @@ interface ManualTapInput {
   studentId: string
   direction: TapDirection
   occurredAt: string
+  reasonKind: TapEventReasonKind
   reason: string
 }
 
