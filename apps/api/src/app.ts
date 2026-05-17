@@ -11,6 +11,7 @@ import { healthRoutes } from './modules/health/routes.js'
 import { authRoutes } from './modules/auth/routes.js'
 import { meRoutes } from './modules/me/routes.js'
 import { studentsRoutes } from './modules/students/routes.js'
+import { usersRoutes } from './modules/users/routes.js'
 import { classesRoutes } from './modules/classes/routes.js'
 import { devicesRoutes } from './modules/devices/routes.js'
 import { cardsRoutes } from './modules/cards/routes.js'
@@ -78,6 +79,7 @@ export async function buildApp(): Promise<FastifyInstance> {
   await app.register(authRoutes)
   await app.register(meRoutes)
   await app.register(studentsRoutes)
+  await app.register(usersRoutes)
   await app.register(classesRoutes)
   await app.register(devicesRoutes)
   await app.register(cardsRoutes)
