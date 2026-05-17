@@ -228,8 +228,21 @@ export const attendanceRecordSchema = z.object({
   cardAnomaly: z.boolean().optional(),
   leftWithoutScan: z.boolean().optional(),
   flaggedForReview: z.boolean().optional(),
+  // Register sign-off (F4): set once the class teacher locks the day.
+  // Absence of lockedAt means the day is still open for overrides.
+  lockedAt: z.string().optional(),
+  lockedBy: idSchema.optional(),
 })
 export type AttendanceRecord = z.infer<typeof attendanceRecordSchema>
+
+// POST /classes/:id/register/lock + /unlock — both bodies are just the date.
+// Validates YYYY-MM-DD; the API rejects mismatched timezones (UTC vs Karachi)
+// by parsing as a calendar date, not a moment.
+export const registerLockRequestSchema = z.object({
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+})
+export type RegisterLockRequest = z.infer<typeof registerLockRequestSchema>
+export const registerUnlockRequestSchema = registerLockRequestSchema
 
 export const notificationChannelSchema = z.enum(['whatsapp', 'sms', 'in_app'])
 export const notificationStatusSchema = z.enum(['queued', 'sent', 'delivered', 'failed'])

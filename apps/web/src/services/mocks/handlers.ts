@@ -25,6 +25,8 @@ import {
   patchDeviceRequestSchema,
   patchHolidayRequestSchema,
   patchSchoolRequestSchema,
+  registerLockRequestSchema,
+  registerUnlockRequestSchema,
   replaceCardRequestSchema,
   requestOtpRequestSchema,
   simulateTapRequestSchema,
@@ -186,6 +188,78 @@ export const handlers = [
     let result = seedStore.attendance.filter((a) => studentIds.has(a.studentId))
     if (date) result = result.filter((a) => a.date === date)
     return HttpResponse.json(result)
+  }),
+
+  http.post(`${API}/classes/:id/register/lock`, async ({ params, request }) => {
+    await latency()
+    const me = currentUser(request)
+    if (!me) return HttpResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const body = registerLockRequestSchema.safeParse(await request.json())
+    if (!body.success) return HttpResponse.json({ error: 'Invalid body' }, { status: 400 })
+    const klass = seedStore.classes.find((c) => c.id === params.id)
+    if (!klass) return HttpResponse.json({ error: 'Not found' }, { status: 404 })
+    // Mirrors the api: admin OR class-teacher only.
+    if (me.role !== 'admin' && !(me.role === 'teacher' && klass.teacherId === me.id)) {
+      return HttpResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+    const { date } = body.data
+    const classStudents = seedStore.students.filter((s) => s.classId === params.id && s.status === 'active')
+    const lockedAt = new Date().toISOString()
+    // Backfill `absent` rows for any student without a record.
+    for (const s of classStudents) {
+      let record = seedStore.attendance.find((a) => a.studentId === s.id && a.date === date)
+      if (!record) {
+        record = {
+          id: `att_${s.id}_${date}`,
+          studentId: s.id,
+          date,
+          status: 'absent',
+          isManual: true,
+        }
+        seedStore.attendance.push(record)
+      }
+      // Lock the row idempotently — don't churn lockedAt/lockedBy if already set.
+      if (!record.lockedAt) {
+        record.lockedAt = lockedAt
+        record.lockedBy = me.id
+      }
+    }
+    const studentIds = new Set(classStudents.map((s) => s.id))
+    const records = seedStore.attendance.filter((a) => studentIds.has(a.studentId) && a.date === date)
+    const earliestLockedAt = records.reduce<string>(
+      (acc, r) => (r.lockedAt && r.lockedAt < acc ? r.lockedAt : acc),
+      lockedAt,
+    )
+    const firstLockedBy = records.find((r) => r.lockedBy)?.lockedBy ?? me.id
+    return HttpResponse.json({
+      classId: params.id,
+      date,
+      lockedAt: earliestLockedAt,
+      lockedBy: firstLockedBy,
+      records,
+    })
+  }),
+
+  http.post(`${API}/classes/:id/register/unlock`, async ({ params, request }) => {
+    await latency()
+    const me = currentUser(request)
+    if (!me) return HttpResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    if (me.role !== 'admin') return HttpResponse.json({ error: 'Forbidden' }, { status: 403 })
+    const body = registerUnlockRequestSchema.safeParse(await request.json())
+    if (!body.success) return HttpResponse.json({ error: 'Invalid body' }, { status: 400 })
+    const klass = seedStore.classes.find((c) => c.id === params.id)
+    if (!klass) return HttpResponse.json({ error: 'Not found' }, { status: 404 })
+    const { date } = body.data
+    const classStudentIds = new Set(
+      seedStore.students.filter((s) => s.classId === params.id).map((s) => s.id),
+    )
+    for (const record of seedStore.attendance) {
+      if (classStudentIds.has(record.studentId) && record.date === date) {
+        record.lockedAt = undefined
+        record.lockedBy = undefined
+      }
+    }
+    return HttpResponse.json({ ok: true })
   }),
 
   // --- Cards --------------------------------------------------------------
@@ -482,6 +556,19 @@ export const handlers = [
     if (!student) return HttpResponse.json({ error: 'Student not found' }, { status: 404 })
     const card = seedStore.cards.find((c) => c.id === student.cardId)
     if (!card) return HttpResponse.json({ error: 'Student has no card' }, { status: 400 })
+
+    // Locked-day gate: non-admin overrides on locked records → 409.
+    const recordDateForLockCheck = formatInTimeZone(
+      new Date(body.data.occurredAt),
+      'Asia/Karachi',
+      'yyyy-MM-dd',
+    )
+    const existingForLock = seedStore.attendance.find(
+      (a) => a.studentId === student.id && a.date === recordDateForLockCheck,
+    )
+    if (existingForLock?.lockedAt && me.role !== 'admin') {
+      return HttpResponse.json({ error: 'Day is locked' }, { status: 409 })
+    }
 
     const event: TapEvent = {
       id: `tap_manual_${Date.now()}`,

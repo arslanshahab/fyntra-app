@@ -88,6 +88,17 @@
       },
       "submitOverride": "Record tap",
       "manualBadge": "Manual",
+      "lockedBadge": "Locked",
+      "lock": {
+        "button": "Lock register",
+        "confirmTitle": "Lock today's register?",
+        "confirmBody": "Once locked, the register stops accepting tap overrides for today. Any student without a tap yet will be marked absent.",
+        "confirmConsequences": "Only an admin can unlock the day after this.",
+        "submit": "Lock register",
+        "success": "Today's register is locked.",
+        "error": "Couldn't lock the register. Please try again.",
+        "banner": "Today's register was locked {{when}}. Contact an admin if you need to change a record."
+      },
       "table": {
         "name": "Student",
         "status": "Status",

@@ -1,5 +1,5 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { I18nextProvider } from 'react-i18next'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
@@ -88,5 +88,27 @@ describe('TeacherTodayPage', () => {
     await waitFor(() => {
       expect(screen.getByText(/manual tap recorded/i)).toBeInTheDocument()
     })
+  })
+
+  it('Lock register button is hidden until a roster is loaded', async () => {
+    renderPage()
+    await screen.findAllByRole('button', { name: /override/i })
+    expect(screen.getByRole('button', { name: 'Lock register' })).toBeInTheDocument()
+  })
+
+  it('locking shows the confirm dialog → success → locked banner + hides override buttons', async () => {
+    const user = userEvent.setup()
+    renderPage()
+    await screen.findAllByRole('button', { name: /override/i })
+    await user.click(screen.getByRole('button', { name: 'Lock register' }))
+    const confirm = await screen.findByRole('dialog', { name: /Lock today's register/i })
+    await user.click(within(confirm).getByRole('button', { name: 'Lock register' }))
+    await waitFor(() => {
+      expect(screen.getByText(/Today's register is locked/i)).toBeInTheDocument()
+    })
+    // Locked banner appears after the attendance refetch lands. Wait for it.
+    expect(await screen.findByText(/register was locked/i)).toBeInTheDocument()
+    // Override row buttons are gone for the teacher.
+    expect(screen.queryAllByRole('button', { name: /^Override$/i })).toHaveLength(0)
   })
 })

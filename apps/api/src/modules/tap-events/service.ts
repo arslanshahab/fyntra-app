@@ -4,10 +4,11 @@ import { db } from '../../db/client.js'
 import { users } from '../../db/schema/auth.js'
 import { students, studentGuardians } from '../../db/schema/students.js'
 import type { TenantContext } from '../../types/tenant-context.js'
-import { NotFoundError } from '../../lib/errors.js'
+import { ConflictError, NotFoundError } from '../../lib/errors.js'
 import { ymdInKarachi } from '../../lib/time.js'
 import { tapEventsRepo } from './repository.js'
 import { recomputeAttendanceForDay } from '../attendance/service.js'
+import { isStudentDayLocked } from '../classes/service.js'
 import { dispatch } from '../notifications/service.js'
 import { broker, channels } from '../../services/realtime.js'
 
@@ -62,6 +63,15 @@ export async function recordManualOverride(ctx: TenantContext, input: ManualOver
   if (!student) throw new NotFoundError('Student not found')
 
   const occurredAt = new Date(input.occurredAt)
+
+  // If the student's day is locked, only admins can override. Teachers
+  // (and anyone else) get 409 — they must ask admin to unlock first.
+  if (ctx.role !== 'admin') {
+    const ymd = ymdInKarachi(occurredAt)
+    if (await isStudentDayLocked(ctx, input.studentId, ymd)) {
+      throw new ConflictError('Day is locked. Ask an admin to unlock it before overriding.')
+    }
+  }
 
   // Insert the manual tap event
   await tapEventsRepo.insert({
