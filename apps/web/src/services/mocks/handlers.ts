@@ -266,27 +266,29 @@ export const handlers = [
     const body = createClassRequestSchema.safeParse(await request.json())
     if (!body.success) return HttpResponse.json({ error: 'Invalid body' }, { status: 400 })
     const { name, teacherId } = body.data
-    // 1. Teacher eligibility (does the user exist AND have role=teacher?)
-    const teacher = seedStore.users.find((u) => u.id === teacherId && u.role === 'teacher')
-    if (!teacher) {
-      return HttpResponse.json(
-        { statusCode: 400, error: 'ValidationError', message: 'invalid teacher', code: 'TEACHER_NOT_ELIGIBLE' },
-        { status: 400 },
-      )
-    }
-    // 2. Name uniqueness (case-insensitive)
+    // 1. Name uniqueness (case-insensitive) — always checked
     if (seedStore.classes.some((c) => c.name.toLowerCase() === name.trim().toLowerCase())) {
       return HttpResponse.json(
         { statusCode: 409, error: 'ConflictError', message: 'name taken', code: 'CLASS_NAME_TAKEN' },
         { status: 409 },
       )
     }
-    // 3. Teacher availability (not assigned to another class)
-    if (seedStore.classes.some((c) => c.teacherId === teacherId)) {
-      return HttpResponse.json(
-        { statusCode: 409, error: 'ConflictError', message: 'teacher taken', code: 'TEACHER_ALREADY_ASSIGNED' },
-        { status: 409 },
-      )
+    if (typeof teacherId === 'string') {
+      // 2. Teacher eligibility (does the user exist AND have role=teacher?)
+      const teacher = seedStore.users.find((u) => u.id === teacherId && u.role === 'teacher')
+      if (!teacher) {
+        return HttpResponse.json(
+          { statusCode: 400, error: 'ValidationError', message: 'invalid teacher', code: 'TEACHER_NOT_ELIGIBLE' },
+          { status: 400 },
+        )
+      }
+      // 3. Teacher availability (not assigned to another class)
+      if (seedStore.classes.some((c) => c.teacherId === teacherId)) {
+        return HttpResponse.json(
+          { statusCode: 409, error: 'ConflictError', message: 'teacher taken', code: 'TEACHER_ALREADY_ASSIGNED' },
+          { status: 409 },
+        )
+      }
     }
     const created = {
       id: `class_${crypto.randomUUID()}`,
@@ -321,7 +323,7 @@ export const handlers = [
         { status: 409 },
       )
     }
-    if (teacherId) {
+    if (typeof teacherId === 'string') {
       const teacher = seedStore.users.find((u) => u.id === teacherId && u.role === 'teacher')
       if (!teacher) {
         return HttpResponse.json(
@@ -339,7 +341,7 @@ export const handlers = [
       }
     }
     if (name !== undefined) target.name = name.trim()
-    if (teacherId !== undefined) target.teacherId = teacherId
+    if (teacherId !== undefined) target.teacherId = teacherId ?? null
     return HttpResponse.json({
       ...target,
       studentCount: seedStore.students.filter((s) => s.classId === target.id).length,

@@ -696,7 +696,7 @@
         "teacherLabel": "Class teacher",
         "teacherPlaceholder": "Select a teacher",
         "teacherUnavailableSuffix": "(already teaches {{className}})",
-        "noTeachersHint": "No teachers available. Add a teacher user first.",
+        "unassignedOption": "— No class teacher —",
         "submitCreate": "Add class",
         "submitSave": "Save changes"
       },

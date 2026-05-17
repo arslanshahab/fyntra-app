@@ -17,15 +17,17 @@ import { useTeachersQuery } from '../../features/users/queries'
 import { ApiError } from '../../services/api/client'
 import type { Class } from '@fyntra/schemas'
 
+const UNASSIGNED = '__unassigned__'
+
 type FormState = {
   name: string
   teacherId: string
 }
 
-const emptyForm: FormState = { name: '', teacherId: '' }
+const emptyForm: FormState = { name: '', teacherId: UNASSIGNED }
 
 function fromClass(c: Class): FormState {
-  return { name: c.name, teacherId: c.teacherId ?? '' }
+  return { name: c.name, teacherId: c.teacherId ?? UNASSIGNED }
 }
 
 function RowSkeleton() {
@@ -111,10 +113,12 @@ export function AdminClassesPage() {
     setBanner(null)
   }
 
+  const editingTeacherForm = editing ? (editing.teacherId ?? UNASSIGNED) : UNASSIGNED
+
   const isDirty =
     !editing ||
     form.name.trim() !== editing.name ||
-    form.teacherId !== editing.teacherId
+    form.teacherId !== editingTeacherForm
 
   const isValid =
     form.name.trim().length > 0 && form.teacherId.length > 0
@@ -122,7 +126,9 @@ export function AdminClassesPage() {
   const submit = () => {
     setBanner(null)
     if (!isValid || !isDirty) return
-    const payload = { name: form.name.trim(), teacherId: form.teacherId }
+    const teacherIdForApi: string | null =
+      form.teacherId === UNASSIGNED ? null : form.teacherId
+    const payload = { name: form.name.trim(), teacherId: teacherIdForApi }
     if (editing) {
       patchMut.mutate(
         { id: editing.id, patch: payload },
@@ -267,6 +273,7 @@ export function AdminClassesPage() {
               className="mt-1.5 h-11 w-full rounded-lg border border-stone-300 bg-white px-3 text-sm text-stone-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
             >
               <option value="" disabled>{t('admin.classes.form.teacherPlaceholder')}</option>
+              <option value={UNASSIGNED}>{t('admin.classes.form.unassignedOption')}</option>
               {(teachers.data ?? []).map((u) => {
                 const conflicting = teacherToClass.get(u.id)
                 const conflictsWithAnother = conflicting && conflicting.id !== editing?.id
@@ -284,9 +291,6 @@ export function AdminClassesPage() {
                 )
               })}
             </select>
-            {(teachers.data?.length ?? 0) === 0 ? (
-              <span className="mt-1.5 block text-xs text-stone-500">{t('admin.classes.form.noTeachersHint')}</span>
-            ) : null}
           </label>
 
           <div className="mt-6 flex justify-end gap-2">

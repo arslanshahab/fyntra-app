@@ -696,7 +696,7 @@
         "teacherLabel": "کلاس ٹیچر",
         "teacherPlaceholder": "ایک ٹیچر منتخب کریں",
         "teacherUnavailableSuffix": "(پہلے سے {{className}} پڑھاتے ہیں)",
-        "noTeachersHint": "کوئی ٹیچر دستیاب نہیں۔ پہلے ٹیچر صارف شامل کریں۔",
+        "unassignedOption": "— کوئی کلاس ٹیچر نہیں —",
         "submitCreate": "جماعت شامل کریں",
         "submitSave": "تبدیلیاں محفوظ کریں"
       },

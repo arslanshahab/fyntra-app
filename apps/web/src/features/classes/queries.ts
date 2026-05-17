@@ -25,7 +25,7 @@ export function useClassesQuery() {
 
 export interface CreateClassInput {
   name: string
-  teacherId: string
+  teacherId?: string | null
 }
 
 export function useCreateClass() {
@@ -43,7 +43,7 @@ export function useCreateClass() {
 
 export interface PatchClassInput {
   name?: string
-  teacherId?: string
+  teacherId?: string | null
 }
 
 export function usePatchClass() {

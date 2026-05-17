@@ -14,9 +14,10 @@ import { AdminClassesPage } from './AdminClassesPage'
 
 const server = setupServer(...handlers)
 
-// Track initial lengths so any mutations are cleaned up after each test.
+// Track initial lengths AND field snapshots so any mutations are cleaned up after each test.
 let initialClassesLength: number
 let initialUsersLength: number
+let classSnapshot: Array<{ id: string; name: string; teacherId: string | null | undefined }>
 
 beforeAll(() => server.listen({ onUnhandledRequest: 'error' }))
 
@@ -26,6 +27,14 @@ afterEach(() => {
   // Restore seed slices to pre-test length so tests don't bleed state.
   seedStore.classes.length = initialClassesLength
   seedStore.users.length = initialUsersLength
+  // Restore in-place field mutations (e.g. teacherId cleared by unassign test).
+  for (const snap of classSnapshot) {
+    const cls = seedStore.classes.find((c) => c.id === snap.id)
+    if (cls) {
+      cls.name = snap.name
+      cls.teacherId = snap.teacherId
+    }
+  }
 })
 
 afterAll(() => server.close())
@@ -53,9 +62,10 @@ describe('AdminClassesPage', () => {
     const admin = seedStore.users.find((u) => u.role === 'admin')!
     useAuthStore.setState({ token: `tok_${admin.id}`, user: admin })
 
-    // Record initial lengths before any test mutates the seed.
+    // Record initial lengths and snapshots before any test mutates the seed.
     initialClassesLength = seedStore.classes.length
     initialUsersLength = seedStore.users.length
+    classSnapshot = seedStore.classes.map((c) => ({ id: c.id, name: c.name, teacherId: c.teacherId }))
   })
 
   it('renders rows with name, teacher, and student count', async () => {
@@ -158,6 +168,34 @@ describe('AdminClassesPage', () => {
     const dialog = await screen.findByRole('dialog', { name: `Delete ${targetClass.name}?` })
     const confirmBtn = within(dialog).getByRole('button', { name: /Delete class/i })
     expect(confirmBtn).toBeDisabled()
+  })
+
+  it('edit modal can clear a teacher assignment via "Unassigned"', async () => {
+    const user = userEvent.setup()
+    renderPage()
+    const target = seedStore.classes[0]!
+    await screen.findByText(target.name)
+
+    // Open edit on the first class.
+    const row = screen.getByText(target.name).closest('tr')!
+    await user.click(within(row).getByLabelText('Edit'))
+
+    // Wait for the picker to populate.
+    const select = (await screen.findByLabelText(/Class teacher/i)) as HTMLSelectElement
+    await within(select).findByRole('option', { name: /No class teacher/i })
+
+    // Switch to the Unassigned option.
+    await user.selectOptions(select, '__unassigned__')
+
+    const saveBtn = screen.getByRole('button', { name: /Save changes/i })
+    expect(saveBtn).not.toBeDisabled()
+    await user.click(saveBtn)
+
+    // Modal closes on success.
+    await waitFor(() => expect(screen.queryByRole('button', { name: /Save changes/i })).not.toBeInTheDocument())
+
+    // Seed store now reflects the unassigned class.
+    expect(seedStore.classes.find((c) => c.id === target.id)?.teacherId).toBeNull()
   })
 
   it('teacher picker marks already-assigned teachers as disabled with "(already teaches X)" suffix', async () => {
