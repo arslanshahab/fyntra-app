@@ -305,3 +305,84 @@ describe('DELETE /classes/:id', () => {
     expect(res.statusCode).toBe(404)
   })
 })
+
+describe('unassign teacher (PATCH)', () => {
+  it('admin clears a teacher assignment with teacherId: null', async () => {
+    const { schoolA, adminA, teacherA1 } = await seedTwoSchools()
+    const id = newId()
+    await db.insert(classes).values({ id, schoolId: schoolA, name: 'Grade 3A', teacherId: teacherA1 })
+    const t = token(app, { userId: adminA, schoolId: schoolA, role: 'admin' })
+    const res = await app.inject({
+      method: 'PATCH',
+      url: `/classes/${id}`,
+      headers: { authorization: `Bearer ${t}` },
+      payload: { teacherId: null },
+    })
+    expect(res.statusCode).toBe(200)
+    const body = res.json() as { teacherId: string | null }
+    expect(body.teacherId).toBeNull()
+  })
+
+  it('allows assigning a freed teacher to another class after unassign', async () => {
+    const { schoolA, adminA, teacherA1, teacherA2 } = await seedTwoSchools()
+    const id1 = newId()
+    const id2 = newId()
+    await db.insert(classes).values([
+      { id: id1, schoolId: schoolA, name: 'C1', teacherId: teacherA1 },
+      { id: id2, schoolId: schoolA, name: 'C2', teacherId: teacherA2 },
+    ])
+    const t = token(app, { userId: adminA, schoolId: schoolA, role: 'admin' })
+    // Unassign T1 from C1.
+    const r1 = await app.inject({
+      method: 'PATCH',
+      url: `/classes/${id1}`,
+      headers: { authorization: `Bearer ${t}` },
+      payload: { teacherId: null },
+    })
+    expect(r1.statusCode).toBe(200)
+    // Assign T1 to a fresh class.
+    const id3 = newId()
+    await db.insert(classes).values({ id: id3, schoolId: schoolA, name: 'C3', teacherId: null })
+    const r2 = await app.inject({
+      method: 'PATCH',
+      url: `/classes/${id3}`,
+      headers: { authorization: `Bearer ${t}` },
+      payload: { teacherId: teacherA1 },
+    })
+    expect(r2.statusCode).toBe(200)
+    expect((r2.json() as { teacherId: string | null }).teacherId).toBe(teacherA1)
+  })
+
+  it('two unassigned classes coexist (partial unique index)', async () => {
+    const { schoolA, adminA } = await seedTwoSchools()
+    const t = token(app, { userId: adminA, schoolId: schoolA, role: 'admin' })
+    const r1 = await app.inject({
+      method: 'POST',
+      url: '/classes',
+      headers: { authorization: `Bearer ${t}` },
+      payload: { name: 'Free A', teacherId: null },
+    })
+    expect(r1.statusCode).toBe(200)
+    const r2 = await app.inject({
+      method: 'POST',
+      url: '/classes',
+      headers: { authorization: `Bearer ${t}` },
+      payload: { name: 'Free B', teacherId: null },
+    })
+    expect(r2.statusCode).toBe(200)
+  })
+
+  it('admin can create a class without teacherId field entirely', async () => {
+    const { schoolA, adminA } = await seedTwoSchools()
+    const t = token(app, { userId: adminA, schoolId: schoolA, role: 'admin' })
+    const res = await app.inject({
+      method: 'POST',
+      url: '/classes',
+      headers: { authorization: `Bearer ${t}` },
+      payload: { name: 'No teacher key' },
+    })
+    expect(res.statusCode).toBe(200)
+    const body = res.json() as { teacherId: string | null }
+    expect(body.teacherId).toBeNull()
+  })
+})

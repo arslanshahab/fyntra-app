@@ -336,7 +336,7 @@ export async function registerForMonth(
 // --- Admin CRUD ---------------------------------------------------------
 
 function classToWire(
-  row: { id: string; schoolId: string; name: string; teacherId: string },
+  row: { id: string; schoolId: string; name: string; teacherId: string | null },
   studentCount: number,
 ): Class {
   return {
@@ -385,11 +385,18 @@ export async function createClass(
   input: CreateClassRequest,
 ): Promise<Class> {
   if (ctx.role !== 'admin') throw new ForbiddenError()
-  await assertEligibleTeacher(ctx, input.teacherId)
+  if (input.teacherId) {
+    await assertEligibleTeacher(ctx, input.teacherId)
+  }
   await assertNameAvailable(ctx, input.name)
-  await assertTeacherAvailable(ctx, input.teacherId)
+  if (input.teacherId) {
+    await assertTeacherAvailable(ctx, input.teacherId)
+  }
   try {
-    const row = await classesRepo.create(ctx, input)
+    const row = await classesRepo.create(ctx, {
+      name: input.name,
+      teacherId: input.teacherId ?? null,
+    })
     return classToWire(row, 0)
   } catch (err) {
     // DB unique-constraint backstop: classes_school_teacher_unique
@@ -428,7 +435,8 @@ export async function patchClass(
   const existing = await classesRepo.findById(ctx, id)
   if (!existing) throw new NotFoundError('Class not found')
 
-  if (input.teacherId !== undefined) {
+  // Only validate when assigning a NEW teacher (not when clearing).
+  if (typeof input.teacherId === 'string') {
     await assertEligibleTeacher(ctx, input.teacherId)
     await assertTeacherAvailable(ctx, input.teacherId, id)
   }
@@ -437,7 +445,11 @@ export async function patchClass(
   }
 
   try {
-    const updated = await classesRepo.patch(ctx, id, input)
+    const updated = await classesRepo.patch(ctx, id, {
+      name: input.name,
+      // Pass through null explicitly when caller sent it; undefined = no change.
+      teacherId: input.teacherId === undefined ? undefined : input.teacherId ?? null,
+    })
     if (!updated) throw new NotFoundError('Class not found')
     const studentCount = await classesRepo.countStudents(ctx, id)
     return classToWire(updated, studentCount)

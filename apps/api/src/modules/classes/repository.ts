@@ -269,7 +269,7 @@ export const classesRepo = {
 
   async create(
     ctx: TenantContext,
-    input: { name: string; teacherId: string },
+    input: { name: string; teacherId: string | null },
   ) {
     const id = newId()
     const rows = await db
@@ -287,7 +287,7 @@ export const classesRepo = {
   async patch(
     ctx: TenantContext,
     id: string,
-    input: { name?: string; teacherId?: string },
+    input: { name?: string; teacherId?: string | null },
   ) {
     const patch: Partial<Pick<typeof classes.$inferSelect, 'name' | 'teacherId' | 'updatedAt'>> = {
       updatedAt: new Date(),

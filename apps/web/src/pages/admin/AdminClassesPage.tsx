@@ -25,7 +25,7 @@ type FormState = {
 const emptyForm: FormState = { name: '', teacherId: '' }
 
 function fromClass(c: Class): FormState {
-  return { name: c.name, teacherId: c.teacherId }
+  return { name: c.name, teacherId: c.teacherId ?? '' }
 }
 
 function RowSkeleton() {
@@ -79,7 +79,7 @@ export function AdminClassesPage() {
 
   const teacherToClass = useMemo(() => {
     const map = new Map<string, Class>()
-    for (const c of classList) map.set(c.teacherId, c)
+    for (const c of classList) if (c.teacherId) map.set(c.teacherId, c)
     return map
   }, [classList])
 
@@ -212,7 +212,7 @@ export function AdminClassesPage() {
                   : classList.map((c) => (
                     <tr key={c.id} className="transition-colors hover:bg-stone-50">
                       <td className="px-4 py-3 font-medium text-stone-900">{c.name}</td>
-                      <td className="px-4 py-3 text-stone-700">{teacherName(c.teacherId)}</td>
+                      <td className="px-4 py-3 text-stone-700">{c.teacherId ? teacherName(c.teacherId) : t('admin.classes.row.unassigned')}</td>
                       <td className="px-4 py-3 font-mono tabular-nums text-stone-700">{c.studentCount ?? 0}</td>
                       <td className="px-4 py-3">
                         <div className="flex justify-end gap-1">

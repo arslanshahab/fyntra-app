@@ -292,7 +292,7 @@ export const handlers = [
       id: `class_${crypto.randomUUID()}`,
       schoolId: me.schoolId,
       name: name.trim(),
-      teacherId,
+      teacherId: teacherId ?? null,
       studentCount: 0,
     }
     seedStore.classes.push(created)

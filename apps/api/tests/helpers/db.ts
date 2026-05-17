@@ -25,7 +25,7 @@ export async function truncateAll() {
   await db.delete(students)
   await db.delete(otpCodes)
   await db.delete(schoolHolidays)
-  await db.delete(users)
   await db.delete(classes)
+  await db.delete(users)
   await db.delete(schools)
 }
